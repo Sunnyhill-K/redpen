@@ -572,7 +572,7 @@ function render(){
     return;
   }
   main.style.setProperty('--z', isPdf(c) ? 1 : zoom.text);
-  if (isPdf(c)) renderPdfCase(main, c); else renderCase(main, c);
+  if (isPdf(c)) renderPdfCase(main, c); else { renderCase(main, c); if (pendingSpot){ const ps=pendingSpot; pendingSpot=null; restoreSpot(ps.y); } }
 }
 function renderHome(main){
   main.innerHTML = `<div class="head"><div class="eyebrow">퇴고 기록 ${cases.length}건</div>
@@ -1325,7 +1325,10 @@ async function deleteDoc(c, btn){
 
 // ── 저장 뒤 원래 자리·커서 복원 ──
 let lastNoteFocus=null, pendingSpot=null;
-document.addEventListener('focusin', e=>{ const n=e.target.closest && e.target.closest('.note'); if (n) lastNoteFocus={noteId:n.id, sel: e.target.classList.contains('md') ? '.md' : e.target.classList.contains('after') ? 'textarea.after' : 'textarea:not([hidden]), .md'}; });
+document.addEventListener('focusin', e=>{ const n=e.target.closest && e.target.closest('.note'); if (n){ lastNoteFocus={noteId:n.id, sel: e.target.classList.contains('md') ? '.md' : e.target.classList.contains('after') ? 'textarea.after' : 'textarea:not([hidden]), .md'}; saveSpot(); } });
+let spotT=null;
+function saveSpot(){ clearTimeout(spotT); spotT=setTimeout(()=>{ try { if (view.mode==='case' && view.id) sessionStorage.setItem('redpen.spot', JSON.stringify({id:view.id, y:window.scrollY, f:lastNoteFocus})); } catch(e){} }, 150); }
+window.addEventListener('scroll', saveSpot, {passive:true});
 function restoreSpot(y){
   requestAnimationFrame(()=>{ window.scrollTo(0, y);
     if (lastNoteFocus){ const n=document.getElementById(lastNoteFocus.noteId); const f=n && n.querySelector(lastNoteFocus.sel); if (f){ f.focus({preventScroll:true}); if (f.isContentEditable){ const r=document.createRange(); r.selectNodeContents(f); r.collapse(false); const sl=getSelection(); sl.removeAllRanges(); sl.addRange(r); } } }
@@ -1396,12 +1399,15 @@ function applyRole(){
 async function boot(){
   try { await loadConfig(); } catch(e){ $('#main').innerHTML=`<div class="head"><p class="msg err">설정 파일을 읽지 못했습니다: ${esc((e&&e.message)||e)}</p></div>`; return; }
   let sess=null; try { sess=JSON.parse(sessionStorage.getItem('redpen.sess')||localStorage.getItem('redpen.sess')||'null'); } catch(e){}
-  if (sess && sess.role && sess.k){ role=sess.role; token=sess.t||null; Kraw=ub64(sess.k); K=await importK(Kraw); if (token) Ke=await deriveKe(Kraw, token); }
-  else await lockScreen();
+  let spot=null;
+  if (sess && sess.role && sess.k){ role=sess.role; token=sess.t||null; Kraw=ub64(sess.k); K=await importK(Kraw); if (token) Ke=await deriveKe(Kraw, token);
+    try { spot=JSON.parse(sessionStorage.getItem('redpen.spot')||'null'); } catch(e){} }
+  else { await lockScreen(); try { sessionStorage.removeItem('redpen.spot'); } catch(e){} }
   applyRole();
   try { await loadIndex(); } catch(e){ toast('목록을 읽지 못했습니다: '+((e&&e.message)||e)); }
   const m=location.hash.match(/case=([\w-]+)/);
   if (m && cases.some(c=>c.id===m[1])) view={mode:'case', id:m[1], draft:null, dirty:false, show:'side'};
+  if (spot && view.mode==='case' && spot.id===view.id){ lastNoteFocus=spot.f||null; pendingSpot={y:spot.y||0}; }   // 새로고침: 마지막 자리로
   render();
 }
 
