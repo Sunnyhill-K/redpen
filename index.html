@@ -1443,6 +1443,10 @@ const shell=$('.shell');
 const syncFold=()=>{ $('#btnRail').textContent = shell.classList.contains('nrail') ? '목록 펼치기 »' : '« 접기'; };
 const syncTop=()=>{ document.documentElement.style.setProperty('--top-h', $('.top').offsetHeight+'px'); };
 syncTop(); window.addEventListener('resize', syncTop);
+// 글꼴이 늦게 로드되면 상단 바 높이가 바뀌어 목록·머리가 그 밑으로 들어간다 → 높이 변화를 계속 감시
+if (window.ResizeObserver) new ResizeObserver(syncTop).observe($('.top'));
+if (document.fonts) document.fonts.ready.then(syncTop);
+window.addEventListener('load', syncTop);
 try { if (localStorage.getItem('redpen.nrail')==='1') shell.classList.add('nrail'); } catch(e){}
 syncFold();
 $('#btnRail').addEventListener('click', e=>{ e.stopPropagation(); shell.classList.toggle('nrail'); syncFold(); try { localStorage.setItem('redpen.nrail', shell.classList.contains('nrail')?'1':'0'); } catch(e){}
