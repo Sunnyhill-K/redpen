@@ -339,6 +339,8 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 
 .note .n .who{font-family:var(--sans);font-size:calc(11px * var(--ui,1));color:var(--ink);background:var(--paper-3);border-radius:3px;padding:0 5px}
 .note .n .who.ed{color:var(--ins);background:var(--ins-bg)}
+.ins-by{background:var(--ins-bg);border-radius:3px;padding:0 3px;box-decoration-break:clone}
+.ins-by .tag{font-family:var(--sans);font-size:.78em;color:var(--ins);margin-right:4px;font-weight:600;user-select:none}
 .ask .box.users{max-width:640px}
 .ask .box.users table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
 .ask .box.users th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:6px;border-bottom:1px solid var(--rule)}
@@ -602,15 +604,18 @@ function listHtml(items, withWhere){
 }
 function listText(c, items){
   const head = `${c.title||''} · 퇴고 메모 ${items.length}곳 (${c.date||''})`;
-  return head + '\n' + items.map(it=>`${it.n}. ${it.who?'['+it.who+'] ':''}${it.where?'['+it.where+'] ':''}${it.kind}${it.before?' · '+it.before:''}${it.after?'\n   → '+it.after:''}${it.reason?'\n   이유: '+it.reason:''}`).join('\n');
+  const plain = t => (t||'').replace(/⟦([^|⟧\n]{1,40})\|([^⟧]*)⟧/g, '[$1] $2');
+  return head + '\n' + items.map(it=>`${it.n}. ${it.who?'['+it.who+'] ':''}${it.where?'['+it.where+'] ':''}${it.kind}${it.before?' · '+it.before:''}${it.after?'\n   → '+it.after:''}${it.reason?'\n   이유: '+plain(it.reason):''}`).join('\n');
 }
 function overallHtml(c){
   const ph='전체 인상, 남겨 둔 것, 의뢰인에게 전할 말';
   return `<div class="box"><h3>총평</h3>${artifactNs ? mdField(c.note||'', 'id="noteAll"', ph, 'txt') : `<div class="txt">${md(c.note||'')}</div>`}</div>`;
 }
 // ── 슬랙식 서식: *굵게* _기울임_ __밑줄__ ~취소선~ `코드` ──
+// ⟦이름|글⟧ = 다른 사람이 덧붙인 부분. 화면에선 이름표가 붙은 색 띠로, 복사 땐 [이름] 글 로
 function md(s){
   let h=esc(s);
+  h=h.replace(/⟦([^|⟧\n]{1,40})\|([^⟧]*)⟧/g,'<span class="ins-by" data-by="$1"><b class="tag">$1</b>$2</span>');
   h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');
   h=h.replace(/\*([^*\n]+)\*/g,'<b>$1</b>');
   h=h.replace(/__([^_\n]+)__/g,'<u>$1</u>');
@@ -631,6 +636,7 @@ function htmlToMd(node){
     const tag=n.tagName.toLowerCase(); const inner=htmlToMd(n);
     const st=(n.getAttribute('style')||'').toLowerCase();
     if (tag==='br'){ out+='\n'; return; }
+    if (tag==='span' && n.classList.contains('ins-by')){ const by=n.getAttribute('data-by')||''; const body=[...n.childNodes].filter(x=>!(x.nodeType===1 && x.classList.contains('tag'))).map(x=>x.nodeType===3?x.nodeValue:htmlToMd(x)).join(''); out+='⟦'+by+'|'+body+'⟧'; return; }
     if (tag==='div'||tag==='p'){ out+=(out && !out.endsWith('\n') ? '\n' : '')+inner; if (tag==='p') out+='\n'; return; }
     if (!inner.trim()){ out+=inner; return; }
     if (tag==='b'||tag==='strong'||/font-weight:\s*(bold|[6-9]00)/.test(st)) out+='*'+inner+'*';
@@ -641,6 +647,15 @@ function htmlToMd(node){
     else out+=inner;
   });
   return out;
+}
+function tagInsertion(oldT, newT, name){
+  let a=0; while (a<oldT.length && a<newT.length && oldT[a]===newT[a]) a++;
+  let b=0; while (b<oldT.length-a && b<newT.length-a && oldT[oldT.length-1-b]===newT[newT.length-1-b]) b++;
+  const mid=newT.slice(a, newT.length-b); if (!mid.trim()) return newT;
+  const head=newT.slice(0,a); const open=head.lastIndexOf('⟦'), close=head.lastIndexOf('⟧');
+  if (open>close){ const nm=head.slice(open+1).split('|')[0]; if (nm===name) return newT; }   // 같은 사람 띠 안이면 그대로
+  const sp=mid.match(/^\s*/)[0], ep=mid.match(/\s*$/)[0]; const core=mid.slice(sp.length, mid.length-ep.length);
+  return head + sp + '⟦' + name + '|' + core + '⟧' + ep + newT.slice(newT.length-b);
 }
 function bindMd(root){
   (root||document).querySelectorAll('.fld').forEach(f=>{
@@ -908,6 +923,12 @@ function refreshPdfHead(c){
   if (!isPdf(c) && !pdfListMode){ if (textRevMode) renderTextRevised(c); else renderTextDoc(c); const nt=$('#notes'); if (nt) nt.hidden = textRevMode; requestAnimationFrame(fitOverall); }
   renderPdfNotes(c);
 }
+document.addEventListener('keydown', e=>{
+  if (e.key!=='Escape') return;
+  const ovs=[...document.querySelectorAll('.ask:not(.lock)')]; const ov=ovs[ovs.length-1]; if (!ov) return;
+  e.preventDefault(); const cancel=ov.querySelector('#pwCancel, #dpwCancel, #p2c, #uClose, #histClose, [data-v="cancel"], [data-v="0"]');
+  if (cancel) cancel.click(); else ov.remove();
+});
 // 단축키: 입력칸 밖에서 Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y
 document.addEventListener('keydown', e=>{
   if (!(e.ctrlKey||e.metaKey)) return;
@@ -941,7 +962,9 @@ function renderPdfNotes(c){
     if (!t || !f || t.hidden && el.tagName==='TEXTAREA') return;
     let before=null;
     f.addEventListener('focus', ()=>{ before = t.value; });
-    f.addEventListener('blur', ()=>{ if (before!==null && before!==t.value){ const cur=t.value; t.value=before; pushHist(c, `메모 ${+t.dataset.i+1} 수정`); t.value=cur; collectMarks(c); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
+    f.addEventListener('blur', ()=>{ if (before!==null && before!==t.value){ let cur=t.value; t.value=before; pushHist(c, `메모 ${+t.dataset.i+1} 수정`);
+        const m=c.marks[+t.dataset.i]; if (m && me && m.by && m.by!==me.name && t.dataset.f!=='after') cur=tagInsertion(before, cur, me.name);
+        t.value=cur; collectMarks(c); if (f.isContentEditable) f.innerHTML=md(cur); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
   });
   bindNotes();
   requestAnimationFrame(()=>layoutNotes());
@@ -1133,8 +1156,8 @@ function renderEdit(main){
       <div><label for="fTitle">제목</label><input id="fTitle" value="${esc(c.title)}" placeholder="글 제목이나 의뢰 건명"></div>
       <div><label for="fClient">의뢰인</label><input id="fClient" value="${esc(c.client)}" placeholder="누가 보냈나"></div>
     </div>
-    <div class="visbox" id="visBox"><div class="lab"><label>볼 수 있는 사람</label><span class="hint">편집자·관리자는 항상 봅니다. 뷰어는 체크한 사람만 목록에서 보고 열 수 있습니다. Shift+클릭으로 범위 선택.</span><span class="spacer"></span><button class="btn small" type="button" id="visAll">전체 선택</button><button class="btn small" type="button" id="visNone">전체 해제</button></div>
-      <div class="vislist" id="visList">${(cfg.users||[]).map(u=>`<label class="${u.role==='viewer'?'':'fixed'}"><input type="checkbox" data-id="${esc(u.id)}" ${u.role!=='viewer' ? 'checked disabled' : ((!Array.isArray(c.vis) || c.vis.includes(u.id)) ? 'checked' : '')}> <b>${esc(u.name)}</b> <span class="mono">${esc(u.id)}</span> <span class="chip">${({admin:'관리자',editor:'편집자',viewer:'뷰어'})[u.role]||''}</span></label>`).join('')}</div></div>
+    <div class="visbox" id="visBox"><div class="lab"><label>볼 수 있는 사람</label><span class="hint">관리자와 올린 사람은 항상 봅니다. 나머지는 체크한 사람만 목록에서 보고 열 수 있습니다. Shift+클릭으로 범위 선택.</span><span class="spacer"></span><button class="btn small" type="button" id="visAll">전체 선택</button><button class="btn small" type="button" id="visNone">전체 해제</button></div>
+      <div class="vislist" id="visList">${(cfg.users||[]).map(u=>`<label class="${(u.role==='admin' || (me && u.id===me.id))?'fixed':''}"><input type="checkbox" data-id="${esc(u.id)}" ${(u.role==='admin' || (me && u.id===me.id)) ? 'checked disabled' : ((!Array.isArray(c.vis) || c.vis.includes(u.id)) ? 'checked' : '')}> <b>${esc(u.name)}</b> <span class="mono">${esc(u.id)}</span> <span class="chip">${({admin:'관리자',editor:'편집자',viewer:'뷰어'})[u.role]||''}</span></label>`).join('')}</div></div>
     <div class="frow lockrow">
       <div><label for="fLock">문서 비밀번호 (선택)</label><input id="fLock" type="password" autocomplete="new-password" placeholder="${c.lock ? '설정되어 있음 · 바꾸려면 새로 입력' : '비워 두면 로그인만으로 열림'}"></div>
       <div class="lockhint">${c.lock ? `<label class="rm"><input type="checkbox" id="fUnlock"> 문서 비밀번호 풀기</label>` : ''}</div>
@@ -1325,12 +1348,14 @@ async function loadDoc(c){
   let key=K;
   if (d.lock){ key=await docKey(c, d); if (!key) throw new Error('문서 비밀번호가 필요합니다'); c.lock=true; c._wrap=d.wrap; } else { c.lock=false; }
   const payload=JSON.parse(td.decode(await decB(key, ub64(d.ct))));
-  Object.assign(c, {title:d.title, date:d.date, ts:d.ts||'', type:d.type||'text', client:d.client, vis:(Array.isArray(d.vis)?d.vis:null)}, payload);
+  Object.assign(c, {title:d.title, date:d.date, ts:d.ts||'', type:d.type||'text', client:d.client, vis:(Array.isArray(d.vis)?d.vis:null), owner:d.owner||''}, payload);
   if (isPdf(c)){ const pe=await ghRead(`docs/${c.id}.pdf.enc`); if (!pe) throw new Error('PDF 파일이 없습니다'); c.pdf=b64(await decB(key, pe)); }
+  const legacy = cfg.legacyAuthor || ((cfg.users||[]).find(u=>u.role==='admin')||{}).name || '';
+  if (legacy) (c.marks||[]).forEach(m=>{ if (!m.by) m.by=legacy; });   // 계정 도입 전 메모 → 도입한 관리자 이름
   c.loaded=true; return c;
 }
-function meta(c){ return {id:c.id, title:c.title, date:c.date, ts:c.ts||'', type:c.type||'text', client:c.client||'', n:caseCount(c), lock:!!c.lock, vis:(Array.isArray(c.vis)?c.vis:null)}; }
-function canSee(c){ if (!me || me.role!=='viewer') return true; return !Array.isArray(c.vis) || c.vis.includes(me.id); }
+function meta(c){ return {id:c.id, title:c.title, date:c.date, ts:c.ts||'', type:c.type||'text', client:c.client||'', n:caseCount(c), lock:!!c.lock, vis:(Array.isArray(c.vis)?c.vis:null), owner:c.owner||''}; }
+function canSee(c){ if (!me) return true; if (me.role==='admin' || c.owner===me.id) return true; return !Array.isArray(c.vis) || c.vis.includes(me.id); }
 function stampNow(c){ const d=new Date(); const z=n=>String(n).padStart(2,'0'); c.ts=`${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; c.date=c.ts.slice(0,10); }
 function fmtWhen(c){ const t=c.ts||c.date||''; if (!t) return ''; const y=t.slice(2,4), mo=t.slice(5,7), d=t.slice(8,10); const hm=t.length>=16 ? ' '+t.slice(11,16) : ''; return `'${y}/${mo}/${d}${hm}`; }
 async function updateIndex(fn){
@@ -1358,7 +1383,7 @@ async function saveDoc(c, btn){
     }
     c.lockPw=''; c.unlockReq=false;
     const ct = b64(await encB(key, te.encode(JSON.stringify(payload))));
-    stampNow(c); c.loaded=true; const m=meta(c);
+    stampNow(c); if (!c.owner && me) c.owner=me.id; c.loaded=true; const m=meta(c);
     if (isPdf(c) && (c.pdfDirty || keyChanged)){ if (!c.pdf) throw new Error('PDF 내용이 메모리에 없습니다. 문서를 다시 열어 주세요'); if (msg) msg.textContent='PDF 올리는 중…'; await ghWrite(`docs/${c.id}.pdf.enc`, await encB(key, b64ToBytes(c.pdf)), `pdf: ${c.title}`); c.pdfDirty=false; }
     if (msg) msg.textContent='문서 저장하는 중…';
     await ghWrite(`docs/${c.id}.json`, te.encode(JSON.stringify(Object.assign({}, m, c.lock?{lock:true, wrap}:{}, {ct}))), `save: ${c.title}`);
@@ -1482,7 +1507,7 @@ function lockScreen(){
           if (!(await tryUnlock(ov.querySelector('#pwOld').value)) || role!=='editor') throw new Error('편집자 비밀번호가 맞지 않습니다.');
           // 관리자 계정 + 토큰 봉투(편집자 열쇠로) 만들고, 공용 봉투는 제거
           const env=await makeUserEnvelope(pw, 'admin');
-          const c2={v:2, iter:cfg.iter, users:[Object.assign({id, name, role:'admin'}, env)], tok:b64(await encB(Ke, te.encode(token)))};
+          const c2={v:2, iter:cfg.iter, legacyAuthor:name, users:[Object.assign({id, name, role:'admin'}, env)], tok:b64(await encB(Ke, te.encode(token)))};
           await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'accounts'); cfg=c2; me={id, name, role:'admin'};
           saveSess(false); ov.remove(); toast('관리자 계정을 만들었습니다. 「사용자 관리」에서 다른 사람 계정을 만드세요.'); res(); return;
         }
