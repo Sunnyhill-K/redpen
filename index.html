@@ -70,8 +70,8 @@ a{color:var(--ins)}
 .shell.nrail .rail{padding-block:10px;padding-inline:6px}
 .shell.nrail .rail h2{margin:0;justify-content:center}
 .shell.nrail .rail .t,.shell.nrail .cases,.shell.nrail .empty{display:none}
-.rail h2{display:flex;align-items:center;gap:6px;margin:0 12px 10px}
-.rail h2 .fold{margin-left:auto;border:1px solid var(--ink-3);background:var(--paper);cursor:pointer;color:var(--ink-2);font-size:calc(12px * var(--ui,1));letter-spacing:0;text-transform:none;font-weight:500;line-height:1;padding:6px 9px;border-radius:4px;white-space:nowrap}
+.rail h2{display:flex;align-items:center;gap:6px;margin:0 12px 6px}
+.rail h2 .fold{margin-left:auto;margin-right:0;border:1px solid var(--ink-2);background:transparent;cursor:pointer;color:var(--ink);font-size:calc(12px * var(--ui,1));letter-spacing:0;text-transform:none;font-weight:400;line-height:1.2;padding:3px 8px;border-radius:4px;white-space:nowrap}
 .rail h2 .fold:hover{background:var(--paper-3);color:var(--ink);border-color:var(--ink)}
 .shell.nrail .rail h2 .fold{margin:0;writing-mode:vertical-rl;padding:12px 7px;font-size:calc(12.5px * var(--ui,1));letter-spacing:.06em}
 .zoom{display:inline-flex;align-items:center;border:1px solid var(--ink-2);border-radius:4px;overflow:hidden;font-size:calc(12px * var(--ui,1))}
@@ -90,6 +90,7 @@ a{color:var(--ins)}
 .cases li.sel .ck{margin:3px 0 0;grid-row:1/3}
 .cases li.sel .t{grid-column:2} .cases li.sel .m{grid-column:2}
 .selrow{padding:0 12px 8px;display:flex;justify-content:flex-end}
+.selrow .btn.small{margin:0}
 .selbar{padding:0 12px 8px;display:flex;gap:6px}
 .imenu{position:fixed;z-index:30;background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:0 6px 18px rgba(0,0,0,.18);display:flex;flex-direction:column;min-width:140px;padding:4px}
 .imenu button{border:0;background:transparent;text-align:left;padding:7px 10px;border-radius:3px;cursor:pointer}
