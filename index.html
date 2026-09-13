@@ -92,6 +92,8 @@ a{color:var(--ins)}
 .railhead{display:flex;align-items:flex-start;justify-content:space-between;padding:0 12px 6px}
 .railrow{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 12px 8px;flex-wrap:nowrap}
 .railrow .btn.small{white-space:nowrap}
+.sorts{display:inline-flex;gap:4px}
+.sorts .btn.small.on{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
 .shell.nrail .railrow{display:none}
 .railhead h2{margin:0;padding-top:4px}
 .railbtns{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
@@ -372,7 +374,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 <div class="shell">
   <aside class="rail" id="rail">
     <div class="railhead"><h2 id="railTitle"><span class="t">목록</span></h2><div class="railbtns"><button class="fold" id="btnRail" title="목록 접기/펼치기" aria-label="목록 접기/펼치기">« 접기</button></div></div>
-    <div class="railrow"><button class="btn small" id="sortBtn" title="누를 때마다 최신순 → 오래된순 → 이름순">⇅ 최신순</button><button class="btn small" id="btnSel" hidden>다수 선택</button></div>
+    <div class="railrow"><span class="sorts"><button class="btn small" id="sortDate" title="날짜순 · 누르면 최신↔오래된">최신순</button><button class="btn small" id="sortName" title="이름순 · 누르면 A→Z↔Z→A">이름 A→Z</button></span><button class="btn small" id="btnSel" hidden>다수 선택</button></div>
     <div class="selbar" id="selBar" hidden><button class="btn small danger" id="selDel">선택 삭제 (0)</button><button class="btn small" id="selAll">전체</button></div>
     <ul class="cases" id="caseList"></ul>
     <div class="empty" id="caseEmpty" hidden>아직 문서가 없습니다. 「새 퇴고」로 시작하세요.</div>
@@ -403,12 +405,17 @@ function caseCount(c){ if (!c.loaded) return c.n||0; return (c.marks||[]).length
 function renderList(){
   const ul=$('#caseList'); ul.innerHTML='';
   $('#caseEmpty').hidden = cases.length>0;
-  const cmp = sortMode==='name' ? (a,b)=>(a.title||'').localeCompare(b.title||'','ko') : sortMode==='old' ? (a,b)=>(a.date||'').localeCompare(b.date||'') || (a.id||'').localeCompare(b.id||'') : (a,b)=>(b.date||'').localeCompare(a.date||'') || (b.id||'').localeCompare(a.id||'');
-  const sb=$('#sortBtn'); if (sb) sb.textContent = '⇅ ' + ({new:'최신순', old:'오래된순', name:'이름순'}[sortMode]||'최신순');
+  const when = c => c.ts || c.date || '';
+  const byName = (a,b)=>(a.title||'').localeCompare(b.title||'','ko');
+  const byDate = (a,b)=>when(a).localeCompare(when(b)) || (a.id||'').localeCompare(b.id||'');
+  const cmp = sortMode==='nameAsc' ? byName : sortMode==='nameDesc' ? (a,b)=>byName(b,a) : sortMode==='old' ? byDate : (a,b)=>byDate(b,a);
+  const sd=$('#sortDate'), sn=$('#sortName');
+  if (sd){ sd.textContent = sortMode==='old' ? '오래된순' : '최신순'; sd.classList.toggle('on', sortMode==='new'||sortMode==='old'); }
+  if (sn){ sn.textContent = sortMode==='nameDesc' ? '이름 Z→A' : '이름 A→Z'; sn.classList.toggle('on', sortMode==='nameAsc'||sortMode==='nameDesc'); }
   [...cases].sort(cmp).forEach(c=>{
     const li=document.createElement('li'); li.className = (view.mode==='case' && view.id===c.id) ? 'on' : ''; li.title = c.title||''; li.dataset.id=c.id;
     if (selMode) li.classList.add('sel');
-    li.innerHTML = (selMode ? `<input type="checkbox" class="ck" ${selIds.has(c.id)?'checked':''}>` : '') + (artifactNs && !selMode ? `<button class="more" title="정보 수정 · 삭제">…</button>` : '') + `<span class="t">${esc(c.title||'(제목 없음)')}</span><span class="m"><span>${esc(c.date||'')}</span><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF':(c.type==='word'?'Word':'텍스트')}</span>${c.lock?'<span title="문서 비밀번호 있음">🔒</span>':''}<span>${caseCount(c)}곳</span></span>`;
+    li.innerHTML = (selMode ? `<input type="checkbox" class="ck" ${selIds.has(c.id)?'checked':''}>` : '') + (artifactNs && !selMode ? `<button class="more" title="정보 수정 · 삭제">…</button>` : '') + `<span class="t">${esc(c.title||'(제목 없음)')}</span><span class="m"><span>${esc(fmtWhen(c))}</span><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF':(c.type==='word'?'Word':'텍스트')}</span>${c.lock?'<span title="문서 비밀번호 있음">🔒</span>':''}<span>${caseCount(c)}곳</span></span>`;
     li.addEventListener('click', e=>{
       if (selMode){
         const items=[...ul.querySelectorAll('li')]; const idx=items.indexOf(li);
@@ -447,7 +454,9 @@ async function editCaseById(id){
 // ── 다수 선택 삭제 ──
 let selMode=false, lastSel=-1; const selIds=new Set();
 let sortMode='new'; try { sortMode=localStorage.getItem('redpen.sort')||'new'; } catch(e){}
-$('#sortBtn').addEventListener('click', ()=>{ sortMode = {new:'old', old:'name', name:'new'}[sortMode] || 'new'; try { localStorage.setItem('redpen.sort', sortMode); } catch(e){} renderList(); });
+const setSort=m=>{ sortMode=m; try { localStorage.setItem('redpen.sort', sortMode); } catch(e){} renderList(); };
+$('#sortDate').addEventListener('click', ()=>setSort(sortMode==='new' ? 'old' : 'new'));       // 이름순이었다면 최신순으로 시작
+$('#sortName').addEventListener('click', ()=>setSort(sortMode==='nameAsc' ? 'nameDesc' : 'nameAsc'));
 function syncSelBar(){
   const bar=$('#selBar'); if (!bar) return;
   bar.hidden=!selMode; $('#selDel').textContent=`선택 삭제 (${selIds.size})`; $('#selDel').disabled=!selIds.size;
@@ -519,7 +528,7 @@ function renderHome(main){
 // ══════════════ 사건 머리(공통) ══════════════
 function headHtml(c, statsHtml, toolsHtml){
   const isDraft = !!view.draft;
-  return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':(c.type==='word'?'Word':'텍스트')}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}<span>${esc(c.client||'')}</span><span>${esc(c.date||'')}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
+  return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':(c.type==='word'?'Word':'텍스트')}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}<span>${esc(c.client||'')}</span><span>${esc(fmtWhen(c))}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
     <h2>${esc(c.title||'(제목 없음)')}<span class="hbtns">${artifactNs ? `<button class="btn small" id="editCase">정보 수정</button>` : ''}${isPdf(c) ? `<button class="btn small" id="dlPdf" title="저장된 원본 PDF 를 그대로 내려받습니다">원본 PDF 내려받기</button>` : ''}</span></h2>
     <div class="stats">${statsHtml}</div>
     <div class="tools">${toolsHtml}
@@ -1281,11 +1290,13 @@ async function loadDoc(c){
   let key=K;
   if (d.lock){ key=await docKey(c, d); if (!key) throw new Error('문서 비밀번호가 필요합니다'); c.lock=true; c._wrap=d.wrap; } else { c.lock=false; }
   const payload=JSON.parse(td.decode(await decB(key, ub64(d.ct))));
-  Object.assign(c, {title:d.title, date:d.date, type:d.type||'text', source:d.source, client:d.client}, payload);
+  Object.assign(c, {title:d.title, date:d.date, ts:d.ts||'', type:d.type||'text', client:d.client}, payload);
   if (isPdf(c)){ const pe=await ghRead(`docs/${c.id}.pdf.enc`); if (!pe) throw new Error('PDF 파일이 없습니다'); c.pdf=b64(await decB(key, pe)); }
   c.loaded=true; return c;
 }
-function meta(c){ return {id:c.id, title:c.title, date:c.date, type:c.type||'text', source:c.source||'', client:c.client||'', n:caseCount(c), lock:!!c.lock}; }
+function meta(c){ return {id:c.id, title:c.title, date:c.date, ts:c.ts||'', type:c.type||'text', client:c.client||'', n:caseCount(c), lock:!!c.lock}; }
+function stampNow(c){ const d=new Date(); const z=n=>String(n).padStart(2,'0'); c.ts=`${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; c.date=c.ts.slice(0,10); }
+function fmtWhen(c){ const t=c.ts||c.date||''; if (!t) return ''; const y=t.slice(2,4), mo=t.slice(5,7), d=t.slice(8,10); const hm=t.length>=16 ? ' '+t.slice(11,16) : ''; return `'${y}/${mo}/${d}${hm}`; }
 async function updateIndex(fn){
   const u=await ghRead('docs/index.json'); const list=u?JSON.parse(td.decode(u)):[]; fn(list);
   list.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.id||'').localeCompare(a.id||''));
@@ -1311,7 +1322,7 @@ async function saveDoc(c, btn){
     }
     c.lockPw=''; c.unlockReq=false;
     const ct = b64(await encB(key, te.encode(JSON.stringify(payload))));
-    c.loaded=true; const m=meta(c);
+    stampNow(c); c.loaded=true; const m=meta(c);
     if (isPdf(c) && (c.pdfDirty || keyChanged)){ if (!c.pdf) throw new Error('PDF 내용이 메모리에 없습니다. 문서를 다시 열어 주세요'); if (msg) msg.textContent='PDF 올리는 중…'; await ghWrite(`docs/${c.id}.pdf.enc`, await encB(key, b64ToBytes(c.pdf)), `pdf: ${c.title}`); c.pdfDirty=false; }
     if (msg) msg.textContent='문서 저장하는 중…';
     await ghWrite(`docs/${c.id}.json`, te.encode(JSON.stringify(Object.assign({}, m, c.lock?{lock:true, wrap}:{}, {ct}))), `save: ${c.title}`);
