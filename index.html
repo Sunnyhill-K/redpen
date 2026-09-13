@@ -626,14 +626,14 @@ function md(s, segs){
     const cuts=[...new Set(segs.flatMap(g=>[g.s,g.e]).filter(x=>x>=0 && x<=s.length))].sort((a,b)=>a-b);
     let out='', pos=0; const pts=[...cuts, s.length];
     for (const cut of pts){ if (cut<=pos) continue; const piece=s.slice(pos,cut); const g=segs.find(x=>x.s<=pos && x.e>=cut); const inner=mdOne(piece);
-      out += g ? `<span class="ins-by" data-by="${esc(g.by)}" style="--nc:${userColor(g.by, g.id)||'var(--ins)'}">${inner}</span>` : inner; pos=cut; }
+      out += g ? `<span class="ins-by" data-by="${esc(userLabel(g.by, g.id))}" style="--nc:${userColor(g.by, g.id)||'var(--ins)'}">${inner}</span>` : inner; pos=cut; }
     return out;
   }
   return mdOne(s);
 }
 function mdOne(s){
   let h=esc(s);
-  h=h.replace(/\[([^\]\n]{1,20})\]/g, (m0,nm)=>{ const col=userColor(nm); return col ? `<span class="nm" style="--nc:${col}">[${nm}]</span>` : m0; });
+  h=h.replace(/\[([^\]\n]{1,20})\]/g, (m0,nm)=>{ const col=userColor(nm, ''); return col ? `<span class="nm" style="--nc:${col}">[${nm}]</span>` : m0; });
   h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');
   h=h.replace(/\*([^*\n]+)\*/g,'<b>$1</b>');
   h=h.replace(/__([^_\n]+)__/g,'<u>$1</u>');
@@ -704,9 +704,12 @@ function tagInsertion(oldT, newT, name){
   const sep = head && !/\s$/.test(head) ? ' ' : '';
   return head + sep + tag + ' ' + newT.slice(a).replace(/^\s+/,'');
 }
-function userColor(name, id){ const us=(cfg&&cfg.users)||[]; const norm=v=>String(v||'').trim().toLowerCase();
-  const u = (id && us.find(x=>x.id===id)) || us.find(x=>norm(x.name)===norm(name)); return u ? (u.color||'#5B6270') : ''; }
-const sameUser=(m,who)=> who && ((m.byId && m.byId===who.id) || (!m.byId && String(m.by||'').trim()===String(who.name||'').trim()));
+// 이름으로 계정 찾기: 정확히 같거나, 한쪽이 다른 쪽을 품으면(김선일 ↔ 선일) 같은 사람으로 본다
+function findUser(name, id){ const us=(cfg&&cfg.users)||[]; const norm=v=>String(v||'').replace(/\s+/g,'').toLowerCase(); const n=norm(name);
+  return (id && us.find(x=>x.id===id)) || us.find(x=>norm(x.name)===n) || (n.length>=2 ? us.find(x=>{ const m=norm(x.name); return m.length>=2 && (n.includes(m) || m.includes(n)); }) : null) || null; }
+function userColor(name, id){ const u=findUser(name, id); return u ? (u.color||'#5B6270') : ''; }
+function userLabel(name, id){ const u=findUser(name, id); return u ? u.name : (name||''); }
+const sameUser=(m,who)=>{ if (!who) return false; const u=findUser(m.by, m.byId); return u ? u.id===who.id : false; };
 function bindMd(root){
   (root||document).querySelectorAll('.fld').forEach(f=>{
     const t=f.querySelector('textarea'), d=f.querySelector('.md'); if (!t||!d||t.dataset.md) return; t.dataset.md='1';
@@ -1000,7 +1003,7 @@ function renderPdfNotes(c){
   const notes=$('#notes'); if (!notes) return;
   const canEdit = !!artifactNs;
   notes.innerHTML = `<div class="notes-title">교정 메모 ${c.marks.length}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
-    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(m.by)}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
+    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
     ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', m.segs) : `<div class="txt">${md(m.reason||'', m.segs)}</div>`}</div>`; }).join('');
   notes.querySelectorAll('.x').forEach(b=>b.addEventListener('click', ()=>{
@@ -1048,7 +1051,8 @@ async function drawPages(){
   const mainW = $('#main').clientWidth - 40 - 28;
   const notesW = Math.round(280*uiScale);
   const baseW = stacked ? mainW : Math.max(320, Math.min(1180, mainW) - notesW - 28);
-  const width = Math.round(baseW * zoom.pdf); const dpr = Math.min(window.devicePixelRatio||1, 2.5);
+  const width = Math.round(baseW * zoom.pdf); const dpr = Math.min(window.devicePixelRatio||1, 2);
+  if (st.io){ try { st.io.disconnect(); } catch(e){} st.io=null; }
   if (sheet){ sheet.classList.toggle('zoomed', !stacked); }              // 100% 에서도 확대 때와 같은 배치
   // 창 가로 스크롤은 실제로 틀+메모가 창을 넘칠 때만, 넘치는 만큼만. (fit-content 로 재면 안내 줄 같은 긴 글이 한 줄로 펴져 폭을 부풀린다)
   const railW = $('#rail').offsetWidth; const need = railW + 40 + (width+28) + 28 + notesW;
@@ -1057,25 +1061,33 @@ async function drawPages(){
   document.body.classList.toggle('zoomed-body', over);
   cont.style.width = !stacked ? (width+28)+'px' : '';   // 홈통 여백 14px×2
   cont.style.setProperty('--pz', String(zoom.pdf));
+  const dprEff = Math.min(dpr, 2);
+  // 1단계: 쪽 틀만 전부(높이는 각 쪽의 실제 비율) → 표시·메모 자리는 바로 잡힌다
+  const pages=[];
   for (let p=1;p<=st.doc.numPages;p++){
     const page = await st.doc.getPage(p); if (st.token!==token) return;
     const base = page.getViewport({scale:1}); const scale = width/base.width; const vp = page.getViewport({scale});
     const el=document.createElement('div'); el.className='page'; el.dataset.p=p; el.style.height = vp.height+'px'; el.style.width = vp.width+'px';
-    const canvas=document.createElement('canvas'); canvas.width=Math.floor(vp.width*dpr); canvas.height=Math.floor(vp.height*dpr);
-    canvas.style.width=vp.width+'px'; canvas.style.height=vp.height+'px';
-    const tl=document.createElement('div'); tl.className='textLayer'; tl.style.setProperty('--scale-factor', String(scale));
     const ml=document.createElement('div'); ml.className='marks';
-    el.append(canvas, tl, ml); const pn=document.createElement('div'); pn.className='pno'; pn.textContent=p+' / '+st.doc.numPages; el.appendChild(pn);
-    cont.appendChild(el);
-    await page.render({canvasContext: canvas.getContext('2d'), viewport: vp, transform: dpr!==1 ? [dpr,0,0,dpr,0,0] : null}).promise;
-    if (st.token!==token) return;
-    try {
-      const tc = await page.getTextContent();
-      await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl, viewport: vp, textDivs: []}).promise;
-    } catch(e){ /* 글자층이 없으면 표시는 보이되 새 선택은 안 됨 */ }
-    drawMarks(st.c, p);
-    layoutNotes();
+    const pn=document.createElement('div'); pn.className='pno'; pn.textContent=p+' / '+st.doc.numPages;
+    el.append(ml, pn); cont.appendChild(el); drawMarks(st.c, p);
+    pages.push({p, page, vp, scale, el});
   }
+  layoutNotes();
+  // 2단계: 화면 근처의 쪽만 캔버스+글자층을 그린다(한 번 그리면 유지)
+  const renderOne = async (pg)=>{
+    if (pg.done || st.token!==token) return; pg.done=true;
+    const canvas=document.createElement('canvas'); canvas.width=Math.floor(pg.vp.width*dprEff); canvas.height=Math.floor(pg.vp.height*dprEff);
+    canvas.style.width=pg.vp.width+'px'; canvas.style.height=pg.vp.height+'px';
+    const tl=document.createElement('div'); tl.className='textLayer'; tl.style.setProperty('--scale-factor', String(pg.scale));
+    pg.el.prepend(canvas, tl);
+    await pg.page.render({canvasContext: canvas.getContext('2d'), viewport: pg.vp, transform: dprEff!==1 ? [dprEff,0,0,dprEff,0,0] : null}).promise;
+    if (st.token!==token) return;
+    try { const tc = await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl, viewport: pg.vp, textDivs: []}).promise; } catch(e){}
+  };
+  const io = new IntersectionObserver(entries=>{ entries.forEach(en=>{ if (en.isIntersecting){ const pg=pages.find(x=>x.el===en.target); if (pg){ renderOne(pg); io.unobserve(en.target); } } }); }, {rootMargin:'1200px 0px'});
+  pages.forEach(pg=>io.observe(pg.el));
+  st.io=io;
   if (artifactNs && !cont.dataset.selBound){ cont.dataset.selBound='1'; bindSelection(cont, st.c); }
   fitOverall();
   if (pendingSpot){ const ps=pendingSpot; pendingSpot=null; restoreSpot(ps.y); }
@@ -1402,7 +1414,7 @@ async function loadDoc(c){
   if (isPdf(c)){ const pe=await ghRead(`docs/${c.id}.pdf.enc`); if (!pe) throw new Error('PDF 파일이 없습니다'); c.pdf=b64(await decB(key, pe)); }
   const legacy = cfg.legacyAuthor || ((cfg.users||[]).find(u=>u.role==='admin')||{}).name || '';
   if (legacy) (c.marks||[]).forEach(m=>{ if (!m.by) m.by=legacy; });   // 계정 도입 전 메모 → 도입한 관리자 이름
-  const idOf=nm=>{ const u=(cfg.users||[]).find(x=>String(x.name||'').trim()===String(nm||'').trim()); return u?u.id:''; };
+  const idOf=nm=>{ const u=findUser(nm, ''); return u?u.id:''; };
   (c.marks||[]).forEach(m=>{ if (m.by && !m.byId) m.byId=idOf(m.by); (m.segs||[]).forEach(g=>{ if (!g.id) g.id=idOf(g.by); }); }); (c.noteSegs||[]).forEach(g=>{ if (!g.id) g.id=idOf(g.by); });
   const unband = t => (t||'').replace(/⟦([^|⟧\n]{1,40})\|([^⟧]*)⟧/g, '[$1] $2').replace(/[⟦⟧]/g,'');
   (c.marks||[]).forEach(m=>{ m.reason=unband(m.reason); }); c.note=unband(c.note);
