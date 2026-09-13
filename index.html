@@ -81,7 +81,19 @@ a{color:var(--ins)}
 .rail{border-right:1px solid var(--rule);background:var(--paper-2);padding-block:12px;padding-inline:0;position:sticky;top:var(--top-h,50px);left:0;height:calc(100vh - var(--top-h,50px));overflow-y:auto;align-self:start;z-index:4}
 .rail h2{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin:0 16px 8px;font-weight:600}
 .cases{list-style:none;margin:0;padding:0}
-.cases li{padding:10px 16px;border-left:3px solid transparent;cursor:pointer}
+.cases li{padding:10px 34px 10px 16px;border-left:3px solid transparent;cursor:pointer;position:relative}
+.cases li .more{position:absolute;right:8px;top:8px;border:0;background:transparent;color:var(--ink-3);font-size:16px;line-height:1;padding:2px 6px;border-radius:3px;cursor:pointer;opacity:0}
+.cases li:hover .more,.cases li .more:focus-visible{opacity:1}
+.cases li .more:hover{background:var(--paper-3);color:var(--ink)}
+.cases li.sel{padding-left:12px;display:grid;grid-template-columns:auto 1fr;column-gap:8px;align-items:start}
+.cases li.sel .ck{margin:3px 0 0;grid-row:1/3}
+.cases li.sel .t{grid-column:2} .cases li.sel .m{grid-column:2}
+.selrow{padding:0 12px 8px;display:flex;justify-content:flex-end}
+.selbar{padding:0 12px 8px;display:flex;gap:6px}
+.imenu{position:fixed;z-index:30;background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:0 6px 18px rgba(0,0,0,.18);display:flex;flex-direction:column;min-width:140px;padding:4px}
+.imenu button{border:0;background:transparent;text-align:left;padding:7px 10px;border-radius:3px;cursor:pointer}
+.imenu button:hover{background:var(--paper-2)}
+.imenu button.d{color:var(--del)}
 .cases li:hover{background:var(--paper-3)}
 .cases li.on{border-left-color:var(--del);background:var(--paper)}
 .cases .t{font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -321,6 +333,8 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 <div class="shell">
   <aside class="rail" id="rail">
     <h2 id="railTitle"><span class="t">목록</span><button class="fold" id="btnRail" title="목록 접기/펼치기" aria-label="목록 접기/펼치기">« 접기</button></h2>
+    <div class="selrow"><button class="btn small" id="btnSel" hidden>선택</button></div>
+    <div class="selbar" id="selBar" hidden><button class="btn small danger" id="selDel">선택 삭제 (0)</button><button class="btn small" id="selAll">전체</button></div>
     <ul class="cases" id="caseList"></ul>
     <div class="empty" id="caseEmpty" hidden>아직 문서가 없습니다. 「새 퇴고」로 시작하세요.</div>
   </aside>
@@ -459,11 +473,55 @@ function renderList(){
   const ul=$('#caseList'); ul.innerHTML='';
   $('#caseEmpty').hidden = cases.length>0;
   [...cases].sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.id||'').localeCompare(a.id||'')).forEach(c=>{
-    const li=document.createElement('li'); li.className = (view.mode==='case' && view.id===c.id) ? 'on' : '';
-    li.innerHTML = `<span class="t">${esc(c.title||'(제목 없음)')}</span><span class="m"><span>${esc(c.date||'')}</span><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':esc(c.source||'')}</span>${c.lock?'<span title="문서 비밀번호 있음">🔒</span>':''}<span>${caseCount(c)}곳</span></span>`;
-    li.addEventListener('click', ()=> openCase(c.id));
+    const li=document.createElement('li'); li.className = (view.mode==='case' && view.id===c.id) ? 'on' : ''; li.title = c.title||'';
+    if (selMode) li.classList.add('sel');
+    li.innerHTML = (selMode ? `<input type="checkbox" class="ck" ${selIds.has(c.id)?'checked':''}>` : '') + (artifactNs && !selMode ? `<button class="more" title="정보 수정 · 삭제">…</button>` : '') + `<span class="t">${esc(c.title||'(제목 없음)')}</span><span class="m"><span>${esc(c.date||'')}</span><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':esc(c.source||'')}</span>${c.lock?'<span title="문서 비밀번호 있음">🔒</span>':''}<span>${caseCount(c)}곳</span></span>`;
+    li.addEventListener('click', e=>{
+      if (selMode){ if (selIds.has(c.id)) selIds.delete(c.id); else selIds.add(c.id); li.querySelector('.ck').checked=selIds.has(c.id); syncSelBar(); return; }
+      openCase(c.id);
+    });
+    const mb=li.querySelector('.more'); if (mb) mb.addEventListener('click', e=>{ e.stopPropagation(); showItemMenu(mb, c); });
     ul.appendChild(li);
   });
+  syncSelBar();
+}
+// ── 목록 항목 메뉴(…): 정보 수정 / 삭제 ──
+function showItemMenu(btn, c){
+  document.querySelectorAll('.imenu').forEach(m=>m.remove());
+  const m=document.createElement('div'); m.className='imenu';
+  m.innerHTML=`<button data-a="edit">정보 수정</button><button data-a="del" class="d">삭제</button>`;
+  const r=btn.getBoundingClientRect(); m.style.left=(r.right-140)+'px'; m.style.top=(r.bottom+4)+'px';
+  document.body.appendChild(m);
+  const close=()=>{ m.remove(); document.removeEventListener('mousedown', onDown); };
+  const onDown=e=>{ if (!m.contains(e.target)) close(); };
+  setTimeout(()=>document.addEventListener('mousedown', onDown), 0);
+  m.querySelector('[data-a="edit"]').addEventListener('click', async ()=>{ close(); await editCaseById(c.id); });
+  m.querySelector('[data-a="del"]').addEventListener('click', async ()=>{ close(); if (!(await ask(`「${c.title}」 문서를 지웁니다. 되돌릴 수 없습니다.`,'지우기'))) return; await deleteMany([c.id]); });
+}
+async function editCaseById(id){
+  if (!(await leaveOk())) return;
+  const c=cases.find(x=>x.id===id); if (!c) return;
+  try { if (!c.loaded) await loadDoc(c); } catch(e){ toast('열지 못했습니다: '+((e&&e.message)||e)); return; }
+  view={mode:'edit', id, draft:c, dirty:false, show:'side'}; location.hash='case='+id; render();
+}
+// ── 다수 선택 삭제 ──
+let selMode=false; const selIds=new Set();
+function syncSelBar(){
+  const bar=$('#selBar'); if (!bar) return;
+  bar.hidden=!selMode; $('#selDel').textContent=`선택 삭제 (${selIds.size})`; $('#selDel').disabled=!selIds.size;
+  $('#btnSel').textContent = selMode ? '선택 끝' : '선택';
+}
+async function deleteMany(ids){
+  if (!token){ toast('편집자만 지울 수 있습니다'); return; }
+  toast(`${ids.length}건 지우는 중…`);
+  try {
+    for (const id of ids){ const c=cases.find(x=>x.id===id); if (!c) continue;
+      await ghDelete(`docs/${id}.json`, `delete: ${c.title}`); if (isPdf(c)) await ghDelete(`docs/${id}.pdf.enc`, `delete pdf: ${c.title}`); }
+    await updateIndex(list=>{ for (const id of ids){ const i=list.findIndex(x=>x.id===id); if (i>=0) list.splice(i,1); } });
+    cases=cases.filter(x=>!ids.includes(x.id)); ids.forEach(id=>selIds.delete(id));
+    if (ids.includes(view.id)){ view={mode:'list',id:null,draft:null,dirty:false,show:'side'}; location.hash=''; }
+    toast(`${ids.length}건 지웠습니다`); render();
+  } catch(e){ toast('삭제 실패: '+((e&&e.message)||e)); }
 }
 // 저장 안 한 채 떠날 때: 저장하고 이동 / 버리기 / 취소. 편집 화면(입력 중)은 저장 대상이 없으니 버리기/취소만
 async function leaveOk(){
@@ -1300,6 +1358,7 @@ async function changePasswords(){
 }
 function applyRole(){
   artifactNs = role==='editor' ? {} : null;
+  $('#btnSel').hidden = !artifactNs;
   $('#btnNew').hidden = !artifactNs; $('#btnPw').hidden = !artifactNs;
   $('#whoami').textContent = role==='editor' ? '편집자' : '뷰어';
 }
@@ -1350,6 +1409,10 @@ window.addEventListener('beforeunload', e=>{ if (view.dirty){ e.preventDefault()
 document.fonts && document.fonts.ready.then(()=>layoutNotes());
 
 $('#btnLock').addEventListener('click', lockNow);
+$('#btnSel').addEventListener('click', ()=>{ selMode=!selMode; if (!selMode) selIds.clear(); renderList(); });
+$('#selAll').addEventListener('click', ()=>{ if (selIds.size===cases.length) selIds.clear(); else cases.forEach(c=>selIds.add(c.id)); renderList(); });
+$('#selDel').addEventListener('click', async ()=>{ const ids=[...selIds]; if (!ids.length) return;
+  if (!(await ask(`선택한 ${ids.length}건을 지웁니다. 되돌릴 수 없습니다.`,'모두 지우기'))) return; selMode=false; await deleteMany(ids); });
 $('#btnPw').addEventListener('click', changePasswords);
 $('#btnNew').hidden = true; $('#btnPw').hidden = true;
 render();
