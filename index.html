@@ -989,6 +989,8 @@ function currentPage(){
   return cur;
 }
 function goPage(n){
+  // 목록만 보기 중이면 문서 위 표시로 돌아간 뒤 이동
+  if (pdfListMode){ const c=view.draft||cases.find(x=>x.id===view.id); if (c){ pdfListMode=false; refreshPdfHead(c); setTimeout(()=>goPage(n), 80); } return; }
   const pages=document.querySelectorAll('.page'); if (!pages.length) return;
   n=Math.max(1, Math.min(pages.length, Math.round(n)||1));
   const el=document.querySelector(`.page[data-p="${n}"]`); if (!el) return;
