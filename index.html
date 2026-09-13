@@ -597,7 +597,7 @@ function bindHead(c, collect){
   });
   const na=$('#noteAll'); if (na){ bindMd(na.closest('.overall')); na.addEventListener('input', ()=>{ autosize(na); view.dirty=true; });
     const nf=na.closest('.fld').querySelector('.md'); let nb=null;
-    nf.addEventListener('focus', ()=>{ nb=na.value; }); nf.addEventListener('blur', ()=>{ if (nb!==null && nb!==na.value){ const owner=(cfg.users||[]).find(u=>u.id===c.owner); const on=owner?owner.name:''; c.noteSegs=updSegs(c.noteSegs, nb, na.value, (me && on && on!==me.name) ? me.name : null); nf.innerHTML=md(na.value, c.noteSegs); } nb=null; }); }
+    nf.addEventListener('focus', ()=>{ nb=na.value; }); nf.addEventListener('blur', ()=>{ if (nb!==null && nb.trim()!==na.value.trim()){ const cur=na.value.trim(); na.value=cur; c.noteSegs=updSegs(c.noteSegs, nb.trim(), cur, (me && c.owner && c.owner!==me.id) ? me.name : null, me ? me.id : ''); nf.innerHTML=md(cur, c.noteSegs); } nb=null; }); }
 }
 // ── 메모 목록(표) + 복사용 텍스트: 텍스트형·PDF형 공통 ──
 function listItems(c){
@@ -626,7 +626,7 @@ function md(s, segs){
     const cuts=[...new Set(segs.flatMap(g=>[g.s,g.e]).filter(x=>x>=0 && x<=s.length))].sort((a,b)=>a-b);
     let out='', pos=0; const pts=[...cuts, s.length];
     for (const cut of pts){ if (cut<=pos) continue; const piece=s.slice(pos,cut); const g=segs.find(x=>x.s<=pos && x.e>=cut); const inner=mdOne(piece);
-      out += g ? `<span class="ins-by" data-by="${esc(g.by)}" style="--nc:${userColor(g.by)||'var(--ins)'}">${inner}</span>` : inner; pos=cut; }
+      out += g ? `<span class="ins-by" data-by="${esc(g.by)}" style="--nc:${userColor(g.by, g.id)||'var(--ins)'}">${inner}</span>` : inner; pos=cut; }
     return out;
   }
   return mdOne(s);
@@ -653,21 +653,22 @@ function segsFor(t){
   return null;
 }
 // 글이 바뀌면 구간을 따라 옮긴다. name 이 있으면(남의 메모를 고친 경우) 새로 넣은 글을 그 사람 구간으로
-function updSegs(segs, oldT, newT, name){
-  segs=(segs||[]).map(g=>({by:g.by, s:g.s, e:g.e}));
+function updSegs(segs, oldT, newT, name, id){
+  segs=(segs||[]).map(g=>({by:g.by, id:g.id||'', s:g.s, e:g.e}));
   let a=0; while (a<oldT.length && a<newT.length && oldT[a]===newT[a]) a++;
   let b=0; while (b<oldT.length-a && b<newT.length-a && oldT[oldT.length-1-b]===newT[newT.length-1-b]) b++;
   const oldLen=oldT.length-a-b, newLen=newT.length-a-b, delta=newLen-oldLen; const res=[];
   for (const g of segs){
     if (g.e<=a){ res.push(g); continue; }
     if (g.s>=a+oldLen){ res.push({by:g.by, s:g.s+delta, e:g.e+delta}); continue; }
-    if (g.s<a && g.e>a+oldLen){ if (g.by===name || !name || newLen===0) res.push({by:g.by, s:g.s, e:g.e+delta}); else { res.push({by:g.by, s:g.s, e:a}); res.push({by:g.by, s:a+newLen, e:g.e+delta}); } continue; }
-    if (g.s<a) res.push({by:g.by, s:g.s, e:a});
-    if (g.e>a+oldLen) res.push({by:g.by, s:a+newLen, e:g.e+delta});
+    if (g.s<a && g.e>a+oldLen){ if (g.by===name || newLen===0) res.push({by:g.by, id:g.id, s:g.s, e:g.e+delta}); else { res.push({by:g.by, id:g.id, s:g.s, e:a}); res.push({by:g.by, id:g.id, s:a+newLen, e:g.e+delta}); } continue; }
+    if (g.s<a) res.push({by:g.by, id:g.id, s:g.s, e:a});
+    if (g.e>a+oldLen) res.push({by:g.by, id:g.id, s:a+newLen, e:g.e+delta});
   }
-  if (newLen>0 && name) res.push({by:name, s:a, e:a+newLen});
+  if (newLen>0 && name) res.push({by:name, id:id||'', s:a, e:a+newLen});
   res.sort((x,y)=>x.s-y.s); const out=[];
   for (const g of res){ if (g.e<=g.s) continue; const l=out[out.length-1]; if (l && l.by===g.by && g.s<=l.e){ l.e=Math.max(l.e,g.e); } else out.push(g); }
+  // 사람이 바뀐 경계에 작성자 본인 글이 끼면 그 자리만 띠가 없다(res 에 안 들어감)
   return out;
 }
 // HTML → 슬랙 표기
@@ -703,7 +704,9 @@ function tagInsertion(oldT, newT, name){
   const sep = head && !/\s$/.test(head) ? ' ' : '';
   return head + sep + tag + ' ' + newT.slice(a).replace(/^\s+/,'');
 }
-function userColor(name){ const u=(cfg&&cfg.users||[]).find(x=>x.name===name); return u ? (u.color||'#5B6270') : ''; }
+function userColor(name, id){ const us=(cfg&&cfg.users)||[]; const norm=v=>String(v||'').trim().toLowerCase();
+  const u = (id && us.find(x=>x.id===id)) || us.find(x=>norm(x.name)===norm(name)); return u ? (u.color||'#5B6270') : ''; }
+const sameUser=(m,who)=> who && ((m.byId && m.byId===who.id) || (!m.byId && String(m.by||'').trim()===String(who.name||'').trim()));
 function bindMd(root){
   (root||document).querySelectorAll('.fld').forEach(f=>{
     const t=f.querySelector('textarea'), d=f.querySelector('.md'); if (!t||!d||t.dataset.md) return; t.dataset.md='1';
@@ -867,7 +870,7 @@ function bindTextSelection(cont, c0){
     pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
     pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
       const c=cur(); pushHist(c, `${KIND[b.dataset.k]} 추가 · ${text.slice(0,18)}${text.length>18?'…':''}`);
-      c.marks.push({start, end, kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : ''}); c.marks.sort((x,y)=>x.start-y.start);
+      c.marks.push({start, end, kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : '', byId: me ? me.id : ''}); c.marks.sort((x,y)=>x.start-y.start);
       view.dirty=true; sel.removeAllRanges(); kill(); renderTextDoc(c); refreshPdfHead(c);
       const idx=c.marks.findIndex(m=>m.start===start && m.end===end); setTimeout(()=>focusHunk(idx+1), 50);
     }));
@@ -997,7 +1000,7 @@ function renderPdfNotes(c){
   const notes=$('#notes'); if (!notes) return;
   const canEdit = !!artifactNs;
   notes.innerHTML = `<div class="notes-title">교정 메모 ${c.marks.length}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
-    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by)||'var(--ink-2)'}">${esc(m.by)}</span>`:''}${m.editedBy?`<span class="who ed" title="수정자" style="--nc:${userColor(m.editedBy)||'var(--ins)'}">수정 ${esc(m.editedBy)}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
+    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(m.by)}</span>`:''}${m.editedBy?`<span class="who ed" title="수정자" style="--nc:${userColor(m.editedBy, m.editedById)||'var(--ins)'}">수정 ${esc(m.editedBy)}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
     ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', m.segs) : `<div class="txt">${md(m.reason||'', m.segs)}</div>`}</div>`; }).join('');
   notes.querySelectorAll('.x').forEach(b=>b.addEventListener('click', ()=>{
@@ -1009,8 +1012,8 @@ function renderPdfNotes(c){
     if (!t || !f || t.hidden && el.tagName==='TEXTAREA') return;
     let before=null;
     f.addEventListener('focus', ()=>{ before = t.value; });
-    f.addEventListener('blur', ()=>{ if (before!==null && before!==t.value){ let cur=t.value; t.value=before; pushHist(c, `메모 ${+t.dataset.i+1} 수정`);
-        const m=c.marks[+t.dataset.i]; if (m && t.dataset.f==='reason') m.segs=updSegs(m.segs, before, cur, (me && m.by && m.by!==me.name) ? me.name : null);
+    f.addEventListener('blur', ()=>{ if (before!==null && before.trim()!==t.value.trim()){ let cur=t.value.trim(); const bef=before.trim(); t.value=bef; pushHist(c, `메모 ${+t.dataset.i+1} 수정`);
+        const m=c.marks[+t.dataset.i]; if (m && t.dataset.f==='reason') m.segs=updSegs(m.segs, bef, cur, (me && m.by && !sameUser(m, me)) ? me.name : null, me ? me.id : '');
         t.value=cur; collectMarks(c); if (f.isContentEditable) f.innerHTML=md(cur, m ? m.segs : null); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
   });
   bindNotes();
@@ -1018,7 +1021,7 @@ function renderPdfNotes(c){
 }
 function collectMarks(c){
   document.querySelectorAll('.note textarea[data-i]').forEach(t=>{ const m=c.marks[+t.dataset.i]; if (!m) return; const v=t.value.trim();
-    if (v!==(m[t.dataset.f]||'') && me && m.by && m.by!==me.name) m.editedBy=me.name;   // 남의 메모를 고치면 수정자 표시
+    if (v!==(m[t.dataset.f]||'') && me && m.by && !sameUser(m, me)){ m.editedBy=me.name; m.editedById=me.id; }   // 남의 메모를 고치면 수정자 표시
     m[t.dataset.f]=v; });
   const na=$('#noteAll'); if (na) c.note = na.value.trim();
 }
@@ -1115,7 +1118,7 @@ function bindSelection(cont, c0){
       pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
       pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
         const c = cur(); pushHist(c, `${KIND[b.dataset.k]} 추가 · ${text.slice(0,18)}${text.length>18?'…':''}`);
-        c.marks.push({page:+pageEl.dataset.p, rects:merged.map(r=>r.map(v=>+v.toFixed(4))), kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : ''});
+        c.marks.push({page:+pageEl.dataset.p, rects:merged.map(r=>r.map(v=>+v.toFixed(4))), kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : '', byId: me ? me.id : ''});
         // 쪽·위치 순으로 번호 유지
         c.marks.sort((a,b)=>a.page-b.page || a.rects[0][1]-b.rects[0][1] || a.rects[0][0]-b.rects[0][0]);
         view.dirty=true; sel.removeAllRanges(); kill();
@@ -1399,6 +1402,8 @@ async function loadDoc(c){
   if (isPdf(c)){ const pe=await ghRead(`docs/${c.id}.pdf.enc`); if (!pe) throw new Error('PDF 파일이 없습니다'); c.pdf=b64(await decB(key, pe)); }
   const legacy = cfg.legacyAuthor || ((cfg.users||[]).find(u=>u.role==='admin')||{}).name || '';
   if (legacy) (c.marks||[]).forEach(m=>{ if (!m.by) m.by=legacy; });   // 계정 도입 전 메모 → 도입한 관리자 이름
+  const idOf=nm=>{ const u=(cfg.users||[]).find(x=>String(x.name||'').trim()===String(nm||'').trim()); return u?u.id:''; };
+  (c.marks||[]).forEach(m=>{ if (m.by && !m.byId) m.byId=idOf(m.by); (m.segs||[]).forEach(g=>{ if (!g.id) g.id=idOf(g.by); }); }); (c.noteSegs||[]).forEach(g=>{ if (!g.id) g.id=idOf(g.by); });
   const unband = t => (t||'').replace(/⟦([^|⟧\n]{1,40})\|([^⟧]*)⟧/g, '[$1] $2').replace(/[⟦⟧]/g,'');
   (c.marks||[]).forEach(m=>{ m.reason=unband(m.reason); }); c.note=unband(c.note);
   c.loaded=true; return c;
@@ -1670,7 +1675,7 @@ function applyRole(){
   $('#btnNew').hidden = !artifactNs; $('#btnPw').hidden = !me;
   $('#btnUsers').hidden = !(me && me.role==='admin');
   $('#whoami').textContent = me ? `${me.name} · ${({admin:'관리자', editor:'편집자', viewer:'뷰어'})[me.role]||''}` : (role==='editor' ? '편집자' : '뷰어');
-  const col=me?userColor(me.name):''; $('#whoami').style.cssText = col ? `color:${col};border:1px solid ${col};background:transparent` : '';
+  const col=me?userColor(me.name, me.id):''; $('#whoami').style.cssText = col ? `color:${col};border:1px solid ${col};background:transparent` : '';
 }
 async function boot(){
   try { await loadConfig(); } catch(e){ $('#main').innerHTML=`<div class="head"><p class="msg err">설정 파일을 읽지 못했습니다: ${esc((e&&e.message)||e)}</p></div>`; return; }
