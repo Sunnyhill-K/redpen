@@ -1348,14 +1348,27 @@ function restoreSpot(y){
 
 // ── 잠금/열기 ──
 async function loadConfig(){ const u=await ghRead('config.json'); if (!u) throw new Error('config.json 이 없습니다'); cfg=JSON.parse(td.decode(u)); }
+let esec=null;   // 편집자 봉투 안의 고정 비밀(base64). 잠긴 문서의 편집자 열쇠 Ke 는 여기서 파생
 async function tryUnlock(pw){
   const key=await kek(pw, cfg.salt, cfg.iter);
-  try { const kr=await decB(key, ub64(cfg.editor.k)); const t=td.decode(await decB(key, ub64(cfg.editor.t))); Kraw=kr; K=await importK(kr); token=t; role='editor'; Ke=await deriveKe(kr, t); return true; } catch(_){}
+  try { const kr=await decB(key, ub64(cfg.editor.k)); const t=td.decode(await decB(key, ub64(cfg.editor.t))); Kraw=kr; K=await importK(kr); token=t; role='editor';
+    if (cfg.editor.s){ esec=td.decode(await decB(key, ub64(cfg.editor.s))); Ke=await deriveKe(kr, esec); }
+    else { await migrateEditorSecret(key, kr, t); }
+    return true; } catch(_){}
   try { const kr=await decB(key, ub64(cfg.viewer.k)); Kraw=kr; K=await importK(kr); token=null; role='viewer'; return true; } catch(_){}
   return false;
 }
+// 옛 구조(Ke 를 토큰에서 파생) → 새 구조(editor.s). 잠긴 문서의 편집자 봉투를 새 Ke 로 다시 싸고 config 에 s 를 넣는다
+async function migrateEditorSecret(key, kr, t){
+  const KeOld=await deriveKe(kr, t); const sNew=b64(crypto.getRandomValues(new Uint8Array(32))); const KeNew=await deriveKe(kr, sNew);
+  const u=await ghRead('docs/index.json'); const list=u?JSON.parse(td.decode(u)):[];
+  for (const m of list){ if (!m.lock) continue; const du=await ghRead(`docs/${m.id}.json`); if (!du) continue; const d=JSON.parse(td.decode(du)); if (!d.wrap||!d.wrap.ed) continue;
+    try { const kd=await decB(KeOld, ub64(d.wrap.ed)); d.wrap.ed=b64(await encB(KeNew, kd)); await ghWrite(`docs/${m.id}.json`, te.encode(JSON.stringify(d)), `rekey: ${d.title}`); } catch(_){} }
+  const c2=JSON.parse(JSON.stringify(cfg)); c2.editor.s=b64(await encB(key, te.encode(sNew)));
+  await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'editor secret'); cfg=c2; esec=sNew; Ke=KeNew;
+}
 function saveSess(remember){
-  const v=JSON.stringify({role, k:b64(Kraw), t:token});
+  const v=JSON.stringify({role, k:b64(Kraw), t:token, s:esec});
   try { sessionStorage.setItem('redpen.sess', v); if (remember) localStorage.setItem('redpen.sess', v); else localStorage.removeItem('redpen.sess'); } catch(e){}
 }
 function lockScreen(){
@@ -1381,22 +1394,39 @@ async function changePasswords(){
   ov.innerHTML=`<form class="box" role="dialog" aria-modal="true"><h3>비밀번호 바꾸기</h3><p>비워 두면 그대로 둡니다. 바꾼 비밀번호는 다른 사람에게 다시 알려 줘야 합니다.</p>
     <label class="l">새 뷰어 비밀번호</label><input type="password" id="pwV" autocomplete="new-password">
     <label class="l">새 편집자 비밀번호</label><input type="password" id="pwE" autocomplete="new-password">
+    <label class="l">새 깃헙 토큰 (갱신할 때만)</label><input type="password" id="pwT" autocomplete="off" placeholder="github_pat_…">
+    <label class="l">현재 편집자 비밀번호 (토큰을 갱신할 때 필요)</label><input type="password" id="pwCur" autocomplete="current-password">
     <div class="msg err" id="pwErr2"></div>
     <div class="row"><button class="btn" type="button" id="pwCancel">취소</button><button class="btn primary" type="submit">바꾸기</button></div></form>`;
   document.body.appendChild(ov); ov.querySelector('#pwV').focus();
   ov.querySelector('#pwCancel').addEventListener('click', ()=>ov.remove());
   ov.querySelector('form').addEventListener('submit', async e=>{
-    e.preventDefault(); const nv=ov.querySelector('#pwV').value, ne=ov.querySelector('#pwE').value; const err=ov.querySelector('#pwErr2');
-    if (!nv && !ne){ ov.remove(); return; }
+    e.preventDefault(); const nv=ov.querySelector('#pwV').value, ne=ov.querySelector('#pwE').value, nt=ov.querySelector('#pwT').value.trim(), cur=ov.querySelector('#pwCur').value; const err=ov.querySelector('#pwErr2');
+    if (!nv && !ne && !nt){ ov.remove(); return; }
+    if (nt && !ne && !cur){ err.textContent='토큰을 갱신하려면 현재 편집자 비밀번호가 필요합니다.'; return; }
     if ((nv && nv.length<8) || (ne && ne.length<8)){ err.textContent='8자 이상으로 해 주세요.'; return; }
     if (nv && ne && nv===ne){ err.textContent='뷰어와 편집자 비밀번호는 달라야 합니다.'; return; }
     err.textContent='바꾸는 중…';
     try {
       // 현재 비밀번호를 모르는 쪽은 기존 봉투를 그대로 두되, salt 를 바꾸면 둘 다 다시 싸야 하므로 salt 는 유지한다
       const c2=JSON.parse(JSON.stringify(cfg));
+      let newTok=token;
+      if (nt){
+        // 새 토큰이 이 저장소를 실제로 쓸 수 있는지 먼저 확인
+        const r=await fetch(apiUrl('config.json')+`?ref=${GH.branch}&v=${Date.now()}`, {headers:{Authorization:'Bearer '+nt, Accept:'application/vnd.github+json'}, cache:'no-store'});
+        if (!r.ok) throw new Error('새 토큰으로 저장소를 읽지 못했습니다 ('+r.status+'). 토큰의 저장소·권한(Contents: Read and write)을 확인하세요');
+        newTok=nt;
+      }
       if (nv){ const kv=await kek(nv, cfg.salt, cfg.iter); c2.viewer={k:b64(await encB(kv, Kraw))}; }
-      if (ne){ const ke=await kek(ne, cfg.salt, cfg.iter); c2.editor={k:b64(await encB(ke, Kraw)), t:b64(await encB(ke, te.encode(token)))}; }
-      await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'passwords'); cfg=c2; ov.remove(); toast('비밀번호를 바꿨습니다');
+      if (ne || nt){
+        // 편집자 봉투를 다시 싼다. 새 편집자 비번이 없으면 현재 비번으로(먼저 맞는지 확인)
+        let ke; if (ne) ke=await kek(ne, cfg.salt, cfg.iter); else { ke=await kek(cur, cfg.salt, cfg.iter); try { await decB(ke, ub64(cfg.editor.k)); } catch(_){ throw new Error('현재 편집자 비밀번호가 맞지 않습니다'); } }
+        c2.editor={k:b64(await encB(ke, Kraw)), t:b64(await encB(ke, te.encode(newTok))), s:b64(await encB(ke, te.encode(esec)))};
+      }
+      const oldTok=token; token=newTok;
+      try { await ghWrite('config.json', te.encode(JSON.stringify(c2)), nt?'token rotated':'passwords'); } catch(ex){ token=oldTok; throw ex; }
+      cfg=c2; saveSess(!!localStorage.getItem('redpen.sess')); ov.remove();
+      toast(nt ? '토큰을 갱신했습니다. 깃헙에서 옛 토큰을 삭제하세요.' : '비밀번호를 바꿨습니다');
     } catch(ex){ err.textContent=(ex&&ex.message)||String(ex); }
   });
 }
@@ -1410,9 +1440,10 @@ async function boot(){
   try { await loadConfig(); } catch(e){ $('#main').innerHTML=`<div class="head"><p class="msg err">설정 파일을 읽지 못했습니다: ${esc((e&&e.message)||e)}</p></div>`; return; }
   let sess=null; try { sess=JSON.parse(sessionStorage.getItem('redpen.sess')||localStorage.getItem('redpen.sess')||'null'); } catch(e){}
   let spot=null;
-  if (sess && sess.role && sess.k){ role=sess.role; token=sess.t||null; Kraw=ub64(sess.k); K=await importK(Kraw); if (token) Ke=await deriveKe(Kraw, token);
+  if (sess && sess.role && sess.k){ role=sess.role; token=sess.t||null; Kraw=ub64(sess.k); K=await importK(Kraw); esec=sess.s||null;
+    if (token && esec) Ke=await deriveKe(Kraw, esec); else if (token){ try { sessionStorage.removeItem('redpen.sess'); localStorage.removeItem('redpen.sess'); } catch(e){} sess=null; }
     try { spot=JSON.parse(sessionStorage.getItem('redpen.spot')||'null'); } catch(e){} }
-  else { await lockScreen(); try { sessionStorage.removeItem('redpen.spot'); } catch(e){} }
+  if (!(sess && sess.role && sess.k)){ await lockScreen(); try { sessionStorage.removeItem('redpen.spot'); } catch(e){} }
   applyRole();
   try { await loadIndex(); } catch(e){ toast('목록을 읽지 못했습니다: '+((e&&e.message)||e)); }
   const m=location.hash.match(/case=([\w-]+)/);
