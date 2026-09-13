@@ -100,7 +100,7 @@ body.zoomed-body .top{left:0;width:100vw}
 .head,.sheet,.overall,.edit,.mlist{margin-left:0!important;margin-right:0!important}
 
 /* ── 사건 머리 ── */
-.head{max-width:1120px;margin:0 auto 18px;position:sticky;top:var(--top-h,50px);z-index:4;background:var(--paper);padding-top:16px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
+.head{max-width:none;margin:0 0 18px;position:sticky;top:var(--top-h,50px);z-index:4;background:var(--paper);padding-top:16px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
 .head .hint{margin-top:8px}
 body.zoomed-body .head{left:20px;max-width:calc(100vw - var(--rail-w,240px) - 40px)}
 .head .eyebrow{font-size:12px;color:var(--ink-3);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -895,9 +895,9 @@ async function drawPages(){
   const mainW = $('#main').clientWidth - 40;
   const baseW = stacked ? mainW : Math.max(320, Math.min(1180, mainW) - 280 - 28);
   const width = Math.round(baseW * zoom.pdf); const dpr = Math.min(window.devicePixelRatio||1, 2.5);
-  if (sheet){ sheet.classList.toggle('zoomed', zoom.pdf > 1 && !stacked); }
-  document.body.classList.toggle('zoomed-body', zoom.pdf > 1 && !stacked);
-  cont.style.width = (zoom.pdf > 1 && !stacked) ? width+'px' : '';
+  if (sheet){ sheet.classList.toggle('zoomed', !stacked); }              // 100% 에서도 확대 때와 같은 배치
+  document.body.classList.toggle('zoomed-body', zoom.pdf > 1 && !stacked); // 창 가로 스크롤은 넘칠 때만
+  cont.style.width = !stacked ? width+'px' : '';
   cont.style.setProperty('--pz', String(zoom.pdf));
   for (let p=1;p<=st.doc.numPages;p++){
     const page = await st.doc.getPage(p); if (st.token!==token) return;
