@@ -908,7 +908,14 @@ document.addEventListener('keydown', e=>{
   if (!(e.ctrlKey||e.metaKey)) return;
   const k=e.key.toLowerCase();
   if (k==='s'){ e.preventDefault(); const sb=$('#saveCase')||$('#doCompare'); if (sb && !sb.disabled && artifactNs){ if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); sb.click(); } return; }
-  const tag=(e.target.tagName||'').toLowerCase(); if (tag==='textarea'||tag==='input'||e.target.isContentEditable) return;
+  const tag=(e.target.tagName||'').toLowerCase();
+  if (tag==='textarea'||tag==='input'||e.target.isContentEditable){
+    // 메모칸에 커서가 있어도 아직 아무것도 안 적었으면(되돌릴 글자가 없으면) 표시 되돌리기로 넘긴다
+    const empty = e.target.isContentEditable ? !e.target.textContent.trim() : !(e.target.value||'').trim();
+    const inNote = !!e.target.closest('.note');
+    if (!(inNote && empty && k==='z')) return;
+    e.target.blur();
+  }
   const c = view.draft || cases.find(x=>x.id===view.id); if (!isPdf(c) || !artifactNs) return;
   if (k==='z' && !e.shiftKey){ e.preventDefault(); undoMarks(c); }
   else if (k==='z' && e.shiftKey){ e.preventDefault(); redoMarks(c); }
