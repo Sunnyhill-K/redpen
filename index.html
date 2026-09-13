@@ -549,7 +549,7 @@ function render(){
   }
   main.style.setProperty('--z', isPdf(c) ? 1 : zoom.text);
   renderDocCase(main, c);
-  if (!isPdf(c)){ requestAnimationFrame(fitOverall); if (pendingSpot){ const ps=pendingSpot; pendingSpot=null; restoreSpot(ps.y); } }
+  if (!isPdf(c)){ requestAnimationFrame(fitOverall); if (pendingSpot){ const ps=pendingSpot; pendingSpot=null; restoreSpot(ps.y, !!ps.focus); } }
 }
 function renderHome(main){
   main.innerHTML = `<div class="head"><div class="eyebrow">퇴고 기록 ${cases.length}건</div>
@@ -828,7 +828,7 @@ function layoutTextDoc(){
   const cont=$('#doc'); if (!cont || !cont.classList.contains('txtdoc')) return;
   const sheet=cont.closest('.sheet'); const stacked = window.innerWidth <= 760;
   const notesW = Math.round(280*uiScale); const mainW = $('#main').clientWidth - 40 - 28;
-  const baseW = stacked ? mainW : Math.max(320, Math.min(1180, mainW) - notesW - 28);
+  const baseW = stacked ? mainW : DOC_BASE_W;   // 창을 줄여도 문서 배율은 그대로, 가로 스크롤만 길어진다
   const width = Math.round(baseW * zoom.text);
   if (sheet) sheet.classList.toggle('zoomed', !stacked);
   cont.style.width = !stacked ? (width+28)+'px' : '';   // 홈통 14px×2
@@ -890,6 +890,7 @@ let pdfState = null; // {c, doc, token}
 // 되돌리기/다시 실행: 표시 배열의 스냅샷 스택(사건별)
 let hist = {id:null, undo:[], redo:[]};
 let pdfListMode = false, textRevMode = false;
+const DOC_BASE_W = 860;   // 문서 100% 폭(px). 창 크기와 무관
 let zoom = {pdf:1, text:1};
 try { const z=JSON.parse(localStorage.getItem('redpen.zoom')||'{}'); if (z.pdf) zoom.pdf=z.pdf; if (z.text) zoom.text=z.text; } catch(e){}
 const snap = c => JSON.stringify(c.marks||[]);
@@ -1093,7 +1094,7 @@ async function drawPages(){
   const sheet = cont.closest('.sheet'); const stacked = window.innerWidth <= 760;
   const mainW = $('#main').clientWidth - 40 - 28;
   const notesW = Math.round(280*uiScale);
-  const baseW = stacked ? mainW : Math.max(320, Math.min(1180, mainW) - notesW - 28);
+  const baseW = stacked ? mainW : DOC_BASE_W;
   const width = Math.round(baseW * zoom.pdf); const dpr = Math.min(window.devicePixelRatio||1, 2);
   if (st.io){ try { st.io.disconnect(); } catch(e){} st.io=null; }
   if (sheet){ sheet.classList.toggle('zoomed', !stacked); }              // 100% 에서도 확대 때와 같은 배치
@@ -1113,7 +1114,7 @@ async function drawPages(){
     el.append(ml, pn); cont.appendChild(el); drawMarks(st.c, p);
     pages.push({p, page, vp, scale, el});
   }
-  layoutNotes(); tmark('쪽 틀 '+pages.length+'개');
+  layoutNotes(); tmark('쪽 틀 '+pages.length+'개'); fixBodyWidth(); requestAnimationFrame(fixBodyWidth);
   // 2단계: 화면 근처의 쪽만 캔버스+글자층을 그린다(한 번 그리면 유지)
   const renderOne = async (pg)=>{
     if (pg.done || st.token!==token) return; pg.done=true;
@@ -1132,7 +1133,7 @@ async function drawPages(){
   st.io=io;
   if (artifactNs && !cont.dataset.selBound){ cont.dataset.selBound='1'; bindSelection(cont, st.c); }
   fitOverall();
-  if (pendingSpot){ const ps=pendingSpot; pendingSpot=null; restoreSpot(ps.y); }
+  if (pendingSpot){ const ps=pendingSpot; pendingSpot=null; restoreSpot(ps.y, !!ps.focus); }
 }
 function drawMarks(c, p){
   const el = document.querySelector(`.page[data-p="${p}"] .marks`); if (!el) return;
@@ -1193,11 +1194,16 @@ function bindSelection(cont, c0){
 }
 
 // ── 창보다 넓어지면 body 를 그 폭까지 늘려, 고정 요소(상단 바·목록·머리)가 가로 스크롤에도 창 왼쪽에 붙어 있게 ──
+let fbwBusy=false;
 function fixBodyWidth(){
-  document.body.style.minWidth=''; document.body.classList.remove('zoomed-body');
-  const de=document.documentElement; const sw=de.scrollWidth, cw=de.clientWidth;
-  if (sw > cw + 2){ document.body.style.minWidth=sw+'px'; document.body.classList.add('zoomed-body'); }
+  if (fbwBusy) return; fbwBusy=true;
+  try {
+    document.body.style.minWidth=''; document.body.classList.remove('zoomed-body');
+    const de=document.documentElement; const sw=de.scrollWidth, cw=de.clientWidth;
+    if (sw > cw + 2){ document.body.style.minWidth=sw+'px'; document.body.classList.add('zoomed-body'); }
+  } finally { fbwBusy=false; }
 }
+if (window.ResizeObserver) new ResizeObserver(()=>{ if (!fbwBusy) fixBodyWidth(); }).observe(document.getElementById('main'));
 // ── 총평 폭을 문서 폭에 맞춘다(PDF 는 쪽 틀, 텍스트는 원고 열 전체) ──
 function fitOverall(){
   const box=document.querySelector('.overall .box'); if (!box) return;
@@ -1512,8 +1518,8 @@ async function saveDoc(c, btn){
     const wasDraft=!!view.draft; const y=window.scrollY;
     view.draft=null; view.id=c.id; view.dirty=false; location.hash='case='+c.id; toast('저장했습니다');
     // 저장 뒤 화면을 맨 위로 보내지 않는다: 기존 PDF 문서는 머리만 갱신, 그 외는 다시 그린 뒤 같은 자리로
-    if (!wasDraft && isPdf(c)){ refreshPdfHead(c); restoreSpot(y); }
-    else { pendingSpot={y}; render(); if (!isPdf(c)){ pendingSpot=null; restoreSpot(y); } }
+    if (!wasDraft && isPdf(c)){ refreshPdfHead(c); restoreSpot(y, true); }
+    else { pendingSpot={y, focus:true}; render(); if (!isPdf(c)){ pendingSpot=null; restoreSpot(y, true); } }
     return true;
   } catch(e){ if (msg){ msg.textContent=(e&&e.message)||String(e); msg.className='msg err'; } if (btn) btn.disabled=false; toast('저장 실패: '+((e&&e.message)||e)); return false; }
 }
@@ -1533,9 +1539,9 @@ document.addEventListener('focusin', e=>{ const n=e.target.closest && e.target.c
 let spotT=null;
 function saveSpot(){ clearTimeout(spotT); spotT=setTimeout(()=>{ try { if (view.mode==='case' && view.id) sessionStorage.setItem('redpen.spot', JSON.stringify({id:view.id, y:window.scrollY, f:lastNoteFocus})); } catch(e){} }, 150); }
 window.addEventListener('scroll', saveSpot, {passive:true});
-function restoreSpot(y){
+function restoreSpot(y, doFocus){
   requestAnimationFrame(()=>{ window.scrollTo(0, y);
-    if (lastNoteFocus){ const n=document.getElementById(lastNoteFocus.noteId); const f=n && n.querySelector(lastNoteFocus.sel); if (f){ f.focus({preventScroll:true}); if (f.isContentEditable){ const r=document.createRange(); r.selectNodeContents(f); r.collapse(false); const sl=getSelection(); sl.removeAllRanges(); sl.addRange(r); } } }
+    if (doFocus && lastNoteFocus){ const n=document.getElementById(lastNoteFocus.noteId); const f=n && n.querySelector(lastNoteFocus.sel); if (f){ f.focus({preventScroll:true}); if (f.isContentEditable){ const r=document.createRange(); r.selectNodeContents(f); r.collapse(false); const sl=getSelection(); sl.removeAllRanges(); sl.addRange(r); } } }
     requestAnimationFrame(()=>window.scrollTo(0, y));
   });
 }
@@ -1800,7 +1806,7 @@ syncFold();
 $('#btnRail').addEventListener('click', e=>{ e.stopPropagation(); shell.classList.toggle('nrail'); syncFold(); try { localStorage.setItem('redpen.nrail', shell.classList.contains('nrail')?'1':'0'); } catch(e){}
   requestAnimationFrame(()=>{ layoutNotes(); if (pdfState && $('#doc')) drawPages(); }); });
 let rsT=null, lastW=window.innerWidth;
-window.addEventListener('resize', ()=>{ layoutNotes(); clearTimeout(rsT); rsT=setTimeout(()=>{ if (Math.abs(window.innerWidth-lastW)>10){ lastW=window.innerWidth; if (pdfState && $('#doc')) drawPages(); else layoutTextDoc(); } }, 250); });
+window.addEventListener('resize', ()=>{ layoutNotes(); fixBodyWidth(); clearTimeout(rsT); rsT=setTimeout(()=>{ const nowStacked=window.innerWidth<=760, wasStacked=lastW<=760; if (nowStacked!==wasStacked || (nowStacked && Math.abs(window.innerWidth-lastW)>10)){ lastW=window.innerWidth; if (pdfState && $('#doc')) drawPages(); else layoutTextDoc(); } else lastW=window.innerWidth; }, 250); });
 window.addEventListener('beforeunload', e=>{ if (view.dirty){ e.preventDefault(); e.returnValue=''; } });
 document.fonts && document.fonts.ready.then(()=>layoutNotes());
 
