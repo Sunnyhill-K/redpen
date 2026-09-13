@@ -473,11 +473,18 @@ function renderList(){
   const ul=$('#caseList'); ul.innerHTML='';
   $('#caseEmpty').hidden = cases.length>0;
   [...cases].sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.id||'').localeCompare(a.id||'')).forEach(c=>{
-    const li=document.createElement('li'); li.className = (view.mode==='case' && view.id===c.id) ? 'on' : ''; li.title = c.title||'';
+    const li=document.createElement('li'); li.className = (view.mode==='case' && view.id===c.id) ? 'on' : ''; li.title = c.title||''; li.dataset.id=c.id;
     if (selMode) li.classList.add('sel');
     li.innerHTML = (selMode ? `<input type="checkbox" class="ck" ${selIds.has(c.id)?'checked':''}>` : '') + (artifactNs && !selMode ? `<button class="more" title="정보 수정 · 삭제">…</button>` : '') + `<span class="t">${esc(c.title||'(제목 없음)')}</span><span class="m"><span>${esc(c.date||'')}</span><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':esc(c.source||'')}</span>${c.lock?'<span title="문서 비밀번호 있음">🔒</span>':''}<span>${caseCount(c)}곳</span></span>`;
     li.addEventListener('click', e=>{
-      if (selMode){ if (selIds.has(c.id)) selIds.delete(c.id); else selIds.add(c.id); li.querySelector('.ck').checked=selIds.has(c.id); syncSelBar(); return; }
+      if (selMode){
+        const items=[...ul.querySelectorAll('li')]; const idx=items.indexOf(li);
+        if (e.shiftKey && lastSel>=0){   // Shift+클릭 = 범위 선택
+          const [a,b]=[Math.min(lastSel,idx), Math.max(lastSel,idx)];
+          items.slice(a,b+1).forEach(x=>{ selIds.add(x.dataset.id); x.querySelector('.ck').checked=true; });
+          getSelection().removeAllRanges();
+        } else { if (selIds.has(c.id)) selIds.delete(c.id); else selIds.add(c.id); li.querySelector('.ck').checked=selIds.has(c.id); }
+        lastSel=idx; syncSelBar(); return; }
       openCase(c.id);
     });
     const mb=li.querySelector('.more'); if (mb) mb.addEventListener('click', e=>{ e.stopPropagation(); showItemMenu(mb, c); });
@@ -505,7 +512,7 @@ async function editCaseById(id){
   view={mode:'edit', id, draft:c, dirty:false, show:'side'}; location.hash='case='+id; render();
 }
 // ── 다수 선택 삭제 ──
-let selMode=false; const selIds=new Set();
+let selMode=false, lastSel=-1; const selIds=new Set();
 function syncSelBar(){
   const bar=$('#selBar'); if (!bar) return;
   bar.hidden=!selMode; $('#selDel').textContent=`선택 삭제 (${selIds.size})`; $('#selDel').disabled=!selIds.size;
@@ -1409,7 +1416,7 @@ window.addEventListener('beforeunload', e=>{ if (view.dirty){ e.preventDefault()
 document.fonts && document.fonts.ready.then(()=>layoutNotes());
 
 $('#btnLock').addEventListener('click', lockNow);
-$('#btnSel').addEventListener('click', ()=>{ selMode=!selMode; if (!selMode) selIds.clear(); renderList(); });
+$('#btnSel').addEventListener('click', ()=>{ selMode=!selMode; lastSel=-1; if (!selMode) selIds.clear(); renderList(); });
 $('#selAll').addEventListener('click', ()=>{ if (selIds.size===cases.length) selIds.clear(); else cases.forEach(c=>selIds.add(c.id)); renderList(); });
 $('#selDel').addEventListener('click', async ()=>{ const ids=[...selIds]; if (!ids.length) return;
   if (!(await ask(`선택한 ${ids.length}건을 지웁니다. 되돌릴 수 없습니다.`,'모두 지우기'))) return; selMode=false; await deleteMany(ids); });
