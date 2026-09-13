@@ -220,7 +220,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .sheet.pdf{max-width:1180px;grid-template-columns:minmax(0,1fr) calc(280px * var(--ui,1))}
 /* 확대 시: 틀이 쪽 크기만큼 넓어지고, 화면을 넘치면 main 이 가로로 움직인다 */
 .sheet.pdf.zoomed{max-width:none;width:max-content;grid-template-columns:auto calc(280px * var(--ui,1))}
-.sheet.pdf .txtdoc{width:min(860px, calc(100vw - var(--rail-w,240px) - 40px - 28px - 280px * var(--ui,1)))}
+.sheet.pdf .txtdoc{width:auto;max-width:none;min-width:0}   /* 격자 열 폭을 그대로 채운다(고정 폭이면 화면 글자 배율에 따라 메모 열을 침범) */
 .sheet.pdf.zoomed .pages{overflow:visible;max-width:none}
 .sheet.pdf .notes-title{position:static;margin-bottom:8px}
 .pages{display:flex;flex-direction:column;gap:18px;position:relative;overflow:auto;max-width:100%;background:var(--paper-3);padding:14px;border-radius:3px}
