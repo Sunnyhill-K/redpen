@@ -96,6 +96,9 @@ body.zoomed-body .top{left:0;width:100vw}
 .shell{--rail-w:240px}
 .shell.nrail{--rail-w:44px}
 
+/* 배율과 무관하게 항상 왼쪽 정렬(100%일 때만 가운데로 튀지 않게) */
+.head,.sheet,.overall,.edit,.mlist{margin-left:0!important;margin-right:0!important}
+
 /* ── 사건 머리 ── */
 .head{max-width:1120px;margin:0 auto 18px;position:sticky;top:var(--top-h,50px);z-index:4;background:var(--paper);padding-top:16px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
 .head .hint{margin-top:8px}
