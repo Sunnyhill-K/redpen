@@ -337,6 +337,28 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .fab{width:28px;height:28px;border-radius:50%;border:1px solid var(--ink-2);background:transparent;color:var(--ink);font-size:calc(14px * var(--ui,1));line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;margin-right:2px}
 .fab:hover{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
 
+.note .n .who{font-family:var(--sans);font-size:calc(11px * var(--ui,1));color:var(--ink);background:var(--paper-3);border-radius:3px;padding:0 5px}
+.note .n .who.ed{color:var(--ins);background:var(--ins-bg)}
+.ask .box.users{max-width:640px}
+.ask .box.users table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+.ask .box.users th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:6px;border-bottom:1px solid var(--rule)}
+.ask .box.users td{padding:5px 6px;border-bottom:1px solid var(--rule);vertical-align:middle}
+.ask .box.users td.mono{font-family:var(--mono)}
+.ask .box.users td input,.ask .box.users td select,.ask .box.users .newrow input,.ask .box.users .newrow select{border:1px solid var(--rule);background:var(--paper-2);padding:4px 6px;border-radius:3px;font-size:13px}
+.ask .box.users td input{width:100%}
+.ask .box.users .acts{white-space:nowrap;text-align:right}
+.ask .box.users h4{margin:6px 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.ask .box.users .newrow{display:grid;grid-template-columns:1.2fr 1fr .8fr 1.2fr auto;gap:6px;align-items:center;margin-bottom:8px}
+.ask .box input[type=text]{width:100%;border:1px solid var(--rule);background:var(--paper-2);padding:9px 10px;border-radius:3px;margin-bottom:8px;font-size:15px}
+
+.visbox{margin-bottom:14px}
+.visbox .lab{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.visbox .lab label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.vislist{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 12px;border:1px solid var(--rule);border-radius:4px;padding:8px 10px;background:var(--paper-2);max-height:220px;overflow:auto;user-select:none}
+.vislist label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:2px 0}
+.vislist label.fixed{color:var(--ink-3)}
+.vislist .mono{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+
 /* ── 토스트 ── */
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:8px 14px;border-radius:4px;font-size:calc(13px * var(--ui,1));opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
 .toast.show{opacity:1}
@@ -365,6 +387,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 <header class="top">
   <div class="brand" id="brand" role="link" tabindex="0" title="홈으로"><span class="pen"></span><h1>쑤닐의 퇴고장</h1></div>
   <span id="whoami" class="chip"></span>
+  <button class="btn" id="btnUsers" hidden>사용자 관리</button>
   <button class="btn" id="btnPw" hidden>비밀번호 바꾸기</button>
   <span class="zoom" title="화면 글자 크기 (문서 제외)"><button id="uiMinus" aria-label="글자 작게">가−</button><button class="z" id="uiReset" title="기본으로">100%</button><button id="uiPlus" aria-label="글자 크게">가+</button></span>
   <button class="btn" id="btnLock">로그아웃</button>
@@ -405,7 +428,7 @@ const isText = c => c && !isPdf(c);
 function caseCount(c){ if (!c.loaded) return c.n||0; return (c.marks||[]).length; }
 function renderList(){
   const ul=$('#caseList'); ul.innerHTML='';
-  $('#caseEmpty').hidden = cases.length>0;
+  $('#caseEmpty').hidden = cases.filter(canSee).length>0;
   const when = c => c.ts || c.date || '';
   const byName = (a,b)=>(a.title||'').localeCompare(b.title||'','ko');
   const byDate = (a,b)=>when(a).localeCompare(when(b)) || (a.id||'').localeCompare(b.id||'');
@@ -413,7 +436,7 @@ function renderList(){
   const sd=$('#sortDate'), sn=$('#sortName');
   if (sd){ sd.textContent = sortMode==='old' ? '오래된순' : '최신순'; sd.classList.toggle('on', sortMode==='new'||sortMode==='old'); }
   if (sn){ sn.textContent = sortMode==='nameDesc' ? '이름 ZA' : '이름 AZ'; sn.classList.toggle('on', sortMode==='nameAsc'||sortMode==='nameDesc'); }
-  [...cases].sort(cmp).forEach(c=>{
+  [...cases].filter(canSee).sort(cmp).forEach(c=>{
     const li=document.createElement('li'); li.className = (view.mode==='case' && view.id===c.id) ? 'on' : ''; li.title = c.title||''; li.dataset.id=c.id;
     if (selMode) li.classList.add('sel');
     li.innerHTML = (selMode ? `<input type="checkbox" class="ck" ${selIds.has(c.id)?'checked':''}>` : '') + (artifactNs && !selMode ? `<button class="more" title="정보 수정 · 삭제">…</button>` : '') + `<span class="t">${esc(c.title||'(제목 없음)')}</span><span class="m"><span>${esc(fmtWhen(c))}</span><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF':(c.type==='word'?'Word':'텍스트')}</span>${c.lock?'<span title="문서 비밀번호 있음">🔒</span>':''}<span>${caseCount(c)}곳</span></span>`;
@@ -497,6 +520,7 @@ function ask3(msg, saveLabel){
   });
 }
 async function openCase(id){
+  const target=cases.find(x=>x.id===id); if (target && !canSee(target)){ toast('이 문서는 볼 수 있는 사람으로 지정되지 않았습니다'); return; }
   if (!(await leaveOk())) return;
   view = {mode:'case', id, draft:null, dirty:false, show:'side'};
   lastNoteFocus=null; pendingSpot=null; window.scrollTo(0, 0);   // 목록에서 연 문서는 맨 위부터
@@ -529,7 +553,7 @@ function renderHome(main){
 // ══════════════ 사건 머리(공통) ══════════════
 function headHtml(c, statsHtml, toolsHtml){
   const isDraft = !!view.draft;
-  return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':(c.type==='word'?'Word':'텍스트')}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}<span>${esc(c.client||'')}</span><span>${esc(fmtWhen(c))}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
+  return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':(c.type==='word'?'Word':'텍스트')}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}${Array.isArray(c.vis)?`<span class="chip" title="지정된 뷰어만 봄">👁 ${c.vis.length}명 지정</span>`:''}<span>${esc(c.client||'')}</span><span>${esc(fmtWhen(c))}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
     <h2>${esc(c.title||'(제목 없음)')}<span class="hbtns">${artifactNs ? `<button class="btn small" id="editCase">정보 수정</button>` : ''}${isPdf(c) ? `<button class="btn small" id="dlPdf" title="저장된 원본 PDF 를 그대로 내려받습니다">원본 PDF 내려받기</button>` : ''}</span></h2>
     <div class="stats">${statsHtml}</div>
     <div class="tools">${toolsHtml}
@@ -569,16 +593,16 @@ function bindHead(c, collect){
 }
 // ── 메모 목록(표) + 복사용 텍스트: 텍스트형·PDF형 공통 ──
 function listItems(c){
-  return (c.marks||[]).map((m,i)=>({n:i+1, where: isPdf(c) ? m.page+'쪽' : '', kind:KIND[m.kind], before:m.text||'', after:m.after||'', reason:m.reason||''}));
+  return (c.marks||[]).map((m,i)=>({n:i+1, where: isPdf(c) ? m.page+'쪽' : '', kind:KIND[m.kind], before:m.text||'', after:m.after||'', reason:m.reason||'', who:(m.by||'')+(m.editedBy?` (수정 ${m.editedBy})`:'')}));
 }
 function listHtml(items, withWhere){
   if (!items.length) return `<div class="mlist"><div class="none">표시가 없습니다.</div></div>`;
-  return `<div class="mlist"><table><thead><tr><th>#</th>${withWhere?'<th>위치</th>':''}<th>종류</th><th>원문</th><th>바꿀 문장</th><th>이유</th></tr></thead><tbody>${items.map(it=>`
-    <tr><td class="n"><button class="jump" data-n="${it.n}" title="문서의 이 자리로 이동">${it.n}</button></td>${withWhere?`<td class="w">${esc(it.where)}</td>`:''}<td><span class="chip">${esc(it.kind)}</span>${it.n===items.length?' <span class="chip last">마지막</span>':''}</td><td class="before">${esc(it.before)}</td><td class="after">${esc(it.after)}</td><td class="reason">${md(it.reason)}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="mlist"><table><thead><tr><th>#</th>${withWhere?'<th>위치</th>':''}<th>종류</th><th>작성</th><th>원문</th><th>바꿀 문장</th><th>이유</th></tr></thead><tbody>${items.map(it=>`
+    <tr><td class="n"><button class="jump" data-n="${it.n}" title="문서의 이 자리로 이동">${it.n}</button></td>${withWhere?`<td class="w">${esc(it.where)}</td>`:''}<td><span class="chip">${esc(it.kind)}</span>${it.n===items.length?' <span class="chip last">마지막</span>':''}</td><td class="w">${esc(it.who)}</td><td class="before">${esc(it.before)}</td><td class="after">${esc(it.after)}</td><td class="reason">${md(it.reason)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function listText(c, items){
   const head = `${c.title||''} · 퇴고 메모 ${items.length}곳 (${c.date||''})`;
-  return head + '\n' + items.map(it=>`${it.n}. ${it.where?'['+it.where+'] ':''}${it.kind}${it.before?' · '+it.before:''}${it.after?'\n   → '+it.after:''}${it.reason?'\n   이유: '+it.reason:''}`).join('\n');
+  return head + '\n' + items.map(it=>`${it.n}. ${it.who?'['+it.who+'] ':''}${it.where?'['+it.where+'] ':''}${it.kind}${it.before?' · '+it.before:''}${it.after?'\n   → '+it.after:''}${it.reason?'\n   이유: '+it.reason:''}`).join('\n');
 }
 function overallHtml(c){
   const ph='전체 인상, 남겨 둔 것, 의뢰인에게 전할 말';
@@ -781,7 +805,7 @@ function bindTextSelection(cont, c0){
     pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
     pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
       const c=cur(); pushHist(c, `${KIND[b.dataset.k]} 추가 · ${text.slice(0,18)}${text.length>18?'…':''}`);
-      c.marks.push({start, end, kind:b.dataset.k, text, after:'', reason:''}); c.marks.sort((x,y)=>x.start-y.start);
+      c.marks.push({start, end, kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : ''}); c.marks.sort((x,y)=>x.start-y.start);
       view.dirty=true; sel.removeAllRanges(); kill(); renderTextDoc(c); refreshPdfHead(c);
       const idx=c.marks.findIndex(m=>m.start===start && m.end===end); setTimeout(()=>focusHunk(idx+1), 50);
     }));
@@ -905,7 +929,7 @@ function renderPdfNotes(c){
   const notes=$('#notes'); if (!notes) return;
   const canEdit = !!artifactNs;
   notes.innerHTML = `<div class="notes-title">교정 메모 ${c.marks.length}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
-    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
+    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자">${esc(m.by)}</span>`:''}${m.editedBy?`<span class="who ed" title="수정자">수정 ${esc(m.editedBy)}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
     ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지') : `<div class="txt">${md(m.reason||'')}</div>`}</div>`; }).join('');
   notes.querySelectorAll('.x').forEach(b=>b.addEventListener('click', ()=>{
@@ -923,7 +947,9 @@ function renderPdfNotes(c){
   requestAnimationFrame(()=>layoutNotes());
 }
 function collectMarks(c){
-  document.querySelectorAll('.note textarea[data-i]').forEach(t=>{ const m=c.marks[+t.dataset.i]; if (m) m[t.dataset.f]=t.value.trim(); });
+  document.querySelectorAll('.note textarea[data-i]').forEach(t=>{ const m=c.marks[+t.dataset.i]; if (!m) return; const v=t.value.trim();
+    if (v!==(m[t.dataset.f]||'') && me && m.by && m.by!==me.name) m.editedBy=me.name;   // 남의 메모를 고치면 수정자 표시
+    m[t.dataset.f]=v; });
   const na=$('#noteAll'); if (na) c.note = na.value.trim();
 }
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('불러오기 실패: '+src)); document.head.appendChild(s); }); }
@@ -1019,7 +1045,7 @@ function bindSelection(cont, c0){
       pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
       pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
         const c = cur(); pushHist(c, `${KIND[b.dataset.k]} 추가 · ${text.slice(0,18)}${text.length>18?'…':''}`);
-        c.marks.push({page:+pageEl.dataset.p, rects:merged.map(r=>r.map(v=>+v.toFixed(4))), kind:b.dataset.k, text, after:'', reason:''});
+        c.marks.push({page:+pageEl.dataset.p, rects:merged.map(r=>r.map(v=>+v.toFixed(4))), kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : ''});
         // 쪽·위치 순으로 번호 유지
         c.marks.sort((a,b)=>a.page-b.page || a.rects[0][1]-b.rects[0][1] || a.rects[0][0]-b.rects[0][0]);
         view.dirty=true; sel.removeAllRanges(); kill();
@@ -1107,6 +1133,8 @@ function renderEdit(main){
       <div><label for="fTitle">제목</label><input id="fTitle" value="${esc(c.title)}" placeholder="글 제목이나 의뢰 건명"></div>
       <div><label for="fClient">의뢰인</label><input id="fClient" value="${esc(c.client)}" placeholder="누가 보냈나"></div>
     </div>
+    <div class="visbox" id="visBox"><div class="lab"><label>볼 수 있는 사람</label><span class="hint">편집자·관리자는 항상 봅니다. 뷰어는 체크한 사람만 목록에서 보고 열 수 있습니다. Shift+클릭으로 범위 선택.</span><span class="spacer"></span><button class="btn small" type="button" id="visAll">전체 선택</button><button class="btn small" type="button" id="visNone">전체 해제</button></div>
+      <div class="vislist" id="visList">${(cfg.users||[]).map(u=>`<label class="${u.role==='viewer'?'':'fixed'}"><input type="checkbox" data-id="${esc(u.id)}" ${u.role!=='viewer' ? 'checked disabled' : ((!Array.isArray(c.vis) || c.vis.includes(u.id)) ? 'checked' : '')}> <b>${esc(u.name)}</b> <span class="mono">${esc(u.id)}</span> <span class="chip">${({admin:'관리자',editor:'편집자',viewer:'뷰어'})[u.role]||''}</span></label>`).join('')}</div></div>
     <div class="frow lockrow">
       <div><label for="fLock">문서 비밀번호 (선택)</label><input id="fLock" type="password" autocomplete="new-password" placeholder="${c.lock ? '설정되어 있음 · 바꾸려면 새로 입력' : '비워 두면 로그인만으로 열림'}"></div>
       <div class="lockhint">${c.lock ? `<label class="rm"><input type="checkbox" id="fUnlock"> 문서 비밀번호 풀기</label>` : ''}</div>
@@ -1123,6 +1151,12 @@ function renderEdit(main){
       <label class="zone" id="zone">여기에 PDF를 끌어다 놓거나 눌러서 고르세요<input type="file" id="fPdf" accept=".pdf"><div class="f" id="pdfName">${esc(pdfName)}</div></label></div>
     <div class="actions"><button class="btn primary" id="doCompare" title="Ctrl+S">저장</button><button class="btn" id="cancelEdit">취소</button><span class="msg" id="editMsg"></span></div>
   </div>`;
+  // 볼 수 있는 사람: 전체 선택/해제 + Shift+클릭 범위
+  let lastVis=-1; const visBoxes=()=>[...main.querySelectorAll('#visList input:not([disabled])')];
+  $('#visAll').addEventListener('click', ()=>{ visBoxes().forEach(b=>b.checked=true); view.dirty=true; });
+  $('#visNone').addEventListener('click', ()=>{ visBoxes().forEach(b=>b.checked=false); view.dirty=true; });
+  visBoxes().forEach((b,idx)=>b.addEventListener('click', e=>{ if (e.shiftKey && lastVis>=0){ const [a1,b1]=[Math.min(lastVis,idx), Math.max(lastVis,idx)]; visBoxes().slice(a1,b1+1).forEach(x=>x.checked=true); } lastVis=idx; view.dirty=true; }));
+  const readVis=()=>{ const all=visBoxes(); const on=all.filter(b=>b.checked).map(b=>b.dataset.id); return (on.length===all.length) ? null : on; };
   const syncType = ()=>{ $('#textPart').hidden = type!=='text'; $('#wordPart').hidden = type!=='word'; $('#pdfPart').hidden = type!=='pdf';
     main.querySelectorAll('.types label').forEach(l=>l.classList.toggle('on', l.querySelector('input').value===type)); };
   syncType();
@@ -1179,13 +1213,13 @@ function renderEdit(main){
     let d; const id = c.id || ('c'+Date.now().toString(36));
     if (type==='pdf'){
       if (!pdfB64) return err('PDF 파일을 넣어 주세요.');
-      d = Object.assign({}, c, base, {type:'pdf', id, pdf: pdfB64, pdfDirty, marks: c.marks||[], lockPw, unlockReq}); delete d.src; delete d.html;
+      d = Object.assign({}, c, base, {type:'pdf', id, pdf: pdfB64, pdfDirty, marks: c.marks||[], lockPw, unlockReq, vis:readVis()}); delete d.src; delete d.html;
     } else if (type==='word'){
       if (!wordHtml) return err('Word 파일을 넣어 주세요.');
-      d = Object.assign({}, c, base, {type:'word', id, html: wordHtml, marks: (hasMarks?c.marks:[]), lockPw, unlockReq}); delete d.pdf; delete d.pages; delete d.src;
+      d = Object.assign({}, c, base, {type:'word', id, html: wordHtml, marks: (hasMarks?c.marks:[]), lockPw, unlockReq, vis:readVis()}); delete d.pdf; delete d.pages; delete d.src;
     } else {
       const src=$('#fOrig').value; if (!src.trim()) return err('원문을 넣어 주세요.');
-      d = Object.assign({}, c, base, {type:'text', id, src, marks: (hasMarks?c.marks:[]), lockPw, unlockReq}); delete d.pdf; delete d.pages; delete d.html;
+      d = Object.assign({}, c, base, {type:'text', id, src, marks: (hasMarks?c.marks:[]), lockPw, unlockReq, vis:readVis()}); delete d.pdf; delete d.pages; delete d.html;
     }
     view = {mode:'case', id:d.id, draft:d, dirty:true, show:'side'};
     const btn=$('#doCompare'); const msgEl=$('#editMsg'); msgEl.className='msg'; msgEl.id='saveMsg';
@@ -1291,11 +1325,12 @@ async function loadDoc(c){
   let key=K;
   if (d.lock){ key=await docKey(c, d); if (!key) throw new Error('문서 비밀번호가 필요합니다'); c.lock=true; c._wrap=d.wrap; } else { c.lock=false; }
   const payload=JSON.parse(td.decode(await decB(key, ub64(d.ct))));
-  Object.assign(c, {title:d.title, date:d.date, ts:d.ts||'', type:d.type||'text', client:d.client}, payload);
+  Object.assign(c, {title:d.title, date:d.date, ts:d.ts||'', type:d.type||'text', client:d.client, vis:(Array.isArray(d.vis)?d.vis:null)}, payload);
   if (isPdf(c)){ const pe=await ghRead(`docs/${c.id}.pdf.enc`); if (!pe) throw new Error('PDF 파일이 없습니다'); c.pdf=b64(await decB(key, pe)); }
   c.loaded=true; return c;
 }
-function meta(c){ return {id:c.id, title:c.title, date:c.date, ts:c.ts||'', type:c.type||'text', client:c.client||'', n:caseCount(c), lock:!!c.lock}; }
+function meta(c){ return {id:c.id, title:c.title, date:c.date, ts:c.ts||'', type:c.type||'text', client:c.client||'', n:caseCount(c), lock:!!c.lock, vis:(Array.isArray(c.vis)?c.vis:null)}; }
+function canSee(c){ if (!me || me.role!=='viewer') return true; return !Array.isArray(c.vis) || c.vis.includes(me.id); }
 function stampNow(c){ const d=new Date(); const z=n=>String(n).padStart(2,'0'); c.ts=`${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}T${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; c.date=c.ts.slice(0,10); }
 function fmtWhen(c){ const t=c.ts||c.date||''; if (!t) return ''; const y=t.slice(2,4), mo=t.slice(5,7), d=t.slice(8,10); const hm=t.length>=16 ? ' '+t.slice(11,16) : ''; return `'${y}/${mo}/${d}${hm}`; }
 async function updateIndex(fn){
@@ -1396,87 +1431,180 @@ async function migrateEditorSecret(key, kr, t){
   const c2=JSON.parse(JSON.stringify(cfg)); c2.editor.s=b64(await encB(key, te.encode(sNew)));
   await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'editor secret'); cfg=c2; esec=sNew; Ke=KeNew;
 }
+let me=null;   // {id, name, role:'admin'|'editor'|'viewer'}
 function saveSess(remember){
-  const v=JSON.stringify({role, k:b64(Kraw), t:token, s:esec});
+  const v=JSON.stringify({role, k:b64(Kraw), t:token, s:esec, me});
   try { sessionStorage.setItem('redpen.sess', v); if (remember) localStorage.setItem('redpen.sess', v); else localStorage.removeItem('redpen.sess'); } catch(e){}
+}
+// 계정 봉투: 계정 비밀번호로 사이트 열쇠 K 를 감싸고, 편집자·관리자는 편집자 비밀 esec 도 함께
+async function makeUserEnvelope(pw, role){
+  const salt=b64(crypto.getRandomValues(new Uint8Array(16))); const key=await kek(pw, salt, cfg.iter);
+  const env={salt, k:b64(await encB(key, Kraw))};
+  if (role!=='viewer') env.s=b64(await encB(key, te.encode(esec)));
+  return env;
+}
+async function unlockUser(id, pw){
+  const u=(cfg.users||[]).find(x=>x.id.toLowerCase()===id.trim().toLowerCase()); if (!u) return false;
+  const key=await kek(pw, u.salt, cfg.iter);
+  try {
+    const kr=await decB(key, ub64(u.k)); Kraw=kr; K=await importK(kr); me={id:u.id, name:u.name, role:u.role};
+    if (u.role!=='viewer'){ esec=td.decode(await decB(key, ub64(u.s))); Ke=await deriveKe(kr, esec); token=td.decode(await decB(Ke, ub64(cfg.tok))); role='editor'; }
+    else { esec=null; Ke=null; token=null; role='viewer'; }
+    return true;
+  } catch(_){ Kraw=null; K=null; me=null; return false; }
 }
 function lockScreen(){
   return new Promise(res=>{
     const ov=document.createElement('div'); ov.className='ask lock';
-    ov.innerHTML=`<form class="box" role="dialog" aria-modal="true"><h3>쑤닐의 퇴고장</h3><p>비밀번호를 넣으세요. 뷰어 비밀번호는 읽기만, 편집자 비밀번호는 저장까지 됩니다.</p>
-      <input type="password" id="pwIn" autocomplete="current-password" placeholder="비밀번호">
-      <label class="rm"><input type="checkbox" id="pwRemember"> 이 브라우저에 기억</label>
-      <div class="msg err" id="pwErr"></div>
-      <div class="row"><button class="btn primary" type="submit">열기</button></div></form>`;
-    document.body.appendChild(ov); const inp=ov.querySelector('#pwIn'); inp.focus();
+    const legacy = !(cfg.users && cfg.users.length);
+    ov.innerHTML = legacy
+      ? `<form class="box" role="dialog" aria-modal="true"><h3>쑤닐의 퇴고장</h3><p>계정 방식으로 바뀌었습니다. 지금 쓰던 <b>편집자 비밀번호</b>로 한 번 인증하고 관리자 계정을 만드세요. 그 뒤로는 공용 비밀번호가 없어지고 계정으로 들어옵니다.</p>
+          <label class="l">현재 편집자 비밀번호</label><input type="password" id="pwOld" autocomplete="current-password">
+          <label class="l">관리자 ID</label><input type="text" id="uId" autocomplete="username" placeholder="영문·숫자">
+          <label class="l">이름 (메모 말머리에 붙습니다)</label><input type="text" id="uName" placeholder="예: 쑤닐">
+          <label class="l">관리자 비밀번호 (8자 이상)</label><input type="password" id="uPw" autocomplete="new-password">
+          <div class="msg err" id="pwErr"></div>
+          <div class="row"><button class="btn primary" type="submit">관리자 계정 만들기</button></div></form>`
+      : `<form class="box" role="dialog" aria-modal="true"><h3>쑤닐의 퇴고장</h3>
+          <label class="l">ID</label><input type="text" id="uId" autocomplete="username">
+          <label class="l">비밀번호</label><input type="password" id="pwIn" autocomplete="current-password">
+          <label class="rm"><input type="checkbox" id="pwRemember"> 이 브라우저에 기억</label>
+          <div class="msg err" id="pwErr"></div>
+          <div class="row"><button class="btn primary" type="submit">로그인</button></div></form>`;
+    document.body.appendChild(ov); ov.querySelector('input').focus();
     ov.querySelector('form').addEventListener('submit', async e=>{
-      e.preventDefault(); const btn=ov.querySelector('button'); btn.disabled=true; ov.querySelector('#pwErr').textContent='확인하는 중…';
-      const ok=await tryUnlock(inp.value);
-      if (ok){ saveSess(ov.querySelector('#pwRemember').checked); ov.remove(); res(); }
-      else { ov.querySelector('#pwErr').textContent='비밀번호가 맞지 않습니다.'; btn.disabled=false; inp.select(); }
+      e.preventDefault(); const btn=ov.querySelector('button[type=submit]'); const err=ov.querySelector('#pwErr'); btn.disabled=true; err.textContent='확인하는 중…';
+      try {
+        if (legacy){
+          const id=ov.querySelector('#uId').value.trim(), name=ov.querySelector('#uName').value.trim(), pw=ov.querySelector('#uPw').value;
+          if (!/^[A-Za-z0-9_.-]{2,32}$/.test(id)) throw new Error('ID 는 영문·숫자 2-32자로.');
+          if (!name) throw new Error('이름을 넣어 주세요.'); if (pw.length<8) throw new Error('비밀번호는 8자 이상으로.');
+          if (!(await tryUnlock(ov.querySelector('#pwOld').value)) || role!=='editor') throw new Error('편집자 비밀번호가 맞지 않습니다.');
+          // 관리자 계정 + 토큰 봉투(편집자 열쇠로) 만들고, 공용 봉투는 제거
+          const env=await makeUserEnvelope(pw, 'admin');
+          const c2={v:2, iter:cfg.iter, users:[Object.assign({id, name, role:'admin'}, env)], tok:b64(await encB(Ke, te.encode(token)))};
+          await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'accounts'); cfg=c2; me={id, name, role:'admin'};
+          saveSess(false); ov.remove(); toast('관리자 계정을 만들었습니다. 「사용자 관리」에서 다른 사람 계정을 만드세요.'); res(); return;
+        }
+        const ok=await unlockUser(ov.querySelector('#uId').value, ov.querySelector('#pwIn').value);
+        if (!ok) throw new Error('ID 또는 비밀번호가 맞지 않습니다.');
+        saveSess(ov.querySelector('#pwRemember').checked); ov.remove(); res();
+      } catch(ex){ err.textContent=(ex&&ex.message)||String(ex); btn.disabled=false; }
     });
   });
 }
 function lockNow(){ try { sessionStorage.removeItem('redpen.sess'); localStorage.removeItem('redpen.sess'); } catch(e){} location.hash=''; location.reload(); }
 async function changePasswords(){
+  const isAdmin = me && me.role==='admin';
   const ov=document.createElement('div'); ov.className='ask';
-  ov.innerHTML=`<form class="box" role="dialog" aria-modal="true"><h3>비밀번호 바꾸기</h3><p>비워 두면 그대로 둡니다. 바꾼 비밀번호는 다른 사람에게 다시 알려 줘야 합니다.</p>
-    <label class="l">새 뷰어 비밀번호</label><input type="password" id="pwV" autocomplete="new-password">
-    <label class="l">새 편집자 비밀번호</label><input type="password" id="pwE" autocomplete="new-password">
-    <label class="l">새 깃헙 토큰 (갱신할 때만)</label><input type="password" id="pwT" autocomplete="off" placeholder="github_pat_…">
-    <label class="l">현재 편집자 비밀번호 (토큰을 갱신할 때 필요)</label><input type="password" id="pwCur" autocomplete="current-password">
+  ov.innerHTML=`<form class="box" role="dialog" aria-modal="true"><h3>내 비밀번호 바꾸기</h3>
+    <label class="l">현재 비밀번호</label><input type="password" id="pwCur" autocomplete="current-password">
+    <label class="l">새 비밀번호 (8자 이상)</label><input type="password" id="pwNew" autocomplete="new-password">
+    ${isAdmin ? `<label class="l">새 깃헙 토큰 (갱신할 때만)</label><input type="password" id="pwT" autocomplete="off" placeholder="github_pat_…">` : ''}
     <div class="msg err" id="pwErr2"></div>
     <div class="row"><button class="btn" type="button" id="pwCancel">취소</button><button class="btn primary" type="submit">바꾸기</button></div></form>`;
-  document.body.appendChild(ov); ov.querySelector('#pwV').focus();
+  document.body.appendChild(ov); ov.querySelector('#pwCur').focus();
   ov.querySelector('#pwCancel').addEventListener('click', ()=>ov.remove());
   ov.querySelector('form').addEventListener('submit', async e=>{
-    e.preventDefault(); const nv=ov.querySelector('#pwV').value, ne=ov.querySelector('#pwE').value, nt=ov.querySelector('#pwT').value.trim(), cur=ov.querySelector('#pwCur').value; const err=ov.querySelector('#pwErr2');
-    if (!nv && !ne && !nt){ ov.remove(); return; }
-    if (nt && !ne && !cur){ err.textContent='토큰을 갱신하려면 현재 편집자 비밀번호가 필요합니다.'; return; }
-    if ((nv && nv.length<8) || (ne && ne.length<8)){ err.textContent='8자 이상으로 해 주세요.'; return; }
-    if (nv && ne && nv===ne){ err.textContent='뷰어와 편집자 비밀번호는 달라야 합니다.'; return; }
+    e.preventDefault(); const cur=ov.querySelector('#pwCur').value, nw=ov.querySelector('#pwNew').value, nt=isAdmin?ov.querySelector('#pwT').value.trim():''; const err=ov.querySelector('#pwErr2');
+    if (!nw && !nt){ ov.remove(); return; }
+    if (nw && nw.length<8){ err.textContent='8자 이상으로 해 주세요.'; return; }
+    if (!token){ err.textContent='뷰어는 저장 권한이 없어 스스로 바꿀 수 없습니다. 관리자에게 재설정을 부탁하세요.'; return; }
     err.textContent='바꾸는 중…';
     try {
-      // 현재 비밀번호를 모르는 쪽은 기존 봉투를 그대로 두되, salt 를 바꾸면 둘 다 다시 싸야 하므로 salt 는 유지한다
+      const u=cfg.users.find(x=>x.id===me.id); const key=await kek(cur, u.salt, cfg.iter);
+      try { await decB(key, ub64(u.k)); } catch(_){ throw new Error('현재 비밀번호가 맞지 않습니다'); }
       const c2=JSON.parse(JSON.stringify(cfg));
+      if (nw){ const env=await makeUserEnvelope(nw, me.role); Object.assign(c2.users.find(x=>x.id===me.id), env); }
       let newTok=token;
       if (nt){
-        // 새 토큰이 이 저장소를 실제로 쓸 수 있는지 먼저 확인
         const r=await fetch(apiUrl('config.json')+`?ref=${GH.branch}&v=${Date.now()}`, {headers:{Authorization:'Bearer '+nt, Accept:'application/vnd.github+json'}, cache:'no-store'});
-        if (!r.ok) throw new Error('새 토큰으로 저장소를 읽지 못했습니다 ('+r.status+'). 토큰의 저장소·권한(Contents: Read and write)을 확인하세요');
-        newTok=nt;
-      }
-      if (nv){ const kv=await kek(nv, cfg.salt, cfg.iter); c2.viewer={k:b64(await encB(kv, Kraw))}; }
-      if (ne || nt){
-        // 편집자 봉투를 다시 싼다. 새 편집자 비번이 없으면 현재 비번으로(먼저 맞는지 확인)
-        let ke; if (ne) ke=await kek(ne, cfg.salt, cfg.iter); else { ke=await kek(cur, cfg.salt, cfg.iter); try { await decB(ke, ub64(cfg.editor.k)); } catch(_){ throw new Error('현재 편집자 비밀번호가 맞지 않습니다'); } }
-        c2.editor={k:b64(await encB(ke, Kraw)), t:b64(await encB(ke, te.encode(newTok))), s:b64(await encB(ke, te.encode(esec)))};
+        if (!r.ok) throw new Error('새 토큰으로 저장소를 읽지 못했습니다 ('+r.status+'). 저장소·권한(Contents: Read and write)을 확인하세요');
+        newTok=nt; c2.tok=b64(await encB(Ke, te.encode(newTok)));
       }
       const oldTok=token; token=newTok;
-      try { await ghWrite('config.json', te.encode(JSON.stringify(c2)), nt?'token rotated':'passwords'); } catch(ex){ token=oldTok; throw ex; }
+      try { await ghWrite('config.json', te.encode(JSON.stringify(c2)), nt?'token rotated':'password'); } catch(ex){ token=oldTok; throw ex; }
       cfg=c2; saveSess(!!localStorage.getItem('redpen.sess')); ov.remove();
       toast(nt ? '토큰을 갱신했습니다. 깃헙에서 옛 토큰을 삭제하세요.' : '비밀번호를 바꿨습니다');
     } catch(ex){ err.textContent=(ex&&ex.message)||String(ex); }
   });
 }
+// ── 사용자 관리(관리자): ID · 이름 · 권한 · 비밀번호 재설정 · 삭제 ──
+async function manageUsers(){
+  const ov=document.createElement('div'); ov.className='ask';
+  const ROLE={admin:'관리자', editor:'편집자', viewer:'뷰어'};
+  const draw=()=>{
+    ov.innerHTML=`<div class="box users" role="dialog" aria-modal="true"><h3>사용자 관리</h3>
+      <table><thead><tr><th>ID</th><th>이름</th><th>권한</th><th></th></tr></thead><tbody>${cfg.users.map(u=>`
+        <tr data-id="${esc(u.id)}"><td class="mono">${esc(u.id)}</td><td><input class="nm" value="${esc(u.name)}"></td>
+        <td><select class="rl">${Object.keys(ROLE).map(r=>`<option value="${r}" ${u.role===r?'selected':''}>${ROLE[r]}</option>`).join('')}</select></td>
+        <td class="acts"><button class="btn small" data-a="pw">비번 재설정</button>${u.id===me.id?'':`<button class="btn small danger" data-a="del">삭제</button>`}</td></tr>`).join('')}</tbody></table>
+      <h4>새 계정</h4>
+      <div class="newrow"><input id="nId" placeholder="ID (영문·숫자)"><input id="nName" placeholder="이름"><select id="nRole"><option value="viewer">뷰어</option><option value="editor">편집자</option><option value="admin">관리자</option></select><input id="nPw" type="password" placeholder="초기 비밀번호 (8자+)" autocomplete="new-password"><button class="btn small primary" id="nAdd">추가</button></div>
+      <div class="msg err" id="uErr"></div>
+      <div class="row"><button class="btn" id="uClose">닫기</button><button class="btn primary" id="uSave">이름·권한 저장</button></div></div>`;
+    const err=ov.querySelector('#uErr');
+    ov.querySelector('#uClose').addEventListener('click', ()=>ov.remove());
+    ov.querySelector('#uSave').addEventListener('click', async ()=>{
+      try { const c2=JSON.parse(JSON.stringify(cfg));
+        ov.querySelectorAll('tbody tr').forEach(tr=>{ const u=c2.users.find(x=>x.id===tr.dataset.id); if (!u) return; u.name=tr.querySelector('.nm').value.trim()||u.name; const r=tr.querySelector('.rl').value; if (r!==u.role){ if (u.role==='viewer' && r!=='viewer') throw new Error(`${u.id}: 뷰어를 편집자로 올리려면 비밀번호 재설정으로 새 봉투를 만들어야 합니다(같은 줄의 「비번 재설정」에서 권한과 함께 처리됩니다)`); u.role=r; if (r==='viewer') delete u.s; } });
+        if (!c2.users.some(u=>u.role==='admin')) throw new Error('관리자가 최소 한 명은 있어야 합니다');
+        await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'users'); cfg=c2; if (me){ const mu=cfg.users.find(x=>x.id===me.id); if (mu){ me.name=mu.name; me.role=mu.role; saveSess(!!localStorage.getItem('redpen.sess')); applyRole(); } }
+        toast('저장했습니다'); draw();
+      } catch(ex){ err.textContent=(ex&&ex.message)||String(ex); }
+    });
+    ov.querySelector('#nAdd').addEventListener('click', async ()=>{
+      try { const id=ov.querySelector('#nId').value.trim(), name=ov.querySelector('#nName').value.trim(), r=ov.querySelector('#nRole').value, pw=ov.querySelector('#nPw').value;
+        if (!/^[A-Za-z0-9_.-]{2,32}$/.test(id)) throw new Error('ID 는 영문·숫자 2-32자로.'); if (!name) throw new Error('이름을 넣어 주세요.'); if (pw.length<8) throw new Error('초기 비밀번호는 8자 이상으로.');
+        if (cfg.users.some(u=>u.id.toLowerCase()===id.toLowerCase())) throw new Error('이미 있는 ID 입니다.');
+        const env=await makeUserEnvelope(pw, r); const c2=JSON.parse(JSON.stringify(cfg)); c2.users.push(Object.assign({id, name, role:r}, env));
+        await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'user add: '+id); cfg=c2; toast(`${name}(${id}) 계정을 만들었습니다. ID 와 초기 비밀번호를 전해 주세요.`); draw();
+      } catch(ex){ err.textContent=(ex&&ex.message)||String(ex); }
+    });
+    ov.querySelectorAll('[data-a="pw"]').forEach(b=>b.addEventListener('click', async ()=>{
+      const tr=b.closest('tr'); const id=tr.dataset.id; const r=tr.querySelector('.rl').value;
+      const pw=await askPw2(`${id} 의 새 비밀번호 (8자 이상)`); if (pw===null) return; if (pw.length<8){ err.textContent='8자 이상으로.'; return; }
+      try { const env=await makeUserEnvelope(pw, r); const c2=JSON.parse(JSON.stringify(cfg)); const u=c2.users.find(x=>x.id===id); Object.assign(u, env, {role:r}); if (r==='viewer') delete u.s;
+        await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'user pw: '+id); cfg=c2; toast(`${id} 비밀번호를 재설정했습니다`); draw();
+      } catch(ex){ err.textContent=(ex&&ex.message)||String(ex); }
+    }));
+    ov.querySelectorAll('[data-a="del"]').forEach(b=>b.addEventListener('click', async ()=>{
+      const id=b.closest('tr').dataset.id; if (!(await ask(`${id} 계정을 지웁니다.`,'지우기'))) return;
+      try { const c2=JSON.parse(JSON.stringify(cfg)); c2.users=c2.users.filter(u=>u.id!==id); if (!c2.users.some(u=>u.role==='admin')) throw new Error('관리자가 최소 한 명은 있어야 합니다');
+        await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'user del: '+id); cfg=c2; toast('지웠습니다'); draw();
+      } catch(ex){ err.textContent=(ex&&ex.message)||String(ex); }
+    }));
+  };
+  draw(); document.body.appendChild(ov);
+}
+function askPw2(label){
+  return new Promise(res=>{
+    const ov=document.createElement('div'); ov.className='ask';
+    ov.innerHTML=`<form class="box" role="dialog" aria-modal="true"><p>${esc(label)}</p><input type="password" id="p2" autocomplete="new-password"><div class="row"><button class="btn" type="button" id="p2c">취소</button><button class="btn primary" type="submit">확인</button></div></form>`;
+    document.body.appendChild(ov); ov.querySelector('#p2').focus();
+    ov.querySelector('#p2c').addEventListener('click', ()=>{ ov.remove(); res(null); });
+    ov.querySelector('form').addEventListener('submit', e=>{ e.preventDefault(); const v=ov.querySelector('#p2').value; ov.remove(); res(v); });
+  });
+}
 function applyRole(){
   artifactNs = role==='editor' ? {} : null;
   $('#btnSel').hidden = !artifactNs;
-  $('#btnNew').hidden = !artifactNs; $('#btnPw').hidden = !artifactNs;
-  $('#whoami').textContent = role==='editor' ? '편집자' : '뷰어';
+  $('#btnNew').hidden = !artifactNs; $('#btnPw').hidden = !me;
+  $('#btnUsers').hidden = !(me && me.role==='admin');
+  $('#whoami').textContent = me ? `${me.name} · ${({admin:'관리자', editor:'편집자', viewer:'뷰어'})[me.role]||''}` : (role==='editor' ? '편집자' : '뷰어');
 }
 async function boot(){
   try { await loadConfig(); } catch(e){ $('#main').innerHTML=`<div class="head"><p class="msg err">설정 파일을 읽지 못했습니다: ${esc((e&&e.message)||e)}</p></div>`; return; }
   let sess=null; try { sess=JSON.parse(sessionStorage.getItem('redpen.sess')||localStorage.getItem('redpen.sess')||'null'); } catch(e){}
   let spot=null;
-  if (sess && sess.role && sess.k){ role=sess.role; token=sess.t||null; Kraw=ub64(sess.k); K=await importK(Kraw); esec=sess.s||null;
+  if (sess && sess.role && sess.k && sess.me){ role=sess.role; token=sess.t||null; Kraw=ub64(sess.k); K=await importK(Kraw); esec=sess.s||null; me=sess.me;
     if (token && esec) Ke=await deriveKe(Kraw, esec); else if (token){ try { sessionStorage.removeItem('redpen.sess'); localStorage.removeItem('redpen.sess'); } catch(e){} sess=null; }
     try { spot=JSON.parse(sessionStorage.getItem('redpen.spot')||'null'); } catch(e){} }
-  if (!(sess && sess.role && sess.k)){ await lockScreen(); try { sessionStorage.removeItem('redpen.spot'); } catch(e){} }
+  if (!(sess && sess.role && sess.k && sess.me)){ await lockScreen(); try { sessionStorage.removeItem('redpen.spot'); } catch(e){} }
   applyRole();
   try { await loadIndex(); } catch(e){ toast('목록을 읽지 못했습니다: '+((e&&e.message)||e)); }
   const m=location.hash.match(/case=([\w-]+)/);
-  if (m && cases.some(c=>c.id===m[1])) view={mode:'case', id:m[1], draft:null, dirty:false, show:'side'};
+  if (m && cases.some(c=>c.id===m[1] && canSee(c))) view={mode:'case', id:m[1], draft:null, dirty:false, show:'side'};
   if (spot && view.mode==='case' && spot.id===view.id){ lastNoteFocus=spot.f||null; pendingSpot={y:spot.y||0}; }   // 새로고침: 마지막 자리로
   render();
 }
@@ -1534,6 +1662,7 @@ $('#selAll').addEventListener('click', ()=>{ if (selIds.size===cases.length) sel
 $('#selDel').addEventListener('click', async ()=>{ const ids=[...selIds]; if (!ids.length) return;
   if (!(await ask(`선택한 ${ids.length}건을 지웁니다. 되돌릴 수 없습니다.`,'모두 지우기'))) return; selMode=false; await deleteMany(ids); });
 $('#btnPw').addEventListener('click', changePasswords);
+$('#btnUsers').addEventListener('click', manageUsers);
 $('#btnNew').hidden = true; $('#btnPw').hidden = true;
 render();
 boot();
