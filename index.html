@@ -717,7 +717,7 @@ function renderCase(main, c){
         <button data-show="orig" class="${view.show==='orig'?'on':''}">원문 그대로</button>
         <button data-show="rev" class="${view.show==='rev'?'on':''}">수정본 그대로</button>
         <button data-show="list" class="${view.show==='list'?'on':''}">메모 목록만</button>
-      </div><button class="btn small" id="copyRev">수정본 복사</button><button class="btn small" id="copyList">목록 복사</button>`)
+      </div><button class="btn small" id="copyRev">수정본 복사</button><button class="btn small" id="copyList">메모 복사</button>`)
     + (artifactNs ? `<div class="hint">메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X (목록 복사 때는 슬랙 표기로 나감)</div>` : '');
   main.appendChild(head);
 
@@ -884,12 +884,12 @@ function refreshPdfHead(c){
     `<span>표시 <b>${c.marks.length}</b>곳</span><span class="d">삭제 <b>${n('del')}</b></span><span class="i">바꾸기 <b>${n('rep')}</b></span><span class="m">메모 <b>${n('memo')}</b></span><span>쪽 <b>${c.pages||'?'}</b></span>`,
     `<div class="seg"><button id="modeDoc" class="${pdfListMode?'':'on'}">문서 위 메모 표시</button><button id="modeList" class="${pdfListMode?'on':''}">메모 목록만</button></div>
      <span class="pager" title="쪽 이동: Alt+W 이전 · Alt+S 다음 · Alt+G 번호 입력"><button id="pgPrev" aria-label="이전 쪽" title="Alt+W">‹</button><input id="pgIn" inputmode="numeric" value="${currentPage()||1}" aria-label="쪽 번호"><span class="sl">/</span><b id="pgTot">${c.pages||'?'}</b><button id="pgNext" aria-label="다음 쪽" title="Alt+S">›</button></span>
-     <button class="btn small" id="toggleMarks" ${pdfListMode?'disabled':''}>${hidden?'표시 보이기':'표시 감추기'}</button>
-     ${canEdit ? `<button class="btn small danger" id="clearBtn" ${c.marks.length?'':'disabled'}>표시 모두 지우기</button>
+     <button class="btn small" id="toggleMarks" ${pdfListMode?'disabled':''}>${hidden?'메모 보이기':'메모 감추기'}</button>
+     ${canEdit ? `<button class="btn small danger" id="clearBtn" ${c.marks.length?'':'disabled'}>메모 모두 지우기</button>
      <button class="btn small" id="undoBtn" title="Ctrl+Z${hist.undo.length?' · '+esc(hist.undo[hist.undo.length-1].l):''}" ${hist.undo.length?'':'disabled'}>↶ 되돌리기${hist.undo.length?' '+hist.undo.length:''}</button>
      <button class="btn small" id="redoBtn" title="Ctrl+Shift+Z${hist.redo.length?' · '+esc(hist.redo[hist.redo.length-1].l):''}" ${hist.redo.length?'':'disabled'}>↷ 다시 실행${hist.redo.length?' '+hist.redo.length:''}</button>
      <button class="btn small" id="histBtn" title="되돌리기 이력을 보고 골라서 되돌아가기" ${(hist.undo.length||hist.redo.length)?'':'disabled'}>실행 기록</button>` : ''}
-     <button class="btn small" id="copyList">목록 복사</button>`)
+     <button class="btn small" id="copyList">메모 복사</button>`)
     + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모를 얹을 수 있습니다 (Alt+1/2/3)':''} · Ctrl+휠 확대·축소 · 쪽 이동 Alt+W/S, 번호 Alt+G · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
   $('#modeDoc').addEventListener('click', ()=>{ pdfListMode=false; refreshPdfHead(c); });
@@ -906,7 +906,7 @@ function refreshPdfHead(c){
     $('#pgPrev').addEventListener('click', ()=>goPage((currentPage()||1)-1));
     $('#pgNext').addEventListener('click', ()=>goPage((currentPage()||1)+1));
   }
-  if (cb) cb.addEventListener('click', async ()=>{ if (!(await ask(`표시 ${c.marks.length}곳을 모두 지웁니다. 되돌리기로 복구할 수 있습니다.`,'모두 지우기'))) return; pushHist(c, `표시 모두 지우기 (${c.marks.length})`); c.marks=[]; view.dirty=true; drawAllMarks(c); refreshPdfHead(c); });
+  if (cb) cb.addEventListener('click', async ()=>{ if (!(await ask(`메모 ${c.marks.length}곳을 모두 지웁니다. 되돌리기로 복구할 수 있습니다.`,'모두 지우기'))) return; pushHist(c, `메모 모두 지우기 (${c.marks.length})`); c.marks=[]; view.dirty=true; drawAllMarks(c); refreshPdfHead(c); });
   bindHead(c, collectMarks);
   // 목록만 보기 ↔ 문서 보기
   const sheet=$('#pdfSheet'), list=$('#mlist');
