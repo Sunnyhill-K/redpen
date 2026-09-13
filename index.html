@@ -371,7 +371,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .toast.show{opacity:1}
 
 /* ── 반응형 ── */
-@media (max-width:980px){
+@media (max-width:760px){
   .sheet,.overall,.sheet.pdf{grid-template-columns:1fr}
   .notes{position:static}
   .note{position:static;margin:6px 0}
@@ -762,7 +762,7 @@ function bindNotes(){
 }
 function layoutNotes(){
   const notes=$('#notes'), doc=$('#doc'); if (!notes || !doc || notes.hidden) return;
-  const stacked = window.innerWidth <= 980 || (notes.closest('.three') && window.innerWidth <= 1240);
+  const stacked = window.innerWidth <= 760;
   if (stacked){ notes.style.height=''; notes.querySelectorAll('.note').forEach(n=>n.style.top=''); return; }
   const base = notes.getBoundingClientRect().top; let bottom = notes.closest('.pdf') || notes.closest('.three') ? 26 : 0;
   notes.querySelectorAll('.note').forEach(n=>{
@@ -826,7 +826,7 @@ function baseHtml(c){ return c.type==='word' ? (c.html||'') : `<div class="pre">
 // 텍스트·Word 틀 폭: 기준 폭 × 문서 배율(PDF 와 같은 규칙). 넘치면 창이 가로로 움직인다
 function layoutTextDoc(){
   const cont=$('#doc'); if (!cont || !cont.classList.contains('txtdoc')) return;
-  const sheet=cont.closest('.sheet'); const stacked = window.innerWidth <= 980;
+  const sheet=cont.closest('.sheet'); const stacked = window.innerWidth <= 760;
   const notesW = Math.round(280*uiScale); const mainW = $('#main').clientWidth - 40 - 28;
   const baseW = stacked ? mainW : Math.max(320, Math.min(1180, mainW) - notesW - 28);
   const width = Math.round(baseW * zoom.text);
@@ -1090,7 +1090,7 @@ async function drawPages(){
   const cont = $('#doc'); if (!cont) return;
   cont.innerHTML=''; cont.classList.remove('pdfmsg');
   // 기준 폭 = 100%일 때의 문서 열 폭. 확대하면 틀(.pages)을 그 배수로 키운다
-  const sheet = cont.closest('.sheet'); const stacked = window.innerWidth <= 980;
+  const sheet = cont.closest('.sheet'); const stacked = window.innerWidth <= 760;
   const mainW = $('#main').clientWidth - 40 - 28;
   const notesW = Math.round(280*uiScale);
   const baseW = stacked ? mainW : Math.max(320, Math.min(1180, mainW) - notesW - 28);
