@@ -297,8 +297,14 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .ask .box.hist li.redo .k{color:var(--ins)}
 .ask .box.hist li .t{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
 
+/* ── 맨 위/맨 아래 동그란 버튼 ── */
+.fabs{position:fixed;right:22px;bottom:22px;display:flex;flex-direction:column;gap:8px;z-index:8}
+.fab{width:40px;height:40px;border-radius:50%;border:1px solid var(--ink-3);background:var(--paper);color:var(--ink);font-size:18px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;padding:0}
+.fab:hover{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+@media (max-width:760px){.fabs{right:12px;bottom:12px}}
+
 /* ── 토스트 ── */
-.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:8px 14px;border-radius:4px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
+.toast{position:fixed;left:50%;bottom:22px;max-width:calc(100vw - 140px);transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:8px 14px;border-radius:4px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
 .toast.show{opacity:1}
 
 /* ── 반응형 ── */
@@ -342,6 +348,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
   <main id="main"></main>
 </div>
 
+<div class="fabs"><button class="fab" id="fabTop" title="맨 위로" aria-label="맨 위로">↑</button><button class="fab" id="fabBottom" title="맨 아래로" aria-label="맨 아래로">↓</button></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1446,6 +1453,8 @@ window.addEventListener('beforeunload', e=>{ if (view.dirty){ e.preventDefault()
 document.fonts && document.fonts.ready.then(()=>layoutNotes());
 
 $('#btnLock').addEventListener('click', lockNow);
+$('#fabTop').addEventListener('click', ()=>window.scrollTo({top:0, behavior:'smooth'}));
+$('#fabBottom').addEventListener('click', ()=>window.scrollTo({top:document.documentElement.scrollHeight, behavior:'smooth'}));
 $('#brand').addEventListener('click', ()=>$('#btnList').click());
 $('#brand').addEventListener('keydown', e=>{ if (e.key==='Enter') $('#btnList').click(); });
 $('#btnSel').addEventListener('click', ()=>{ selMode=!selMode; lastSel=-1; if (!selMode) selIds.clear(); renderList(); });
