@@ -116,7 +116,7 @@ a{color:var(--ins)}
 .empty{padding:16px;color:var(--ink-3);font-size:calc(13px * var(--ui,1))}
 
 main{padding-block:0 60px;padding-inline:20px;min-width:0}
-body.zoomed-body .top{left:0;width:100vw}
+body.zoomed-body .top{left:0;width:var(--vw,100vw)}
 .shell{--rail-w:240px}
 .shell.nrail{--rail-w:44px}
 
@@ -126,7 +126,7 @@ body.zoomed-body .top{left:0;width:100vw}
 /* ── 사건 머리 ── */
 .head{max-width:none;margin:0 0 18px;position:sticky;top:var(--top-h,50px);z-index:4;background:var(--paper);padding-top:16px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
 .head .hint{margin-top:8px}
-body.zoomed-body .head{left:calc(var(--rail-w,240px) + 20px);max-width:calc(100vw - var(--rail-w,240px) - 40px)}   /* 가로 스크롤 때 머리는 목록 오른쪽부터 창 끝까지, 그 밑으로 문서가 지나간다 */
+body.zoomed-body .head{left:calc(var(--rail-w,240px) + 20px);width:calc(var(--vw,100vw) - var(--rail-w,240px) - 40px);max-width:none}   /* 가로 스크롤 때 머리는 목록 오른쪽부터 창 끝까지, 그 밑으로 문서가 지나간다 */
 .head .eyebrow{font-size:calc(12px * var(--ui,1));color:var(--ink-3);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .head h2{font-family:var(--serif);font-size:calc(24px * var(--ui,1));font-weight:600;margin:4px 0 6px;text-wrap:balance;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .head h2 .hbtns{display:inline-flex;gap:6px;font-family:var(--sans);font-weight:400}
@@ -1200,7 +1200,8 @@ function fixBodyWidth(){
   try {
     document.body.style.minWidth=''; document.body.classList.remove('zoomed-body');
     const de=document.documentElement; const sw=de.scrollWidth, cw=de.clientWidth;
-    if (sw > cw + 2){ document.body.style.minWidth=sw+'px'; document.body.classList.add('zoomed-body'); }
+    document.documentElement.style.setProperty('--vw', cw+'px');   // 세로 스크롤바를 뺀 실제 보이는 폭
+    if (sw > cw + 2){ document.body.style.minWidth=(sw+1)+'px'; document.body.classList.add('zoomed-body'); }
   } finally { fbwBusy=false; }
 }
 if (window.ResizeObserver) new ResizeObserver(()=>{ if (!fbwBusy) fixBodyWidth(); }).observe(document.getElementById('main'));
@@ -1588,7 +1589,8 @@ const T0=performance.now(); const TL=[]; const DEBUG=/[?&]debug/.test(location.s
 document.addEventListener('visibilitychange', ()=>tmark('창 상태: '+document.visibilityState));
 ['focus','blur','resize','pageshow'].forEach(ev=>window.addEventListener(ev, ()=>tmark('창 이벤트: '+ev)));
 // 1초마다 시계: 이 시계가 멈춰 있으면 크롬이 화면을 안 그리는 것, 시계는 가는데 내용이 옛것이면 데이터 문제
-if (DEBUG) setInterval(()=>{ const el=document.getElementById('hb'); if (el) el.textContent='시계 '+new Date().toTimeString().slice(0,8)+' · 그려진 뒤 '+Math.round((performance.now()-T0)/1000)+'초'; }, 1000);
+let rafN=0; if (DEBUG){ const tick=()=>{ rafN++; requestAnimationFrame(tick); }; requestAnimationFrame(tick);
+  setInterval(()=>{ const el=document.getElementById('hb'); if (el) el.textContent='시계 '+new Date().toTimeString().slice(0,8)+' · 그려진 뒤 '+Math.round((performance.now()-T0)/1000)+'초 · 프레임 '+rafN; }, 1000); }
 function tmark(label){ TL.push([label+(document.hidden?' (창 가려짐)':''), Math.round(performance.now()-T0)]); if (!DEBUG) return; let el=$('#tlog'); if (!el){ el=document.createElement('pre'); el.id='tlog'; el.style.cssText='position:fixed;right:8px;bottom:8px;z-index:99;background:rgba(0,0,0,.8);color:#fff;font:11px/1.4 monospace;padding:6px 8px;border-radius:4px;max-height:40vh;overflow:auto'; document.body.appendChild(el); } el.innerHTML='<b id="hb"></b>\n'+TL.map(x=>x[1]+'ms  '+esc(x[0])).join('\n'); }
 function saveSess(remember){
   const v=JSON.stringify({role, k:b64(Kraw), t:token, s:esec, me});
