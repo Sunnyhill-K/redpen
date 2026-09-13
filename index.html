@@ -79,7 +79,7 @@ a{color:var(--ins)}
 .zoom button:last-child{border-right:0}
 .zoom button:hover{background:var(--paper-2)}
 .zoom .z{font-family:var(--mono);min-width:52px;text-align:center;font-variant-numeric:tabular-nums}
-.rail{border-right:1px solid var(--rule);background:var(--paper-2);padding-block:12px;padding-inline:0;position:sticky;top:var(--top-h,50px);left:0;height:calc(100vh - var(--top-h,50px));overflow-y:auto;align-self:start;z-index:4}
+.rail{border-right:1px solid var(--rule);background:var(--paper-2);padding-block:12px;padding-inline:0;position:sticky;top:var(--top-h,50px);left:0;height:calc(100vh - var(--top-h,50px));overflow-y:auto;align-self:start;z-index:6}
 .rail h2{font-size:calc(11px * var(--ui,1));letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin:0 16px 8px;font-weight:600}
 .cases{list-style:none;margin:0;padding:0}
 .cases li{padding:10px 34px 10px 16px;border-left:3px solid transparent;cursor:pointer;position:relative}
@@ -126,7 +126,7 @@ body.zoomed-body .top{left:0;width:100vw}
 /* ── 사건 머리 ── */
 .head{max-width:none;margin:0 0 18px;position:sticky;top:var(--top-h,50px);z-index:4;background:var(--paper);padding-top:16px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
 .head .hint{margin-top:8px}
-body.zoomed-body .head{left:20px;max-width:calc(100vw - var(--rail-w,240px) - 40px)}
+body.zoomed-body .head{left:calc(var(--rail-w,240px) + 20px);max-width:calc(100vw - var(--rail-w,240px) - 40px)}   /* 가로 스크롤 때 머리는 목록 오른쪽부터 창 끝까지, 그 밑으로 문서가 지나간다 */
 .head .eyebrow{font-size:calc(12px * var(--ui,1));color:var(--ink-3);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .head h2{font-family:var(--serif);font-size:calc(24px * var(--ui,1));font-weight:600;margin:4px 0 6px;text-wrap:balance;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .head h2 .hbtns{display:inline-flex;gap:6px;font-family:var(--sans);font-weight:400}
