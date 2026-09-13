@@ -1349,14 +1349,29 @@ function restoreSpot(y){
 }
 
 // ── 잠금/열기 ──
-async function loadConfig(){ const u=await ghRead('config.json'); if (!u) throw new Error('config.json 이 없습니다'); cfg=JSON.parse(td.decode(u)); }
+async function readConfigFresh(){
+  // raw CDN 은 몇 분 묵은 사본을 줄 수 있다. 설정 파일만큼은 API 로(토큰 없으면 비인증 호출, 시간당 60회 제한) 읽고 안 되면 raw 로
+  try {
+    const r=await fetch(apiUrl('config.json')+`?ref=${GH.branch}&v=${Date.now()}`, {headers: token ? authH({Accept:'application/vnd.github.raw+json'}) : {Accept:'application/vnd.github.raw+json'}, cache:'no-store'});
+    if (r.ok) return JSON.parse(td.decode(new Uint8Array(await r.arrayBuffer())));
+  } catch(e){}
+  const u=await ghRead('config.json'); if (!u) throw new Error('config.json 이 없습니다'); return JSON.parse(td.decode(u));
+}
+async function loadConfig(){ cfg=await readConfigFresh(); }
 let esec=null;   // 편집자 봉투 안의 고정 비밀(base64). 잠긴 문서의 편집자 열쇠 Ke 는 여기서 파생
 async function tryUnlock(pw){
   const key=await kek(pw, cfg.salt, cfg.iter);
-  try { const kr=await decB(key, ub64(cfg.editor.k)); const t=td.decode(await decB(key, ub64(cfg.editor.t))); Kraw=kr; K=await importK(kr); token=t; role='editor';
-    if (cfg.editor.s){ esec=td.decode(await decB(key, ub64(cfg.editor.s))); Ke=await deriveKe(kr, esec); }
-    else { await migrateEditorSecret(key, kr, t); }
-    return true; } catch(_){}
+  let kr=null, t=null;
+  try { kr=await decB(key, ub64(cfg.editor.k)); t=td.decode(await decB(key, ub64(cfg.editor.t))); } catch(_){ kr=null; }
+  if (kr){
+    Kraw=kr; K=await importK(kr); token=t; role='editor';
+    try { const fresh=await readConfigFresh(); if (fresh && fresh.editor) cfg=fresh; } catch(_){}
+    try {
+      if (cfg.editor.s){ esec=td.decode(await decB(key, ub64(cfg.editor.s))); Ke=await deriveKe(kr, esec); }
+      else await migrateEditorSecret(key, kr, t);
+    } catch(ex){ Ke=await deriveKe(kr, t); esec=null; setTimeout(()=>toast('편집자 열쇠 정리에 실패했습니다: '+((ex&&ex.message)||ex)+' · 잠긴 문서 기능만 영향'), 500); }
+    return true;
+  }
   try { const kr=await decB(key, ub64(cfg.viewer.k)); Kraw=kr; K=await importK(kr); token=null; role='viewer'; return true; } catch(_){}
   return false;
 }
