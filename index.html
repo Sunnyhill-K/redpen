@@ -1195,17 +1195,18 @@ function bindSelection(cont, c0){
 }
 
 // ── 창보다 넓어지면 body 를 그 폭까지 늘려, 고정 요소(상단 바·목록·머리)가 가로 스크롤에도 창 왼쪽에 붙어 있게 ──
-let fbwBusy=false;
+let fbwLast=-1;
 function fixBodyWidth(){
-  if (fbwBusy) return; fbwBusy=true;
-  try {
-    document.body.style.minWidth=''; document.body.classList.remove('zoomed-body');
-    const de=document.documentElement; const sw=de.scrollWidth, cw=de.clientWidth;
-    document.documentElement.style.setProperty('--vw', cw+'px');   // 세로 스크롤바를 뺀 실제 보이는 폭
-    if (sw > cw + 2){ document.body.style.minWidth=(sw+1)+'px'; document.body.classList.add('zoomed-body'); }
-  } finally { fbwBusy=false; }
+  // 몸통 폭을 지우지 않고, 문서 틀(sheet)의 실제 오른쪽 끝을 재서 필요한 폭을 정한다 → 값이 안 바뀌면 아무것도 건드리지 않는다
+  const de=document.documentElement; const cw=de.clientWidth; de.style.setProperty('--vw', cw+'px');
+  const sheet=document.querySelector('.sheet'); let need=0;
+  if (sheet){ const r=sheet.getBoundingClientRect(); need=Math.ceil(r.right + window.scrollX + 20); }
+  const over = need > cw + 2;
+  const want = over ? need : 0;
+  if (want===fbwLast) return; fbwLast=want;
+  document.body.style.minWidth = over ? need+'px' : ''; document.body.classList.toggle('zoomed-body', over);
 }
-if (window.ResizeObserver) new ResizeObserver(()=>{ if (!fbwBusy) fixBodyWidth(); }).observe(document.getElementById('main'));
+if (window.ResizeObserver) new ResizeObserver(()=>fixBodyWidth()).observe(document.getElementById('main'));
 // ── 총평 폭을 문서 폭에 맞춘다(PDF 는 쪽 틀, 텍스트는 원고 열 전체) ──
 function fitOverall(){
   const box=document.querySelector('.overall .box'); if (!box) return;
