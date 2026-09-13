@@ -340,7 +340,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .note .n .who{font-family:var(--sans);font-size:calc(11px * var(--ui,1));color:var(--ink);background:var(--paper-3);border-radius:3px;padding:0 5px}
 .note .n .who.ed{color:var(--ins);background:var(--ins-bg)}
 .nm{color:var(--nc,var(--ink-2));font-weight:700}
-.ins-by{background:color-mix(in srgb, var(--nc,var(--ins)) 14%, transparent);box-shadow:inset 0 -2px 0 var(--nc,var(--ins));border-radius:2px;padding:0 2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.ins-by{background:var(--nbg,rgba(45,91,185,.14));text-decoration:underline;text-decoration-color:var(--nc,var(--ins));text-decoration-thickness:2px;text-underline-offset:3px;border-radius:2px;padding:0 2px}
 .ins-by.cont::before{display:none}
 .ins-by::before{content:attr(data-by);font-family:var(--sans);font-size:.72em;font-weight:700;color:var(--nc,var(--ins));margin-right:4px;vertical-align:.15em;user-select:none}
 .note .n .who{color:var(--nc,var(--ink));border:1px solid var(--nc,var(--ink-3));background:transparent}
@@ -628,8 +628,8 @@ function md(s, segs){
     let out='', pos=0; const pts=[...cuts, s.length];
     for (const cut of pts){ if (cut<=pos) continue; const piece=s.slice(pos,cut); const g=segs.find(x=>x.s<=pos && x.e>=cut);
       if (!g){ out+=mdOne(piece); pos=cut; continue; }
-      const col=userColor(g.by, g.id)||'var(--ins)', lab=esc(userLabel(g.by, g.id)); let first=true;
-      piece.split('\n').forEach((ln,i)=>{ if (i>0) out+='<br>'; if (!ln){ return; } out+=`<span class="ins-by${first?'':' cont'}" data-by="${lab}" style="--nc:${col}">${mdOne(ln)}</span>`; first=false; });
+      const colRaw=userColor(g.by, g.id); const col=colRaw||'var(--ins)'; const bg=/^#[0-9a-f]{6}$/i.test(colRaw) ? colRaw+'24' : 'rgba(45,91,185,.14)'; const lab=esc(userLabel(g.by, g.id)); let first=true;
+      piece.split('\n').forEach((ln,i)=>{ if (i>0) out+='<br>'; if (!ln){ return; } out+=`<span class="ins-by${first?'':' cont'}" data-by="${lab}" style="--nc:${col};--nbg:${bg}">${mdOne(ln)}</span>`; first=false; });
       pos=cut; }
     return out;
   }
