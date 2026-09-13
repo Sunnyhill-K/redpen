@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>붉은펜 퇴고장</title>
+<title>쑤닐의 붉은펜 퇴고장</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 :root{
@@ -322,7 +322,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="pen"></span><h1>붉은펜 퇴고장</h1><span class="sub">받은 글, 고친 자리, 고친 이유</span></div>
+  <div class="brand"><span class="pen"></span><h1>쑤닐의 붉은펜 퇴고장</h1><span class="sub">받은 글, 고친 자리, 고친 이유</span></div>
   <span id="whoami" class="chip"></span>
   <button class="btn" id="btnPw" hidden>비밀번호 바꾸기</button>
   <button class="btn" id="btnLock">잠그기</button>
@@ -1317,7 +1317,7 @@ function saveSess(remember){
 function lockScreen(){
   return new Promise(res=>{
     const ov=document.createElement('div'); ov.className='ask lock';
-    ov.innerHTML=`<form class="box" role="dialog" aria-modal="true"><h3>붉은펜 퇴고장</h3><p>비밀번호를 넣으세요. 뷰어 비밀번호는 읽기만, 편집자 비밀번호는 저장까지 됩니다.</p>
+    ov.innerHTML=`<form class="box" role="dialog" aria-modal="true"><h3>쑤닐의 붉은펜 퇴고장</h3><p>비밀번호를 넣으세요. 뷰어 비밀번호는 읽기만, 편집자 비밀번호는 저장까지 됩니다.</p>
       <input type="password" id="pwIn" autocomplete="current-password" placeholder="비밀번호">
       <label class="rm"><input type="checkbox" id="pwRemember"> 이 브라우저에 기억</label>
       <div class="msg err" id="pwErr"></div>
