@@ -992,6 +992,7 @@ async function drawPages(){
     layoutNotes();
   }
   if (artifactNs && !cont.dataset.selBound){ cont.dataset.selBound='1'; bindSelection(cont, st.c); }
+  if (pendingSpot){ const ps=pendingSpot; pendingSpot=null; restoreSpot(ps.y); }
 }
 function drawMarks(c, p){
   const el = document.querySelector(`.page[data-p="${p}"] .marks`); if (!el) return;
@@ -1304,7 +1305,12 @@ async function saveDoc(c, btn){
     await ghWrite(`docs/${c.id}.json`, te.encode(JSON.stringify(Object.assign({}, m, c.lock?{lock:true, wrap}:{}, {ct}))), `save: ${c.title}`);
     await updateIndex(list=>{ const i=list.findIndex(x=>x.id===c.id); if (i>=0) list[i]=m; else list.push(m); });
     const idx=cases.findIndex(x=>x.id===c.id); if (idx>=0){ if (cases[idx]!==c) Object.assign(cases[idx], c); } else cases.push(c);
-    view.draft=null; view.id=c.id; view.dirty=false; location.hash='case='+c.id; toast('저장했습니다'); render(); return true;
+    const wasDraft=!!view.draft; const y=window.scrollY;
+    view.draft=null; view.id=c.id; view.dirty=false; location.hash='case='+c.id; toast('저장했습니다');
+    // 저장 뒤 화면을 맨 위로 보내지 않는다: 기존 PDF 문서는 머리만 갱신, 그 외는 다시 그린 뒤 같은 자리로
+    if (!wasDraft && isPdf(c)){ refreshPdfHead(c); restoreSpot(y); }
+    else { pendingSpot={y}; render(); if (!isPdf(c)){ pendingSpot=null; restoreSpot(y); } }
+    return true;
   } catch(e){ if (msg){ msg.textContent=(e&&e.message)||String(e); msg.className='msg err'; } if (btn) btn.disabled=false; toast('저장 실패: '+((e&&e.message)||e)); return false; }
 }
 async function deleteDoc(c, btn){
@@ -1315,6 +1321,16 @@ async function deleteDoc(c, btn){
     await updateIndex(list=>{ const i=list.findIndex(x=>x.id===c.id); if (i>=0) list.splice(i,1); });
     cases=cases.filter(x=>x.id!==c.id); view={mode:'list',id:null,draft:null,dirty:false,show:'side'}; location.hash=''; toast('지웠습니다'); render();
   } catch(e){ if (msg){ msg.textContent=(e&&e.message)||String(e); msg.className='msg err'; } if (btn) btn.disabled=false; }
+}
+
+// ── 저장 뒤 원래 자리·커서 복원 ──
+let lastNoteFocus=null, pendingSpot=null;
+document.addEventListener('focusin', e=>{ const n=e.target.closest && e.target.closest('.note'); if (n) lastNoteFocus={noteId:n.id, sel: e.target.classList.contains('md') ? '.md' : e.target.classList.contains('after') ? 'textarea.after' : 'textarea:not([hidden]), .md'}; });
+function restoreSpot(y){
+  requestAnimationFrame(()=>{ window.scrollTo(0, y);
+    if (lastNoteFocus){ const n=document.getElementById(lastNoteFocus.noteId); const f=n && n.querySelector(lastNoteFocus.sel); if (f){ f.focus({preventScroll:true}); if (f.isContentEditable){ const r=document.createRange(); r.selectNodeContents(f); r.collapse(false); const sl=getSelection(); sl.removeAllRanges(); sl.addRange(r); } } }
+    requestAnimationFrame(()=>window.scrollTo(0, y));
+  });
 }
 
 // ── 잠금/열기 ──
