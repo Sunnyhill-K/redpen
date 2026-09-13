@@ -105,7 +105,6 @@ a{color:var(--ins)}
 .empty{padding:16px;color:var(--ink-3);font-size:calc(13px * var(--ui,1))}
 
 main{padding-block:0 60px;padding-inline:20px;min-width:0}
-body.zoomed-body{min-width:fit-content}
 body.zoomed-body .top{left:0;width:100vw}
 .shell{--rail-w:240px}
 .shell.nrail{--rail-w:44px}
@@ -979,7 +978,11 @@ async function drawPages(){
   const baseW = stacked ? mainW : Math.max(320, Math.min(1180, mainW) - notesW - 28);
   const width = Math.round(baseW * zoom.pdf); const dpr = Math.min(window.devicePixelRatio||1, 2.5);
   if (sheet){ sheet.classList.toggle('zoomed', !stacked); }              // 100% 에서도 확대 때와 같은 배치
-  document.body.classList.toggle('zoomed-body', zoom.pdf > 1 && !stacked); // 창 가로 스크롤은 넘칠 때만
+  // 창 가로 스크롤은 실제로 틀+메모가 창을 넘칠 때만, 넘치는 만큼만. (fit-content 로 재면 안내 줄 같은 긴 글이 한 줄로 펴져 폭을 부풀린다)
+  const railW = $('#rail').offsetWidth; const need = railW + 40 + (width+28) + 28 + notesW;
+  const over = !stacked && need > document.documentElement.clientWidth;
+  document.body.style.minWidth = over ? need+'px' : '';
+  document.body.classList.toggle('zoomed-body', over);
   cont.style.width = !stacked ? (width+28)+'px' : '';   // 홈통 여백 14px×2
   cont.style.setProperty('--pz', String(zoom.pdf));
   for (let p=1;p<=st.doc.numPages;p++){
