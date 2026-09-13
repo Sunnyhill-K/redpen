@@ -254,7 +254,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .types input{margin-top:3px}
 .types b{display:block;font-weight:600}
 .types span{font-size:calc(12px * var(--ui,1));color:var(--ink-2)}
-.frow{display:grid;grid-template-columns:1fr 160px 200px;gap:12px;margin-bottom:14px}
+.frow{display:grid;grid-template-columns:1fr 240px;gap:12px;margin-bottom:14px}
 .frow.lockrow{grid-template-columns:1fr 200px 1fr;align-items:end}
 .frow .lockhint{font-size:calc(12px * var(--ui,1));color:var(--ink-3);padding-bottom:8px}
 .frow .rm{display:flex;gap:6px;align-items:center;font-size:calc(13px * var(--ui,1));color:var(--ink-2)}
@@ -355,7 +355,6 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 'use strict';
 const $ = s => document.querySelector(s);
 const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const SOURCES = ['슬랙','PDF','워드','네이버 블로그','기타'];
 const KIND = {del:'삭제', rep:'바꾸기', memo:'메모'};
 
 let cases = [];   // docs/index.json 의 메타. 문서를 열면 복호화된 내용이 같은 객체에 합쳐진다(loaded=true)
@@ -482,7 +481,7 @@ function renderList(){
   [...cases].sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.id||'').localeCompare(a.id||'')).forEach(c=>{
     const li=document.createElement('li'); li.className = (view.mode==='case' && view.id===c.id) ? 'on' : ''; li.title = c.title||''; li.dataset.id=c.id;
     if (selMode) li.classList.add('sel');
-    li.innerHTML = (selMode ? `<input type="checkbox" class="ck" ${selIds.has(c.id)?'checked':''}>` : '') + (artifactNs && !selMode ? `<button class="more" title="정보 수정 · 삭제">…</button>` : '') + `<span class="t">${esc(c.title||'(제목 없음)')}</span><span class="m"><span>${esc(c.date||'')}</span><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':esc(c.source||'')}</span>${c.lock?'<span title="문서 비밀번호 있음">🔒</span>':''}<span>${caseCount(c)}곳</span></span>`;
+    li.innerHTML = (selMode ? `<input type="checkbox" class="ck" ${selIds.has(c.id)?'checked':''}>` : '') + (artifactNs && !selMode ? `<button class="more" title="정보 수정 · 삭제">…</button>` : '') + `<span class="t">${esc(c.title||'(제목 없음)')}</span><span class="m"><span>${esc(c.date||'')}</span><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':'텍스트'}</span>${c.lock?'<span title="문서 비밀번호 있음">🔒</span>':''}<span>${caseCount(c)}곳</span></span>`;
     li.addEventListener('click', e=>{
       if (selMode){
         const items=[...ul.querySelectorAll('li')]; const idx=items.indexOf(li);
@@ -590,7 +589,7 @@ function renderHome(main){
 // ══════════════ 사건 머리(공통) ══════════════
 function headHtml(c, statsHtml, toolsHtml){
   const isDraft = !!view.draft;
-  return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':esc(c.source||'')}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}<span>${esc(c.client||'')}</span><span>${esc(c.date||'')}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
+  return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':'텍스트'}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}<span>${esc(c.client||'')}</span><span>${esc(c.date||'')}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
     <h2>${esc(c.title||'(제목 없음)')}<span class="hbtns">${artifactNs ? `<button class="btn small" id="editCase">정보 수정</button>` : ''}${isPdf(c) ? `<button class="btn small" id="dlPdf" title="저장된 원본 PDF 를 그대로 내려받습니다">원본 PDF 내려받기</button>` : ''}</span></h2>
     <div class="stats">${statsHtml}</div>
     <div class="tools">${toolsHtml}
@@ -1121,7 +1120,7 @@ document.addEventListener('keydown', e=>{
 
 // ══════════════ 편집 화면 ══════════════
 function renderEdit(main){
-  const c = view.draft || {id:'', type:'text', title:'', source:'슬랙', client:'', date:new Date().toISOString().slice(0,10), orig:'', rev:'', memos:{}, note:'', marks:[]};
+  const c = view.draft || {id:'', type:'text', title:'', client:'', date:new Date().toISOString().slice(0,10), orig:'', rev:'', memos:{}, note:'', marks:[]};
   const isNew = !cases.some(x=>x.id===c.id);
   let type = c.type || 'text'; let pdfB64 = c.pdf || ''; let pdfName = c.pdf ? '(저장된 PDF 유지)' : ''; let pdfDirty = !!c.pdfDirty;
   main.innerHTML = `<div class="edit"><h2>${isNew?'새 퇴고':'정보 수정'}</h2>
@@ -1131,7 +1130,6 @@ function renderEdit(main){
     </div>
     <div class="frow">
       <div><label for="fTitle">제목</label><input id="fTitle" value="${esc(c.title)}" placeholder="글 제목이나 의뢰 건명"></div>
-      <div><label for="fSource">받은 경로</label><select id="fSource">${SOURCES.map(s=>`<option ${s===c.source?'selected':''}>${s}</option>`).join('')}</select></div>
       <div><label for="fClient">의뢰인</label><input id="fClient" value="${esc(c.client)}" placeholder="누가 보냈나"></div>
     </div>
     <div class="frow lockrow">
@@ -1154,7 +1152,7 @@ function renderEdit(main){
   const syncType = ()=>{ $('#textPart').hidden = type!=='text'; $('#pdfPart').hidden = type!=='pdf'; $('#doCompare').textContent = '저장';
     main.querySelectorAll('.types label').forEach(l=>l.classList.toggle('on', l.querySelector('input').value===type)); };
   syncType();
-  main.querySelectorAll('input[name=ty]').forEach(r=>r.addEventListener('change', ()=>{ type=r.value; if (type==='pdf' && $('#fSource').value==='슬랙') $('#fSource').value='PDF'; syncType(); }));
+  main.querySelectorAll('input[name=ty]').forEach(r=>r.addEventListener('change', ()=>{ type=r.value; syncType(); }));
   const count = ()=>{ $('#cOrig').textContent = $('#fOrig').value.replace(/\s/g,'').length+'자'; $('#cRev').textContent = $('#fRev').value.replace(/\s/g,'').length+'자'; };
   count();
   ['#fOrig','#fRev'].forEach(s=>{ const t=$(s); t.addEventListener('input', ()=>{ count(); view.dirty=true; });
@@ -1178,7 +1176,7 @@ function renderEdit(main){
   $('#fPdf').addEventListener('change', ()=>{ const f=$('#fPdf').files[0]; if (f) takePdf(f); });
   $('#cancelEdit').addEventListener('click', ()=>{ view = {mode: isNew?'list':'case', id:c.id, draft:null, dirty:false, show:'side'}; render(); });
   $('#doCompare').addEventListener('click', async ()=>{
-    const base = {title:$('#fTitle').value.trim()||'(제목 없음)', source:$('#fSource').value, client:$('#fClient').value.trim()};
+    const base = {title:$('#fTitle').value.trim()||'(제목 없음)', client:$('#fClient').value.trim()};
     const lockPw=$('#fLock').value; const unlockReq = !!($('#fUnlock') && $('#fUnlock').checked);
     if (lockPw && lockPw.length<6){ $('#editMsg').textContent='문서 비밀번호는 6자 이상으로 해 주세요.'; $('#editMsg').className='msg err'; return; }
     let d;
