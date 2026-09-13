@@ -536,7 +536,7 @@ async function openCase(id){
 }
 function render(){
   renderList();
-  const main=$('#main'); main.innerHTML=''; document.body.classList.remove('zoomed-body');
+  const main=$('#main'); main.innerHTML=''; document.body.classList.remove('zoomed-body'); document.body.style.minWidth='';
   if (view.mode==='list'){ renderHome(main); window.scrollTo(0,0); return; }
   if (view.mode==='edit'){ renderEdit(main); window.scrollTo(0,0); return; }   // 문서를 내려 보다가 들어와도 위가 상단 바에 가려지지 않게
   const c = view.draft || cases.find(x=>x.id===view.id);
@@ -832,9 +832,7 @@ function layoutTextDoc(){
   const width = Math.round(baseW * zoom.text);
   if (sheet) sheet.classList.toggle('zoomed', !stacked);
   cont.style.width = !stacked ? (width+28)+'px' : '';   // 홈통 14px×2
-  const railW = $('#rail').offsetWidth; const need = railW + 40 + (width+28) + 28 + notesW;
-  const over = !stacked && need > document.documentElement.clientWidth;
-  document.body.style.minWidth = over ? need+'px' : ''; document.body.classList.toggle('zoomed-body', over);
+  requestAnimationFrame(fixBodyWidth);
   requestAnimationFrame(()=>{ layoutNotes(); fitOverall(); });
 }
 function renderTextDoc(c){
@@ -1100,10 +1098,7 @@ async function drawPages(){
   if (st.io){ try { st.io.disconnect(); } catch(e){} st.io=null; }
   if (sheet){ sheet.classList.toggle('zoomed', !stacked); }              // 100% 에서도 확대 때와 같은 배치
   // 창 가로 스크롤은 실제로 틀+메모가 창을 넘칠 때만, 넘치는 만큼만. (fit-content 로 재면 안내 줄 같은 긴 글이 한 줄로 펴져 폭을 부풀린다)
-  const railW = $('#rail').offsetWidth; const need = railW + 40 + (width+28) + 28 + notesW;
-  const over = !stacked && need > document.documentElement.clientWidth;
-  document.body.style.minWidth = over ? need+'px' : '';
-  document.body.classList.toggle('zoomed-body', over);
+  requestAnimationFrame(fixBodyWidth);
   cont.style.width = !stacked ? (width+28)+'px' : '';   // 홈통 여백 14px×2
   cont.style.setProperty('--pz', String(zoom.pdf));
   const dprEff = Math.min(dpr, 2);
@@ -1197,6 +1192,12 @@ function bindSelection(cont, c0){
   });
 }
 
+// ── 창보다 넓어지면 body 를 그 폭까지 늘려, 고정 요소(상단 바·목록·머리)가 가로 스크롤에도 창 왼쪽에 붙어 있게 ──
+function fixBodyWidth(){
+  document.body.style.minWidth=''; document.body.classList.remove('zoomed-body');
+  const de=document.documentElement; const sw=de.scrollWidth, cw=de.clientWidth;
+  if (sw > cw + 2){ document.body.style.minWidth=sw+'px'; document.body.classList.add('zoomed-body'); }
+}
 // ── 총평 폭을 문서 폭에 맞춘다(PDF 는 쪽 틀, 텍스트는 원고 열 전체) ──
 function fitOverall(){
   const box=document.querySelector('.overall .box'); if (!box) return;
@@ -1206,7 +1207,7 @@ function fitOverall(){
   w=doc.getBoundingClientRect().width;
   box.style.maxWidth='none'; box.style.width=Math.round(w)+'px';
 }
-window.addEventListener('resize', ()=>fitOverall());
+window.addEventListener('resize', ()=>{ fitOverall(); fixBodyWidth(); });
 
 // ── 목록의 번호 → 문서의 그 자리로 ──
 function jumpToHunk(h){
