@@ -433,7 +433,7 @@ const isText = c => c && !isPdf(c);
 // ══════════════ 목록/라우팅 ══════════════
 function caseCount(c){ if (!c.loaded) return c.n||0; return (c.marks||[]).length; }
 function renderList(){
-  const ul=$('#caseList'); ul.innerHTML='';
+  const ul=$('#caseList'); ul.innerHTML=''; tmark('목록 그리기');
   $('#caseEmpty').hidden = cases.filter(canSee).length>0;
   const when = c => c.ts || c.date || '';
   const byName = (a,b)=>(a.title||'').localeCompare(b.title||'','ko');
@@ -1087,7 +1087,8 @@ async function drawPages(){
     tmark('쪽 '+pg.p+' 그림');
   };
   const io = new IntersectionObserver(entries=>{ entries.forEach(en=>{ if (en.isIntersecting){ const pg=pages.find(x=>x.el===en.target); if (pg){ renderOne(pg); io.unobserve(en.target); } } }); }, {rootMargin:'1200px 0px'});
-  pages.forEach(pg=>io.observe(pg.el));
+  pages.slice(0,2).forEach(pg=>renderOne(pg));
+  pages.slice(2).forEach(pg=>io.observe(pg.el));
   st.io=io;
   if (artifactNs && !cont.dataset.selBound){ cont.dataset.selBound='1'; bindSelection(cont, st.c); }
   fitOverall();
@@ -1526,7 +1527,8 @@ async function migrateEditorSecret(key, kr, t){
 let me=null;   // {id, name, role:'admin'|'editor'|'viewer'}
 // ── 단계별 시간 재기(?debug) ──
 const T0=performance.now(); const TL=[]; const DEBUG=/[?&]debug/.test(location.search);
-function tmark(label){ TL.push([label, Math.round(performance.now()-T0)]); if (!DEBUG) return; let el=$('#tlog'); if (!el){ el=document.createElement('pre'); el.id='tlog'; el.style.cssText='position:fixed;right:8px;bottom:8px;z-index:99;background:rgba(0,0,0,.8);color:#fff;font:11px/1.4 monospace;padding:6px 8px;border-radius:4px;max-height:40vh;overflow:auto'; document.body.appendChild(el); } el.textContent=TL.map(x=>x[1]+'ms  '+x[0]).join('\n'); }
+document.addEventListener('visibilitychange', ()=>tmark('창 상태: '+document.visibilityState));
+function tmark(label){ TL.push([label+(document.hidden?' (창 가려짐)':''), Math.round(performance.now()-T0)]); if (!DEBUG) return; let el=$('#tlog'); if (!el){ el=document.createElement('pre'); el.id='tlog'; el.style.cssText='position:fixed;right:8px;bottom:8px;z-index:99;background:rgba(0,0,0,.8);color:#fff;font:11px/1.4 monospace;padding:6px 8px;border-radius:4px;max-height:40vh;overflow:auto'; document.body.appendChild(el); } el.textContent=TL.map(x=>x[1]+'ms  '+x[0]).join('\n'); }
 function saveSess(remember){
   const v=JSON.stringify({role, k:b64(Kraw), t:token, s:esec, me});
   try { sessionStorage.setItem('redpen.sess', v); if (remember) localStorage.setItem('redpen.sess', v); else localStorage.removeItem('redpen.sess'); } catch(e){}
@@ -1706,7 +1708,7 @@ async function boot(){
   const m=location.hash.match(/case=([\w-]+)/);
   if (m && cases.some(c=>c.id===m[1] && canSee(c))) view={mode:'case', id:m[1], draft:null, dirty:false, show:'side'};
   if (spot && view.mode==='case' && spot.id===view.id){ lastNoteFocus=spot.f||null; pendingSpot={y:spot.y||0}; }   // 새로고침: 마지막 자리로
-  render();
+  tmark('화면 그리기 시작'); render(); tmark('화면 그리기 끝');
 }
 
 // ══════════════ 공통 ══════════════
