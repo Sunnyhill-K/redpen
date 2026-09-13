@@ -339,8 +339,9 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 
 .note .n .who{font-family:var(--sans);font-size:calc(11px * var(--ui,1));color:var(--ink);background:var(--paper-3);border-radius:3px;padding:0 5px}
 .note .n .who.ed{color:var(--ins);background:var(--ins-bg)}
-.ins-by{background:var(--ins-bg);border-radius:3px;padding:0 3px;box-decoration-break:clone}
-.ins-by .tag{font-family:var(--sans);font-size:.78em;color:var(--ins);margin-right:4px;font-weight:600;user-select:none}
+.nm{color:var(--nc,var(--ink-2));font-weight:700}
+.note .n .who{color:var(--nc,var(--ink));border:1px solid var(--nc,var(--ink-3));background:transparent}
+.note .n .who.ed{color:var(--nc,var(--ins));border-color:var(--nc,var(--ins));background:transparent}
 .ask .box.users{max-width:640px}
 .ask .box.users table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
 .ask .box.users th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:6px;border-bottom:1px solid var(--rule)}
@@ -350,7 +351,8 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .ask .box.users td input{width:100%}
 .ask .box.users .acts{white-space:nowrap;text-align:right}
 .ask .box.users h4{margin:6px 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
-.ask .box.users .newrow{display:grid;grid-template-columns:1.2fr 1fr .8fr 1.2fr auto;gap:6px;align-items:center;margin-bottom:8px}
+.ask .box.users .newrow{display:grid;grid-template-columns:1.2fr 1fr auto .8fr 1.2fr auto;gap:6px;align-items:center;margin-bottom:8px}
+.ask .box.users input[type=color]{width:34px;height:26px;padding:0;border:1px solid var(--rule);border-radius:3px;background:transparent;cursor:pointer}
 .ask .box input[type=text]{width:100%;border:1px solid var(--rule);background:var(--paper-2);padding:9px 10px;border-radius:3px;margin-bottom:8px;font-size:15px}
 
 .visbox{margin-bottom:14px}
@@ -604,7 +606,7 @@ function listHtml(items, withWhere){
 }
 function listText(c, items){
   const head = `${c.title||''} · 퇴고 메모 ${items.length}곳 (${c.date||''})`;
-  const plain = t => (t||'').replace(/⟦([^|⟧\n]{1,40})\|([^⟧]*)⟧/g, '[$1] $2');
+  const plain = t => t||'';
   return head + '\n' + items.map(it=>`${it.n}. ${it.who?'['+it.who+'] ':''}${it.where?'['+it.where+'] ':''}${it.kind}${it.before?' · '+it.before:''}${it.after?'\n   → '+it.after:''}${it.reason?'\n   이유: '+plain(it.reason):''}`).join('\n');
 }
 function overallHtml(c){
@@ -615,7 +617,7 @@ function overallHtml(c){
 // ⟦이름|글⟧ = 다른 사람이 덧붙인 부분. 화면에선 이름표가 붙은 색 띠로, 복사 땐 [이름] 글 로
 function md(s){
   let h=esc(s);
-  h=h.replace(/⟦([^|⟧\n]{1,40})\|([^⟧]*)⟧/g,'<span class="ins-by" data-by="$1"><b class="tag">$1</b>$2</span>');
+  h=h.replace(/\[([^\]\n]{1,20})\]/g, (m0,nm)=>{ const col=userColor(nm); return col ? `<span class="nm" style="--nc:${col}">[${nm}]</span>` : m0; });
   h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');
   h=h.replace(/\*([^*\n]+)\*/g,'<b>$1</b>');
   h=h.replace(/__([^_\n]+)__/g,'<u>$1</u>');
@@ -636,7 +638,6 @@ function htmlToMd(node){
     const tag=n.tagName.toLowerCase(); const inner=htmlToMd(n);
     const st=(n.getAttribute('style')||'').toLowerCase();
     if (tag==='br'){ out+='\n'; return; }
-    if (tag==='span' && n.classList.contains('ins-by')){ const by=n.getAttribute('data-by')||''; const body=[...n.childNodes].filter(x=>!(x.nodeType===1 && x.classList.contains('tag'))).map(x=>x.nodeType===3?x.nodeValue:htmlToMd(x)).join(''); out+='⟦'+by+'|'+body+'⟧'; return; }
     if (tag==='div'||tag==='p'){ out+=(out && !out.endsWith('\n') ? '\n' : '')+inner; if (tag==='p') out+='\n'; return; }
     if (!inner.trim()){ out+=inner; return; }
     if (tag==='b'||tag==='strong'||/font-weight:\s*(bold|[6-9]00)/.test(st)) out+='*'+inner+'*';
@@ -648,15 +649,20 @@ function htmlToMd(node){
   });
   return out;
 }
+// 남의 메모에 덧붙인 자리 앞에 [이름] 말머리를 넣는다. 바로 앞에 이미 같은 말머리가 있으면 생략
 function tagInsertion(oldT, newT, name){
   let a=0; while (a<oldT.length && a<newT.length && oldT[a]===newT[a]) a++;
   let b=0; while (b<oldT.length-a && b<newT.length-a && oldT[oldT.length-1-b]===newT[newT.length-1-b]) b++;
   const mid=newT.slice(a, newT.length-b); if (!mid.trim()) return newT;
-  const head=newT.slice(0,a); const open=head.lastIndexOf('⟦'), close=head.lastIndexOf('⟧');
-  if (open>close){ const nm=head.slice(open+1).split('|')[0]; if (nm===name) return newT; }   // 같은 사람 띠 안이면 그대로
-  const sp=mid.match(/^\s*/)[0], ep=mid.match(/\s*$/)[0]; const core=mid.slice(sp.length, mid.length-ep.length);
-  return head + sp + '⟦' + name + '|' + core + '⟧' + ep + newT.slice(newT.length-b);
+  let head=newT.slice(0,a);
+  // 낱말 중간에서 갈라졌으면 그 낱말 앞으로 물러난다
+  const back=head.match(/[^\s\[\]]*$/); if (back && back[0] && !/^\s/.test(mid)) { a-=back[0].length; head=newT.slice(0,a); }
+  const tag='['+name+']';
+  if (head.replace(/\s+$/,'').endsWith(tag)) return newT;
+  const sep = head && !/\s$/.test(head) ? ' ' : '';
+  return head + sep + tag + ' ' + newT.slice(a).replace(/^\s+/,'');
 }
+function userColor(name){ const u=(cfg&&cfg.users||[]).find(x=>x.name===name); return u ? (u.color||'#5B6270') : ''; }
 function bindMd(root){
   (root||document).querySelectorAll('.fld').forEach(f=>{
     const t=f.querySelector('textarea'), d=f.querySelector('.md'); if (!t||!d||t.dataset.md) return; t.dataset.md='1';
@@ -950,7 +956,7 @@ function renderPdfNotes(c){
   const notes=$('#notes'); if (!notes) return;
   const canEdit = !!artifactNs;
   notes.innerHTML = `<div class="notes-title">교정 메모 ${c.marks.length}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
-    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자">${esc(m.by)}</span>`:''}${m.editedBy?`<span class="who ed" title="수정자">수정 ${esc(m.editedBy)}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
+    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by)||'var(--ink-2)'}">${esc(m.by)}</span>`:''}${m.editedBy?`<span class="who ed" title="수정자" style="--nc:${userColor(m.editedBy)||'var(--ins)'}">수정 ${esc(m.editedBy)}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
     ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지') : `<div class="txt">${md(m.reason||'')}</div>`}</div>`; }).join('');
   notes.querySelectorAll('.x').forEach(b=>b.addEventListener('click', ()=>{
@@ -1352,6 +1358,8 @@ async function loadDoc(c){
   if (isPdf(c)){ const pe=await ghRead(`docs/${c.id}.pdf.enc`); if (!pe) throw new Error('PDF 파일이 없습니다'); c.pdf=b64(await decB(key, pe)); }
   const legacy = cfg.legacyAuthor || ((cfg.users||[]).find(u=>u.role==='admin')||{}).name || '';
   if (legacy) (c.marks||[]).forEach(m=>{ if (!m.by) m.by=legacy; });   // 계정 도입 전 메모 → 도입한 관리자 이름
+  const unband = t => (t||'').replace(/⟦([^|⟧\n]{1,40})\|([^⟧]*)⟧/g, '[$1] $2').replace(/[⟦⟧]/g,'');
+  (c.marks||[]).forEach(m=>{ m.reason=unband(m.reason); }); c.note=unband(c.note);
   c.loaded=true; return c;
 }
 function meta(c){ return {id:c.id, title:c.title, date:c.date, ts:c.ts||'', type:c.type||'text', client:c.client||'', n:caseCount(c), lock:!!c.lock, vis:(Array.isArray(c.vis)?c.vis:null), owner:c.owner||''}; }
@@ -1558,21 +1566,22 @@ async function changePasswords(){
 async function manageUsers(){
   const ov=document.createElement('div'); ov.className='ask';
   const ROLE={admin:'관리자', editor:'편집자', viewer:'뷰어'};
+  const PAL=['#C4342D','#2D5BB9','#2E7D4F','#B0620D','#7A3E9D','#0E7C86','#8A6D1E','#C2185B'];
   const draw=()=>{
     ov.innerHTML=`<div class="box users" role="dialog" aria-modal="true"><h3>사용자 관리</h3>
-      <table><thead><tr><th>ID</th><th>이름</th><th>권한</th><th></th></tr></thead><tbody>${cfg.users.map(u=>`
-        <tr data-id="${esc(u.id)}"><td class="mono">${esc(u.id)}</td><td><input class="nm" value="${esc(u.name)}"></td>
+      <table><thead><tr><th>ID</th><th>이름</th><th>색</th><th>권한</th><th></th></tr></thead><tbody>${cfg.users.map((u,ui)=>`
+        <tr data-id="${esc(u.id)}"><td class="mono">${esc(u.id)}</td><td><input class="nm" value="${esc(u.name)}"></td><td><input type="color" class="cl" value="${esc(u.color||PAL[ui%PAL.length])}" title="이름 색"></td>
         <td><select class="rl">${Object.keys(ROLE).map(r=>`<option value="${r}" ${u.role===r?'selected':''}>${ROLE[r]}</option>`).join('')}</select></td>
         <td class="acts"><button class="btn small" data-a="pw">비번 재설정</button>${u.id===me.id?'':`<button class="btn small danger" data-a="del">삭제</button>`}</td></tr>`).join('')}</tbody></table>
       <h4>새 계정</h4>
-      <div class="newrow"><input id="nId" placeholder="ID (영문·숫자)"><input id="nName" placeholder="이름"><select id="nRole"><option value="viewer">뷰어</option><option value="editor">편집자</option><option value="admin">관리자</option></select><input id="nPw" type="password" placeholder="초기 비밀번호 (8자+)" autocomplete="new-password"><button class="btn small primary" id="nAdd">추가</button></div>
+      <div class="newrow"><input id="nId" placeholder="ID (영문·숫자)"><input id="nName" placeholder="이름"><input type="color" id="nColor" value="${PAL[cfg.users.length%PAL.length]}" title="이름 색"><select id="nRole"><option value="viewer">뷰어</option><option value="editor">편집자</option><option value="admin">관리자</option></select><input id="nPw" type="password" placeholder="초기 비밀번호 (8자+)" autocomplete="new-password"><button class="btn small primary" id="nAdd">추가</button></div>
       <div class="msg err" id="uErr"></div>
       <div class="row"><button class="btn" id="uClose">닫기</button><button class="btn primary" id="uSave">이름·권한 저장</button></div></div>`;
     const err=ov.querySelector('#uErr');
     ov.querySelector('#uClose').addEventListener('click', ()=>ov.remove());
     ov.querySelector('#uSave').addEventListener('click', async ()=>{
       try { const c2=JSON.parse(JSON.stringify(cfg));
-        ov.querySelectorAll('tbody tr').forEach(tr=>{ const u=c2.users.find(x=>x.id===tr.dataset.id); if (!u) return; u.name=tr.querySelector('.nm').value.trim()||u.name; const r=tr.querySelector('.rl').value; if (r!==u.role){ if (u.role==='viewer' && r!=='viewer') throw new Error(`${u.id}: 뷰어를 편집자로 올리려면 비밀번호 재설정으로 새 봉투를 만들어야 합니다(같은 줄의 「비번 재설정」에서 권한과 함께 처리됩니다)`); u.role=r; if (r==='viewer') delete u.s; } });
+        ov.querySelectorAll('tbody tr').forEach(tr=>{ const u=c2.users.find(x=>x.id===tr.dataset.id); if (!u) return; u.name=tr.querySelector('.nm').value.trim()||u.name; u.color=tr.querySelector('.cl').value; const r=tr.querySelector('.rl').value; if (r!==u.role){ if (u.role==='viewer' && r!=='viewer') throw new Error(`${u.id}: 뷰어를 편집자로 올리려면 비밀번호 재설정으로 새 봉투를 만들어야 합니다(같은 줄의 「비번 재설정」에서 권한과 함께 처리됩니다)`); u.role=r; if (r==='viewer') delete u.s; } });
         if (!c2.users.some(u=>u.role==='admin')) throw new Error('관리자가 최소 한 명은 있어야 합니다');
         await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'users'); cfg=c2; if (me){ const mu=cfg.users.find(x=>x.id===me.id); if (mu){ me.name=mu.name; me.role=mu.role; saveSess(!!localStorage.getItem('redpen.sess')); applyRole(); } }
         toast('저장했습니다'); draw();
@@ -1582,7 +1591,7 @@ async function manageUsers(){
       try { const id=ov.querySelector('#nId').value.trim(), name=ov.querySelector('#nName').value.trim(), r=ov.querySelector('#nRole').value, pw=ov.querySelector('#nPw').value;
         if (!/^[A-Za-z0-9_.-]{2,32}$/.test(id)) throw new Error('ID 는 영문·숫자 2-32자로.'); if (!name) throw new Error('이름을 넣어 주세요.'); if (pw.length<8) throw new Error('초기 비밀번호는 8자 이상으로.');
         if (cfg.users.some(u=>u.id.toLowerCase()===id.toLowerCase())) throw new Error('이미 있는 ID 입니다.');
-        const env=await makeUserEnvelope(pw, r); const c2=JSON.parse(JSON.stringify(cfg)); c2.users.push(Object.assign({id, name, role:r}, env));
+        const env=await makeUserEnvelope(pw, r); const c2=JSON.parse(JSON.stringify(cfg)); c2.users.push(Object.assign({id, name, role:r, color:ov.querySelector('#nColor').value}, env));
         await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'user add: '+id); cfg=c2; toast(`${name}(${id}) 계정을 만들었습니다. ID 와 초기 비밀번호를 전해 주세요.`); draw();
       } catch(ex){ err.textContent=(ex&&ex.message)||String(ex); }
     });
@@ -1617,6 +1626,7 @@ function applyRole(){
   $('#btnNew').hidden = !artifactNs; $('#btnPw').hidden = !me;
   $('#btnUsers').hidden = !(me && me.role==='admin');
   $('#whoami').textContent = me ? `${me.name} · ${({admin:'관리자', editor:'편집자', viewer:'뷰어'})[me.role]||''}` : (role==='editor' ? '편집자' : '뷰어');
+  const col=me?userColor(me.name):''; $('#whoami').style.cssText = col ? `color:${col};border:1px solid ${col};background:transparent` : '';
 }
 async function boot(){
   try { await loadConfig(); } catch(e){ $('#main').innerHTML=`<div class="head"><p class="msg err">설정 파일을 읽지 못했습니다: ${esc((e&&e.message)||e)}</p></div>`; return; }
