@@ -1765,7 +1765,7 @@ function applyRole(){
   const col=me?userColor(me.name, me.id):''; $('#whoami').style.cssText = col ? `color:${col};border:1px solid ${col};background:transparent` : '';
 }
 async function boot(){
-  tmark('시작'); try { await loadConfig(); tmark('설정 읽음'); } catch(e){ $('#main').innerHTML=`<div class="head"><p class="msg err">설정 파일을 읽지 못했습니다: ${esc((e&&e.message)||e)}</p></div>`; return; }
+  tmark('시작'); try { cfg={v:2, iter:310000, users:[]}; tmark('설정 생략'); } catch(e){ $('#main').innerHTML=`<div class="head"><p class="msg err">설정 파일을 읽지 못했습니다: ${esc((e&&e.message)||e)}</p></div>`; return; }
   let sess=null; try { sess=JSON.parse(sessionStorage.getItem('redpen.sess')||localStorage.getItem('redpen.sess')||'null'); } catch(e){}
   let spot=null;
   if (sess && sess.role && sess.k && sess.me){ role=sess.role; token=sess.t||null; Kraw=ub64(sess.k); K=await importK(Kraw); esec=sess.s||null; me=sess.me;
@@ -1835,7 +1835,8 @@ $('#selDel').addEventListener('click', async ()=>{ const ids=[...selIds]; if (!i
 $('#btnPw').addEventListener('click', changePasswords);
 $('#btnUsers').addEventListener('click', manageUsers);
 $('#btnNew').hidden = true; $('#btnPw').hidden = true;
-render(); document.getElementById('main').insertAdjacentHTML('beforeend','<p style="padding:20px">noboot · 열린 시각: '+new Date().toTimeString().slice(0,8)+'</p>');
+render();
+boot();
 })();
 </script>
 </body>

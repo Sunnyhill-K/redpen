@@ -553,7 +553,7 @@ function render(){
   if (!isPdf(c)){ requestAnimationFrame(fitOverall); if (pendingSpot){ const ps=pendingSpot; pendingSpot=null; restoreSpot(ps.y, !!ps.focus); } }
 }
 function renderHome(main){
-  main.innerHTML = `<div class="head"><div class="eyebrow">퇴고 기록 ${cases.length}건</div>
+  main.innerHTML = `<div class="head"><div class="eyebrow">퇴고 기록 ${cases.length}건 · 열린 시각 ${new Date().toTimeString().slice(0,8)}</div>
     <h2>왼쪽 목록에서 문서를 고르거나, 새 퇴고를 시작하세요.</h2>
     <p class="msg" style="font-size:14.5px;line-height:1.7">유형은 셋입니다. <b>텍스트</b>는 붙여 넣은 글, <b>Word · 구글 문서</b>는 화면에서 복사해 붙여 넣거나 .docx 파일을 넣는 서식 있는 글(제목·굵게·표·그림 유지), <b>PDF 문서</b>는 쪽을 원본 그대로 그립니다. 어느 유형이든 글자를 드래그해 <span style="color:var(--del)">삭제</span>·<span style="color:var(--ins)">바꾸기</span>·<span style="color:var(--memo)">메모</span>를 얹고, 수정본은 그 표시를 반영해 자동으로 만들어집니다.<br>내용은 암호화되어 깃헙에 저장되고, 뷰어 비밀번호를 아는 사람은 읽기만, 편집자 비밀번호를 아는 사람은 저장까지 할 수 있습니다.</p></div>`;
 }
