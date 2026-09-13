@@ -597,7 +597,7 @@ function bindHead(c, collect){
   });
   const na=$('#noteAll'); if (na){ bindMd(na.closest('.overall')); na.addEventListener('input', ()=>{ autosize(na); view.dirty=true; });
     const nf=na.closest('.fld').querySelector('.md'); let nb=null;
-    nf.addEventListener('focus', ()=>{ nb=na.value; }); nf.addEventListener('blur', ()=>{ if (nb!==null && nb.trim()!==na.value.trim()){ const cur=na.value.trim(); na.value=cur; c.noteSegs=updSegs(c.noteSegs, nb.trim(), cur, (me && c.owner && c.owner!==me.id) ? me.name : null, me ? me.id : ''); nf.innerHTML=md(cur, c.noteSegs); } nb=null; }); }
+    nf.addEventListener('focus', ()=>{ nb=na.value; }); nf.addEventListener('blur', ()=>{ if (nb!==null && nb.trim()!==na.value.trim()){ const cur=na.value.trim(); na.value=cur; c.noteSegs=updSegs(c.noteSegs, nb.trim(), cur, (me && c.owner && c.owner!==me.id) ? me.name : null, me ? me.id : ''); c.noteMt=Date.now(); nf.innerHTML=md(cur, c.noteSegs); } nb=null; }); }
 }
 // ── 메모 목록(표) + 복사용 텍스트: 텍스트형·PDF형 공통 ──
 function listItems(c){
@@ -873,7 +873,7 @@ function bindTextSelection(cont, c0){
     pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
     pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
       const c=cur(); pushHist(c, `${KIND[b.dataset.k]} 추가 · ${text.slice(0,18)}${text.length>18?'…':''}`);
-      c.marks.push({start, end, kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : '', byId: me ? me.id : ''}); c.marks.sort((x,y)=>x.start-y.start);
+      c.marks.push({mid:newMid(), mt:Date.now(), start, end, kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : '', byId: me ? me.id : ''}); c.marks.sort((x,y)=>x.start-y.start);
       view.dirty=true; sel.removeAllRanges(); kill(); renderTextDoc(c); refreshPdfHead(c);
       const idx=c.marks.findIndex(m=>m.start===start && m.end===end); setTimeout(()=>focusHunk(idx+1), 50);
     }));
@@ -1016,17 +1016,45 @@ function renderPdfNotes(c){
     let before=null;
     f.addEventListener('focus', ()=>{ before = t.value; });
     f.addEventListener('blur', ()=>{ if (before!==null && before.trim()!==t.value.trim()){ let cur=t.value.trim(); const bef=before.trim(); t.value=bef; pushHist(c, `메모 ${+t.dataset.i+1} 수정`);
-        const m=c.marks[+t.dataset.i]; if (m && t.dataset.f==='reason') m.segs=updSegs(m.segs, bef, cur, (me && m.by && !sameUser(m, me)) ? me.name : null, me ? me.id : '');
+        const m=c.marks[+t.dataset.i]; if (m && t.dataset.f==='reason'){ m.segs=updSegs(m.segs, bef, cur, (me && m.by && !sameUser(m, me)) ? me.name : null, me ? me.id : ''); m.mt=Date.now(); }
         t.value=cur; collectMarks(c); if (f.isContentEditable) f.innerHTML=md(cur, m ? m.segs : null); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
   });
   bindNotes();
   requestAnimationFrame(()=>layoutNotes());
 }
+function hashStr(str){ let h=0; for (let i=0;i<str.length;i++){ h=(h*31 + str.charCodeAt(i))|0; } return (h>>>0).toString(36); }
+function markKey(m){ return 'k'+hashStr([m.kind, m.text||'', m.page||'', m.start??'', m.end??'', JSON.stringify(m.rects||[])].join('|')); }
+function ensureMids(c){ (c.marks||[]).forEach(m=>{ if (!m.mid) m.mid=markKey(m); if (!m.mt) m.mt=0; }); }
+const newMid=()=>'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 function collectMarks(c){
   document.querySelectorAll('.note textarea[data-i]').forEach(t=>{ const m=c.marks[+t.dataset.i]; if (!m) return; const v=t.value.trim();
-    if (v!==(m[t.dataset.f]||'') && me && m.by && !sameUser(m, me)){ m.editedBy=me.name; m.editedById=me.id; }   // 남의 메모를 고치면 수정자 표시
+    if (v!==(m[t.dataset.f]||'')){ m.mt=Date.now(); if (me && m.by && !sameUser(m, me)){ m.editedBy=me.name; m.editedById=me.id; } }   // 남의 메모를 고치면 수정자 표시
     m[t.dataset.f]=v; });
-  const na=$('#noteAll'); if (na) c.note = na.value.trim();
+  const na=$('#noteAll'); if (na){ const v=na.value.trim(); if (v!==(c.note||'')) c.noteMt=Date.now(); c.note=v; }
+}
+// ── 저장 직전 3자 병합: 내가 연 시점(base) · 지금 내 것(local) · 깃헙 최신(remote) 을 메모 단위로 합친다 ──
+async function readRemotePayload(c){
+  const u=await ghRead(`docs/${c.id}.json`); if (!u) return null;
+  const d=JSON.parse(td.decode(u)); let key=K;
+  if (d.lock){ key=docKeys[c.id]; if (!key) return null; }
+  try { const pl=JSON.parse(td.decode(await decB(key, ub64(d.ct)))); return {pl, ts:d.ts||''}; } catch(e){ return null; }
+}
+async function mergeRemote(c){
+  if (!c._base) return 0;                             // 새 문서
+  const r=await readRemotePayload(c); if (!r) return 0;
+  const remote=r.pl; if (r.ts===c._baseTs) return 0;   // 내가 연 뒤로 아무도 저장 안 함
+  ensureMids(c); (remote.marks||[]).forEach(m=>{ if (!m.mid) m.mid=markKey(m); if (!m.mt) m.mt=0; });
+  const L=new Map(c.marks.map(m=>[m.mid,m])), R=new Map(remote.marks.map(m=>[m.mid,m])), B=c._base;
+  const out=[]; let changed=0;
+  for (const mid of new Set([...L.keys(), ...R.keys()])){
+    const l=L.get(mid), rm=R.get(mid), b=B.has(mid);
+    if (l && rm){ out.push((rm.mt||0)>(l.mt||0) ? rm : l); if ((rm.mt||0)>(l.mt||0)) changed++; }
+    else if (l && !rm){ if (!b) out.push(l); else changed++; }   // 원격에서 지워진 것은 버림
+    else { if (!b){ out.push(rm); changed++; } }                  // 원격에서 새로 생긴 것은 받음(내가 지운 건 안 살림)
+  }
+  if ((remote.noteMt||0)>(c.noteMt||0) && remote.note!==c.note){ c.note=remote.note; c.noteSegs=remote.noteSegs||[]; c.noteMt=remote.noteMt; changed++; }
+  c.marks=out; if (isPdf(c)) c.marks.sort((a,b)=>a.page-b.page || a.rects[0][1]-b.rects[0][1] || a.rects[0][0]-b.rects[0][0]); else c.marks.sort((a,b)=>a.start-b.start);
+  return changed;
 }
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('불러오기 실패: '+src)); document.head.appendChild(s); }); }
 async function ensurePdfjs(){
@@ -1132,7 +1160,7 @@ function bindSelection(cont, c0){
       pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
       pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
         const c = cur(); pushHist(c, `${KIND[b.dataset.k]} 추가 · ${text.slice(0,18)}${text.length>18?'…':''}`);
-        c.marks.push({page:+pageEl.dataset.p, rects:merged.map(r=>r.map(v=>+v.toFixed(4))), kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : '', byId: me ? me.id : ''});
+        c.marks.push({page:+pageEl.dataset.p, rects:merged.map(r=>r.map(v=>+v.toFixed(4))), kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : '', byId: me ? me.id : '', mid:newMid(), mt:Date.now()});
         // 쪽·위치 순으로 번호 유지
         c.marks.sort((a,b)=>a.page-b.page || a.rects[0][1]-b.rects[0][1] || a.rects[0][0]-b.rects[0][0]);
         view.dirty=true; sel.removeAllRanges(); kill();
@@ -1420,6 +1448,7 @@ async function loadDoc(c){
   (c.marks||[]).forEach(m=>{ if (m.by && !m.byId) m.byId=idOf(m.by); (m.segs||[]).forEach(g=>{ if (!g.id) g.id=idOf(g.by); }); }); (c.noteSegs||[]).forEach(g=>{ if (!g.id) g.id=idOf(g.by); });
   const unband = t => (t||'').replace(/⟦([^|⟧\n]{1,40})\|([^⟧]*)⟧/g, '[$1] $2').replace(/[⟦⟧]/g,'');
   (c.marks||[]).forEach(m=>{ m.reason=unband(m.reason); }); c.note=unband(c.note);
+  ensureMids(c); c._base=new Set(c.marks.map(m=>m.mid)); c._baseTs=d.ts||'';
   c.loaded=true; return c;
 }
 function meta(c){ return {id:c.id, title:c.title, date:c.date, ts:c.ts||'', type:c.type||'text', client:c.client||'', n:caseCount(c), lock:!!c.lock, vis:(Array.isArray(c.vis)?c.vis:null), owner:c.owner||''}; }
@@ -1435,7 +1464,11 @@ async function saveDoc(c, btn){
   const msg=$('#saveMsg'); if (msg){ msg.textContent='저장하는 중…'; msg.className='msg'; } if (btn) btn.disabled=true;
   try {
     if (!token) throw new Error('편집자만 저장할 수 있습니다');
-    const payload = isPdf(c) ? {marks:c.marks||[], note:c.note||'', pages:c.pages||0, noteSegs:c.noteSegs||[]} : {src:c.src||'', html:c.html||'', marks:c.marks||[], note:c.note||'', noteSegs:c.noteSegs||[]};
+    ensureMids(c);
+    if (msg) msg.textContent='다른 사람 저장분과 합치는 중…';
+    let merged=0; try { merged=await mergeRemote(c); } catch(e){ console.warn('merge', e); }
+    if (merged) toast(`다른 사람이 저장한 메모 ${merged}건을 합쳤습니다`);
+    const payload = isPdf(c) ? {marks:c.marks||[], note:c.note||'', pages:c.pages||0, noteSegs:c.noteSegs||[], noteMt:c.noteMt||0} : {src:c.src||'', html:c.html||'', marks:c.marks||[], note:c.note||'', noteSegs:c.noteSegs||[], noteMt:c.noteMt||0};
     // 문서 열쇠 정하기: 잠금 없음 = 사이트키 K / 잠금 = 문서키(문서 비밀번호와 편집자키 Ke 로 각각 감쌈)
     let key=K, wrap=null; const wasLocked=!!c.lock; let keyChanged=false;
     if (c.unlockReq){ c.lock=false; keyChanged=wasLocked; }
@@ -1457,6 +1490,7 @@ async function saveDoc(c, btn){
     await ghWrite(`docs/${c.id}.json`, te.encode(JSON.stringify(Object.assign({}, m, c.lock?{lock:true, wrap}:{}, {ct}))), `save: ${c.title}`);
     await updateIndex(list=>{ const i=list.findIndex(x=>x.id===c.id); if (i>=0) list[i]=m; else list.push(m); });
     const idx=cases.findIndex(x=>x.id===c.id); if (idx>=0){ if (cases[idx]!==c) Object.assign(cases[idx], c); } else cases.push(c);
+    c._base=new Set(c.marks.map(m=>m.mid)); c._baseTs=c.ts||'';
     const wasDraft=!!view.draft; const y=window.scrollY;
     view.draft=null; view.id=c.id; view.dirty=false; location.hash='case='+c.id; toast('저장했습니다');
     // 저장 뒤 화면을 맨 위로 보내지 않는다: 기존 PDF 문서는 머리만 갱신, 그 외는 다시 그린 뒤 같은 자리로
