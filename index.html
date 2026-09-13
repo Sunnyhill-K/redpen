@@ -220,7 +220,9 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .sheet.pdf{max-width:1180px;grid-template-columns:minmax(0,1fr) calc(280px * var(--ui,1))}
 /* 확대 시: 틀이 쪽 크기만큼 넓어지고, 화면을 넘치면 main 이 가로로 움직인다 */
 .sheet.pdf.zoomed{max-width:none;width:max-content;grid-template-columns:auto calc(280px * var(--ui,1))}
-.sheet.pdf .txtdoc{width:auto;max-width:none;min-width:0}   /* 격자 열 폭을 그대로 채운다(고정 폭이면 화면 글자 배율에 따라 메모 열을 침범) */
+.sheet.pdf .txtdoc{width:auto;max-width:none;min-width:0;background:var(--paper-3);padding:14px;border:0;box-shadow:none;border-radius:3px}
+.txtdoc .tpage{background:#fff;color:#1F2430;box-shadow:0 1px 3px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);padding:34px 38px;min-height:300px}
+.txtdoc .tpage .pre{color:inherit}
 .sheet.pdf.zoomed .pages{overflow:visible;max-width:none}
 .sheet.pdf .notes-title{position:static;margin-bottom:8px}
 .pages{display:flex;flex-direction:column;gap:18px;position:relative;overflow:auto;max-width:100%;background:var(--paper-3);padding:14px;border-radius:3px}
@@ -723,8 +725,8 @@ function layoutTextDoc(){
   const baseW = stacked ? mainW : Math.max(320, Math.min(1180, mainW) - notesW - 28);
   const width = Math.round(baseW * zoom.text);
   if (sheet) sheet.classList.toggle('zoomed', !stacked);
-  cont.style.width = !stacked ? width+'px' : '';
-  const railW = $('#rail').offsetWidth; const need = railW + 40 + width + 28 + notesW;
+  cont.style.width = !stacked ? (width+28)+'px' : '';   // 홈통 14px×2
+  const railW = $('#rail').offsetWidth; const need = railW + 40 + (width+28) + 28 + notesW;
   const over = !stacked && need > document.documentElement.clientWidth;
   document.body.style.minWidth = over ? need+'px' : ''; document.body.classList.toggle('zoomed-body', over);
   requestAnimationFrame(()=>{ layoutNotes(); fitOverall(); });
@@ -732,7 +734,7 @@ function layoutTextDoc(){
 function renderTextDoc(c){
   const cont=$('#doc'); if (!cont || cont.classList.contains('pages')) return;
   layoutTextDoc();
-  cont.innerHTML = baseHtml(c);
+  cont.innerHTML = `<div class="tpage">${baseHtml(c)}</div>`;
   // 뒤에서부터 감싸야 앞쪽 오프셋이 흔들리지 않는다
   c.marks.map((m,i)=>({m,h:i+1})).sort((x,y)=>y.m.start-x.m.start).forEach(({m,h})=>wrapRange(cont, m.start, m.end, m.kind, h, true));
   requestAnimationFrame(()=>layoutNotes());
@@ -747,7 +749,7 @@ function revisedDom(c){
     else sp.replaceWith(...sp.childNodes); });
   return tmp;
 }
-function renderTextRevised(c){ const cont=$('#doc'); if (!cont) return; layoutTextDoc(); cont.innerHTML=''; cont.appendChild(revisedDom(c)); }
+function renderTextRevised(c){ const cont=$('#doc'); if (!cont) return; layoutTextDoc(); cont.innerHTML=''; const pg=document.createElement('div'); pg.className='tpage'; pg.appendChild(revisedDom(c)); cont.appendChild(pg); }
 function revisedText(c){
   if (c.type!=='word'){ let src=c.src||''; c.marks.map(m=>m).sort((x,y)=>y.start-x.start).forEach(m=>{ if (m.kind==='memo') return; src = src.slice(0,m.start) + (m.kind==='rep' ? (m.after||'') : '') + src.slice(m.end); }); return src; }
   const d=revisedDom(c); d.style.cssText='position:fixed;left:-9999px;top:0;white-space:pre-wrap'; document.body.appendChild(d); const t=d.innerText; d.remove(); return t;
