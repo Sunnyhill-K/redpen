@@ -636,7 +636,7 @@ function setZoom(c, delta, reset){
   if (nz===zoom[k]) return;
   zoom[k]=nz; try { localStorage.setItem('redpen.zoom', JSON.stringify(zoom)); } catch(e){}
   const lab=$('#zoomReset'); if (lab) lab.textContent = Math.round(nz*100)+'%';
-  if (k==='text'){ $('#main').style.setProperty('--z', nz); requestAnimationFrame(()=>layoutNotes()); }
+  if (k==='text'){ $('#main').style.setProperty('--z', nz); layoutTextDoc(); requestAnimationFrame(()=>layoutNotes()); }
   else { clearTimeout(zoomT); zoomT=setTimeout(()=>{ if (pdfState && $('#doc')) drawPages(); }, 120); }
 }
 $('#main').addEventListener('wheel', e=>{
@@ -688,7 +688,10 @@ function sanitizeHtml(html){
     const st=(ch.getAttribute('style')||'').toLowerCase(); let wrapTags=[];
     if (/font-weight:\s*(bold|[6-9]00)/.test(st)) wrapTags.push('b'); if (/font-style:\s*italic/.test(st)) wrapTags.push('i');
     if (/text-decoration[^;]*underline/.test(st)) wrapTags.push('u'); if (/text-decoration[^;]*line-through/.test(st)) wrapTags.push('s');
+    const keep=[]; st.split(';').forEach(d=>{ const m=d.match(/^\s*([a-z-]+)\s*:\s*([^;]+)$/); if (!m) return; const k=m[1], v=m[2].trim();
+      if (/^(color|background-color|font-size|font-weight|font-style|text-decoration|text-decoration-line|text-align|vertical-align)$/.test(k) && !/url\(|expression|javascript/i.test(v)) keep.push(k+':'+v); });
     [...ch.attributes].forEach(a=>{ if (!/^(colspan|rowspan)$/i.test(a.name)) ch.removeAttribute(a.name); });
+    if (keep.length) ch.setAttribute('style', keep.join(';'));
     if (wrapTags.length && t==='span'){ let inner=ch; wrapTags.forEach(w=>{ const el=doc.createElement(w); while (inner.firstChild) el.appendChild(inner.firstChild); inner.appendChild(el); }); }
     walk(ch); }); };
   walk(doc.body); return doc.body.innerHTML;
@@ -709,8 +712,23 @@ function wrapRange(root, start, end, cls, h, withBadge){
   }
 }
 function baseHtml(c){ return c.type==='word' ? (c.html||'') : `<div class="pre">${esc(c.src||'')}</div>`; }
+// 텍스트·Word 틀 폭: 기준 폭 × 문서 배율(PDF 와 같은 규칙). 넘치면 창이 가로로 움직인다
+function layoutTextDoc(){
+  const cont=$('#doc'); if (!cont || !cont.classList.contains('txtdoc')) return;
+  const sheet=cont.closest('.sheet'); const stacked = window.innerWidth <= 980;
+  const notesW = Math.round(280*uiScale); const mainW = $('#main').clientWidth - 40 - 28;
+  const baseW = stacked ? mainW : Math.max(320, Math.min(1180, mainW) - notesW - 28);
+  const width = Math.round(baseW * zoom.text);
+  if (sheet) sheet.classList.toggle('zoomed', !stacked);
+  cont.style.width = !stacked ? width+'px' : '';
+  const railW = $('#rail').offsetWidth; const need = railW + 40 + width + 28 + notesW;
+  const over = !stacked && need > document.documentElement.clientWidth;
+  document.body.style.minWidth = over ? need+'px' : ''; document.body.classList.toggle('zoomed-body', over);
+  requestAnimationFrame(()=>{ layoutNotes(); fitOverall(); });
+}
 function renderTextDoc(c){
   const cont=$('#doc'); if (!cont || cont.classList.contains('pages')) return;
+  layoutTextDoc();
   cont.innerHTML = baseHtml(c);
   // 뒤에서부터 감싸야 앞쪽 오프셋이 흔들리지 않는다
   c.marks.map((m,i)=>({m,h:i+1})).sort((x,y)=>y.m.start-x.m.start).forEach(({m,h})=>wrapRange(cont, m.start, m.end, m.kind, h, true));
@@ -726,7 +744,7 @@ function revisedDom(c){
     else sp.replaceWith(...sp.childNodes); });
   return tmp;
 }
-function renderTextRevised(c){ const cont=$('#doc'); if (!cont) return; cont.innerHTML=''; cont.appendChild(revisedDom(c)); }
+function renderTextRevised(c){ const cont=$('#doc'); if (!cont) return; layoutTextDoc(); cont.innerHTML=''; cont.appendChild(revisedDom(c)); }
 function revisedText(c){
   if (c.type!=='word'){ let src=c.src||''; c.marks.map(m=>m).sort((x,y)=>y.start-x.start).forEach(m=>{ if (m.kind==='memo') return; src = src.slice(0,m.start) + (m.kind==='rep' ? (m.after||'') : '') + src.slice(m.end); }); return src; }
   const d=revisedDom(c); d.style.cssText='position:fixed;left:-9999px;top:0;white-space:pre-wrap'; document.body.appendChild(d); const t=d.innerText; d.remove(); return t;
@@ -1434,14 +1452,14 @@ syncFold();
 $('#btnRail').addEventListener('click', e=>{ e.stopPropagation(); shell.classList.toggle('nrail'); syncFold(); try { localStorage.setItem('redpen.nrail', shell.classList.contains('nrail')?'1':'0'); } catch(e){}
   requestAnimationFrame(()=>{ layoutNotes(); if (pdfState && $('#doc')) drawPages(); }); });
 let rsT=null, lastW=window.innerWidth;
-window.addEventListener('resize', ()=>{ layoutNotes(); clearTimeout(rsT); rsT=setTimeout(()=>{ if (pdfState && $('#doc') && Math.abs(window.innerWidth-lastW)>10){ lastW=window.innerWidth; drawPages(); } }, 250); });
+window.addEventListener('resize', ()=>{ layoutNotes(); clearTimeout(rsT); rsT=setTimeout(()=>{ if (Math.abs(window.innerWidth-lastW)>10){ lastW=window.innerWidth; if (pdfState && $('#doc')) drawPages(); else layoutTextDoc(); } }, 250); });
 window.addEventListener('beforeunload', e=>{ if (view.dirty){ e.preventDefault(); e.returnValue=''; } });
 document.fonts && document.fonts.ready.then(()=>layoutNotes());
 
 $('#btnLock').addEventListener('click', lockNow);
 // 화면 글자 크기(문서 제외)
-let uiScale=1; try { uiScale=parseFloat(localStorage.getItem('redpen.ui'))||1; } catch(e){}
-function applyUi(){ document.documentElement.style.setProperty('--ui', uiScale); $('#uiReset').textContent=Math.round(uiScale*100)+'%'; try { localStorage.setItem('redpen.ui', uiScale); } catch(e){} syncTop(); layoutNotes(); fitOverall(); if (pdfState && $('#doc')) drawPages(); }
+var uiScale=1; try { uiScale=parseFloat(localStorage.getItem('redpen.ui'))||1; } catch(e){}
+function applyUi(){ document.documentElement.style.setProperty('--ui', uiScale); $('#uiReset').textContent=Math.round(uiScale*100)+'%'; try { localStorage.setItem('redpen.ui', uiScale); } catch(e){} syncTop(); layoutNotes(); fitOverall(); if (pdfState && $('#doc')) drawPages(); else layoutTextDoc(); }
 function setUi(d, reset){ uiScale = reset ? 1 : Math.min(1.6, Math.max(0.8, Math.round((uiScale+d)*10)/10)); applyUi(); }
 $('#uiMinus').addEventListener('click', ()=>setUi(-0.1)); $('#uiPlus').addEventListener('click', ()=>setUi(0.1)); $('#uiReset').addEventListener('click', ()=>setUi(0,true));
 document.documentElement.style.setProperty('--ui', uiScale); $('#uiReset').textContent=Math.round(uiScale*100)+'%';
