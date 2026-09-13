@@ -194,6 +194,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .pop button{border:0;background:transparent;color:var(--btn-ink);padding:4px 9px;border-radius:3px;cursor:pointer;font-size:12.5px}
 .pop button:hover{background:rgba(127,127,127,.3)}
 .pop button.d{color:#F0776E} .pop button.r{color:#86ACF2} .pop button.m{color:#7FC49A}
+.pop kbd{font-family:var(--mono);font-size:10px;opacity:.7;margin-left:2px}
 .pdfmsg{padding:40px;text-align:center;color:var(--ink-3);border:1px dashed var(--rule)}
 
 /* 메모 목록만 보기 */
@@ -793,7 +794,7 @@ function refreshPdfHead(c){
      <button class="btn small" id="redoBtn" title="Ctrl+Shift+Z${hist.redo.length?' · '+esc(hist.redo[hist.redo.length-1].l):''}" ${hist.redo.length?'':'disabled'}>↷ 다시 실행${hist.redo.length?' '+hist.redo.length:''}</button>
      <button class="btn small" id="histBtn" title="되돌리기 이력을 보고 골라서 되돌아가기" ${(hist.undo.length||hist.redo.length)?'':'disabled'}>실행 기록</button>
      <button class="btn small danger" id="clearBtn" ${c.marks.length?'':'disabled'}>표시 모두 지우기</button>` : ''}`)
-    + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모를 얹을 수 있습니다':''} · Ctrl+휠로 확대·축소 · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
+    + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모를 얹을 수 있습니다 (Alt+1/2/3)':''} · Ctrl+휠로 확대·축소 · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
   $('#modeDoc').addEventListener('click', ()=>{ pdfListMode=false; refreshPdfHead(c); });
   $('#modeList').addEventListener('click', ()=>{ collectMarks(c); pdfListMode=true; refreshPdfHead(c); });
@@ -927,7 +928,7 @@ function bindSelection(cont, c0){
       const last = merged[merged.length-1];
       pop=document.createElement('div'); pop.className='pop';
       pop.style.left=((last[0]+last[2]/2)*100)+'%'; pop.style.top=((last[1]+last[3])*100)+'%';
-      pop.innerHTML = `<button class="d" data-k="del">삭제</button><button class="r" data-k="rep">바꾸기</button><button class="m" data-k="memo">메모</button>`;
+      pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
       pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
         const c = cur(); pushHist(c, `${KIND[b.dataset.k]} 추가 · ${text.slice(0,18)}${text.length>18?'…':''}`);
         c.marks.push({page:+pageEl.dataset.p, rects:merged.map(r=>r.map(v=>+v.toFixed(4))), kind:b.dataset.k, text, after:'', reason:''});
@@ -942,6 +943,12 @@ function bindSelection(cont, c0){
     }, 0);
   });
   document.addEventListener('mousedown', e=>{ if (pop && !pop.contains(e.target)) kill(); });
+  // 메뉴가 떠 있을 때 Alt+1/2/3 = 삭제/바꾸기/메모
+  document.addEventListener('keydown', e=>{
+    if (!pop || !e.altKey) return;
+    const i={Digit1:0, Digit2:1, Digit3:2, Numpad1:0, Numpad2:1, Numpad3:2}[e.code]; if (i===undefined) return;
+    e.preventDefault(); const b=pop.querySelectorAll('button')[i]; if (b) b.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true}));
+  });
 }
 
 // ══════════════ 편집 화면 ══════════════
