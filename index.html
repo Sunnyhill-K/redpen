@@ -560,6 +560,7 @@ function ask3(msg, saveLabel){
 async function openCase(id){
   if (!(await leaveOk())) return;
   view = {mode:'case', id, draft:null, dirty:false, show:'side'};
+  lastNoteFocus=null; pendingSpot=null; window.scrollTo(0, 0);   // 목록에서 연 문서는 맨 위부터
   location.hash = 'case=' + id;
   render();
 }
