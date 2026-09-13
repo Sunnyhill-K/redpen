@@ -268,7 +268,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .overall .txt:empty::before{content:"총평 없음";color:var(--ink-3)}
 
 /* ── 편집 화면 ── */
-.edit{max-width:1120px;margin:0 auto}
+.edit{max-width:1120px;margin:0 auto;padding-top:20px}
 .edit h2{font-family:var(--serif);font-size:calc(22px * var(--ui,1));font-weight:600;margin:0 0 14px}
 .types{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .types label{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--rule);border-radius:4px;padding:10px 12px;cursor:pointer;flex:1;min-width:240px}
@@ -486,8 +486,8 @@ async function openCase(id){
 function render(){
   renderList();
   const main=$('#main'); main.innerHTML=''; document.body.classList.remove('zoomed-body');
-  if (view.mode==='list'){ renderHome(main); return; }
-  if (view.mode==='edit'){ renderEdit(main); return; }
+  if (view.mode==='list'){ renderHome(main); window.scrollTo(0,0); return; }
+  if (view.mode==='edit'){ renderEdit(main); window.scrollTo(0,0); return; }   // 문서를 내려 보다가 들어와도 위가 상단 바에 가려지지 않게
   const c = view.draft || cases.find(x=>x.id===view.id);
   if (!c){ view.mode='list'; renderHome(main); return; }
   if (!c.loaded && !view.draft){
