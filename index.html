@@ -689,7 +689,10 @@ function sanitizeHtml(html){
     if (/font-weight:\s*(bold|[6-9]00)/.test(st)) wrapTags.push('b'); if (/font-style:\s*italic/.test(st)) wrapTags.push('i');
     if (/text-decoration[^;]*underline/.test(st)) wrapTags.push('u'); if (/text-decoration[^;]*line-through/.test(st)) wrapTags.push('s');
     const keep=[]; st.split(';').forEach(d=>{ const m=d.match(/^\s*([a-z-]+)\s*:\s*([^;]+)$/); if (!m) return; const k=m[1], v=m[2].trim();
-      if (/^(color|background-color|font-size|font-weight|font-style|text-decoration|text-decoration-line|text-align|vertical-align)$/.test(k) && !/url\(|expression|javascript/i.test(v)) keep.push(k+':'+v); });
+      if (!/^(color|background-color|font-size|font-weight|font-style|text-decoration|text-decoration-line|text-align|vertical-align)$/.test(k) || /url\(|expression|javascript/i.test(v)) return;
+      // 글자 크기는 절대값(pt/px)을 본문 기준 배수(em)로 바꿔 문서 배율을 따라가게 한다 (구글 문서 기본 11pt)
+      if (k==='font-size'){ const mm=v.match(/^(\d+(?:\.\d+)?)(pt|px)$/); if (mm){ const em=(+mm[1])/(mm[2]==='pt'?11:14.67); keep.push('font-size:'+em.toFixed(2)+'em'); } return; }
+      keep.push(k+':'+v); });
     [...ch.attributes].forEach(a=>{ if (!/^(colspan|rowspan)$/i.test(a.name)) ch.removeAttribute(a.name); });
     if (keep.length) ch.setAttribute('style', keep.join(';'));
     if (wrapTags.length && t==='span'){ let inner=ch; wrapTags.forEach(w=>{ const el=doc.createElement(w); while (inner.firstChild) el.appendChild(inner.firstChild); inner.appendChild(el); }); }
