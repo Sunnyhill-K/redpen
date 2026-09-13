@@ -259,6 +259,17 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .ask .box .msg{min-height:18px;margin-bottom:8px}
 .ask.lock{background:var(--paper)}
 
+.ask .box.hist{max-width:520px}
+.ask .box.hist ul{list-style:none;margin:0 0 12px;padding:0;max-height:50vh;overflow:auto;border:1px solid var(--rule);border-radius:4px}
+.ask .box.hist li{display:flex;gap:10px;align-items:center;padding:7px 10px;border-bottom:1px solid var(--rule);font-size:13px;cursor:pointer}
+.ask .box.hist li:last-child{border-bottom:0}
+.ask .box.hist li:hover{background:var(--paper-2)}
+.ask .box.hist li.now{background:var(--paper-3);cursor:default;font-weight:600}
+.ask .box.hist li.redo{color:var(--ink-3)}
+.ask .box.hist li .k{font-family:var(--mono);font-size:11px;color:var(--del);min-width:28px}
+.ask .box.hist li.redo .k{color:var(--ins)}
+.ask .box.hist li .t{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+
 /* ── 토스트 ── */
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:8px 14px;border-radius:4px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
 .toast.show{opacity:1}
@@ -440,8 +451,29 @@ function renderList(){
     ul.appendChild(li);
   });
 }
+// 저장 안 한 채 떠날 때: 저장하고 이동 / 버리기 / 취소. 편집 화면(입력 중)은 저장 대상이 없으니 버리기/취소만
+async function leaveOk(){
+  if (!view.dirty) return true;
+  const c = view.mode==='case' ? (view.draft || cases.find(x=>x.id===view.id)) : null;
+  const choice = await ask3('저장하지 않은 내용이 있습니다.', c && artifactNs ? '저장하고 이동' : null);
+  if (choice==='cancel') return false;
+  if (choice==='save'){ (isPdf(c)?collectMarks:collectMemos)(c); const ok=await saveDoc(c, $('#saveCase')); return !!ok; }
+  return true;
+}
+function ask3(msg, saveLabel){
+  return new Promise(res=>{
+    const ov=document.createElement('div'); ov.className='ask';
+    ov.innerHTML=`<div class="box" role="dialog" aria-modal="true"><p>${esc(msg)}</p><div class="row"><button class="btn" data-v="cancel">취소</button><button class="btn danger" data-v="discard">버리기</button>${saveLabel?`<button class="btn primary" data-v="save">${esc(saveLabel)}</button>`:''}</div></div>`;
+    const done=v=>{ ov.remove(); document.removeEventListener('keydown', onKey); res(v); };
+    const onKey=e=>{ if (e.key==='Escape') done('cancel'); };
+    ov.querySelectorAll('button').forEach(b=>b.addEventListener('click', ()=>done(b.dataset.v)));
+    ov.addEventListener('mousedown', e=>{ if (e.target===ov) done('cancel'); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(ov); (ov.querySelector('.primary')||ov.querySelector('.danger')).focus();
+  });
+}
 async function openCase(id){
-  if (view.dirty && !(await ask('저장하지 않은 내용이 있습니다. 버릴까요?','버리기'))) return;
+  if (!(await leaveOk())) return;
   view = {mode:'case', id, draft:null, dirty:false, show:'side'};
   location.hash = 'case=' + id;
   render();
@@ -480,7 +512,7 @@ function headHtml(c, statsHtml, toolsHtml){
       <span class="spacer"></span>
       ${artifactNs ? `<button class="btn small" id="editCase">정보 수정</button>` : ''}
       ${artifactNs && !isDraft ? `<button class="btn small danger" id="delCase">삭제</button>` : ''}
-      ${artifactNs ? `<button class="btn small primary" id="saveCase">저장</button>` : ''}
+      ${artifactNs ? `<button class="btn small primary" id="saveCase" title="Ctrl+S">저장</button>` : ''}
       <span class="msg" id="saveMsg"></span>
     </div>`;
 }
@@ -706,11 +738,30 @@ let pdfListMode = false;
 let zoom = {pdf:1, text:1};
 try { const z=JSON.parse(localStorage.getItem('redpen.zoom')||'{}'); if (z.pdf) zoom.pdf=z.pdf; if (z.text) zoom.text=z.text; } catch(e){}
 const snap = c => JSON.stringify(c.marks||[]);
-function pushHist(c){ collectMarks(c); if (hist.id!==c.id) hist={id:c.id, undo:[], redo:[]}; hist.undo.push(snap(c)); if (hist.undo.length>100) hist.undo.shift(); hist.redo=[]; }
+const HIST_MAX = 100;   // 문서당 되돌리기 깊이. 저장해도 남고, 새로고침하면 비워진다
+function pushHist(c, label){ collectMarks(c); if (hist.id!==c.id) hist={id:c.id, undo:[], redo:[]}; hist.undo.push({s:snap(c), l:label||'변경', t:Date.now()}); if (hist.undo.length>HIST_MAX) hist.undo.shift(); hist.redo=[]; }
 function applyHist(c, from, to){
   if (hist.id!==c.id || !from.length) return;
-  collectMarks(c); to.push(snap(c)); c.marks = JSON.parse(from.pop());
+  collectMarks(c); const e=from.pop(); to.push({s:snap(c), l:e.l, t:Date.now()}); c.marks = JSON.parse(e.s);
   view.dirty=true; drawAllMarks(c); refreshPdfHead(c);
+}
+// 실행 기록 창: 항목을 누르면 그 시점으로 한 번에 되돌아간다(되돌리기/다시 실행을 필요한 만큼 반복)
+function showHistory(c){
+  if (hist.id!==c.id) hist={id:c.id, undo:[], redo:[]};
+  const tm=t=>new Date(t).toTimeString().slice(0,8);
+  const ov=document.createElement('div'); ov.className='ask';
+  const rows=[];
+  hist.redo.slice().reverse().forEach((e,i)=>rows.push(`<li class="redo" data-r="${hist.redo.length-i}"><span class="k">다시</span>${esc(e.l)}<span class="t">${tm(e.t)}</span></li>`));
+  rows.push(`<li class="now"><span class="k">현재</span>지금 상태 · 표시 ${c.marks.length}곳</li>`);
+  hist.undo.slice().reverse().forEach((e,i)=>rows.push(`<li class="undo" data-u="${i+1}"><span class="k">${i+1}</span>${esc(e.l)} 이전으로<span class="t">${tm(e.t)}</span></li>`));
+  ov.innerHTML=`<div class="box hist" role="dialog" aria-modal="true"><h3>실행 기록</h3><p>되돌리기 ${hist.undo.length} / 다시 실행 ${hist.redo.length} · 문서당 ${HIST_MAX}단계까지, 새로고침하면 비워집니다. 항목을 누르면 그 시점으로 갑니다.</p>
+    <ul>${rows.join('')}</ul><div class="row"><button class="btn" id="histClose">닫기</button></div></div>`;
+  document.body.appendChild(ov);
+  const close=()=>ov.remove();
+  ov.querySelector('#histClose').addEventListener('click', close);
+  ov.addEventListener('mousedown', e=>{ if (e.target===ov) close(); });
+  ov.querySelectorAll('li.undo').forEach(li=>li.addEventListener('click', ()=>{ const n=+li.dataset.u; for (let i=0;i<n;i++) undoMarks(c); close(); toast(`${n}단계 되돌렸습니다`); }));
+  ov.querySelectorAll('li.redo').forEach(li=>li.addEventListener('click', ()=>{ const n=+li.dataset.r; for (let i=0;i<n;i++) redoMarks(c); close(); toast(`${n}단계 다시 실행했습니다`); }));
 }
 const undoMarks = c => applyHist(c, hist.undo, hist.redo);
 const redoMarks = c => applyHist(c, hist.redo, hist.undo);
@@ -738,8 +789,9 @@ function refreshPdfHead(c){
     `<div class="seg"><button id="modeDoc" class="${pdfListMode?'':'on'}">문서 위 표시</button><button id="modeList" class="${pdfListMode?'on':''}">목록만</button></div>
      <button class="btn small" id="toggleMarks" ${pdfListMode?'disabled':''}>${hidden?'표시 보이기':'표시 감추기'}</button>
      <button class="btn small" id="copyList">목록 복사</button>
-     ${canEdit ? `<button class="btn small" id="undoBtn" title="Ctrl+Z" ${hist.undo.length?'':'disabled'}>↶ 되돌리기</button>
-     <button class="btn small" id="redoBtn" title="Ctrl+Shift+Z" ${hist.redo.length?'':'disabled'}>↷ 다시 실행</button>
+     ${canEdit ? `<button class="btn small" id="undoBtn" title="Ctrl+Z${hist.undo.length?' · '+esc(hist.undo[hist.undo.length-1].l):''}" ${hist.undo.length?'':'disabled'}>↶ 되돌리기${hist.undo.length?' '+hist.undo.length:''}</button>
+     <button class="btn small" id="redoBtn" title="Ctrl+Shift+Z${hist.redo.length?' · '+esc(hist.redo[hist.redo.length-1].l):''}" ${hist.redo.length?'':'disabled'}>↷ 다시 실행${hist.redo.length?' '+hist.redo.length:''}</button>
+     <button class="btn small" id="histBtn" title="되돌리기 이력을 보고 골라서 되돌아가기" ${(hist.undo.length||hist.redo.length)?'':'disabled'}>실행 기록</button>
      <button class="btn small danger" id="clearBtn" ${c.marks.length?'':'disabled'}>표시 모두 지우기</button>` : ''}`)
     + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모를 얹을 수 있습니다':''} · Ctrl+휠로 확대·축소 · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
@@ -749,7 +801,8 @@ function refreshPdfHead(c){
   const ub=$('#undoBtn'), rb=$('#redoBtn'), cb=$('#clearBtn');
   if (ub) ub.addEventListener('click', ()=>undoMarks(c));
   if (rb) rb.addEventListener('click', ()=>redoMarks(c));
-  if (cb) cb.addEventListener('click', async ()=>{ if (!(await ask(`표시 ${c.marks.length}곳을 모두 지웁니다. 되돌리기로 복구할 수 있습니다.`,'모두 지우기'))) return; pushHist(c); c.marks=[]; view.dirty=true; drawAllMarks(c); refreshPdfHead(c); });
+  const hb=$('#histBtn'); if (hb) hb.addEventListener('click', ()=>showHistory(c));
+  if (cb) cb.addEventListener('click', async ()=>{ if (!(await ask(`표시 ${c.marks.length}곳을 모두 지웁니다. 되돌리기로 복구할 수 있습니다.`,'모두 지우기'))) return; pushHist(c, `표시 모두 지우기 (${c.marks.length})`); c.marks=[]; view.dirty=true; drawAllMarks(c); refreshPdfHead(c); });
   bindHead(c, collectMarks);
   // 목록만 보기 ↔ 문서 보기
   const sheet=$('#pdfSheet'), list=$('#mlist');
@@ -774,7 +827,7 @@ function renderPdfNotes(c){
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
     ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지') : `<div class="txt">${md(m.reason||'')}</div>`}</div>`; }).join('');
   notes.querySelectorAll('.x').forEach(b=>b.addEventListener('click', ()=>{
-    pushHist(c); c.marks.splice(+b.dataset.i,1); view.dirty=true; drawAllMarks(c); refreshPdfHead(c); layoutNotes();
+    pushHist(c, `표시 ${+b.dataset.i+1} 지움`); c.marks.splice(+b.dataset.i,1); view.dirty=true; drawAllMarks(c); refreshPdfHead(c); layoutNotes();
   }));
   // 메모 글 편집도 되돌리기 대상: 칸에 들어갈 때 스냅샷을 잡고, 나올 때 바뀌었으면 확정
   notes.querySelectorAll('textarea[data-i], .fld').forEach(el=>{
@@ -782,7 +835,7 @@ function renderPdfNotes(c){
     if (!t || !f || t.hidden && el.tagName==='TEXTAREA') return;
     let before=null;
     f.addEventListener('focus', ()=>{ before = t.value; });
-    f.addEventListener('blur', ()=>{ if (before!==null && before!==t.value){ const cur=t.value; t.value=before; pushHist(c); t.value=cur; collectMarks(c); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
+    f.addEventListener('blur', ()=>{ if (before!==null && before!==t.value){ const cur=t.value; t.value=before; pushHist(c, `메모 ${+t.dataset.i+1} 수정`); t.value=cur; collectMarks(c); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
   });
   bindNotes();
   requestAnimationFrame(()=>layoutNotes());
@@ -876,7 +929,7 @@ function bindSelection(cont, c0){
       pop.style.left=((last[0]+last[2]/2)*100)+'%'; pop.style.top=((last[1]+last[3])*100)+'%';
       pop.innerHTML = `<button class="d" data-k="del">삭제</button><button class="r" data-k="rep">바꾸기</button><button class="m" data-k="memo">메모</button>`;
       pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
-        const c = cur(); pushHist(c);
+        const c = cur(); pushHist(c, `${KIND[b.dataset.k]} 추가 · ${text.slice(0,18)}${text.length>18?'…':''}`);
         c.marks.push({page:+pageEl.dataset.p, rects:merged.map(r=>r.map(v=>+v.toFixed(4))), kind:b.dataset.k, text, after:'', reason:''});
         // 쪽·위치 순으로 번호 유지
         c.marks.sort((a,b)=>a.page-b.page || a.rects[0][1]-b.rects[0][1] || a.rects[0][0]-b.rects[0][0]);
@@ -921,7 +974,7 @@ function renderEdit(main){
     </div>
     <div class="pdfpick" id="pdfPart"><label class="l">PDF 파일</label>
       <label class="zone" id="zone">여기에 PDF를 끌어다 놓거나 눌러서 고르세요<input type="file" id="fPdf" accept=".pdf"><div class="f" id="pdfName">${esc(pdfName)}</div></label></div>
-    <div class="actions"><button class="btn primary" id="doCompare">저장</button><button class="btn" id="cancelEdit">취소</button><span class="msg" id="editMsg"></span></div>
+    <div class="actions"><button class="btn primary" id="doCompare" title="Ctrl+S">저장</button><button class="btn" id="cancelEdit">취소</button><span class="msg" id="editMsg"></span></div>
   </div>`;
   const syncType = ()=>{ $('#textPart').hidden = type!=='text'; $('#pdfPart').hidden = type!=='pdf'; $('#doCompare').textContent = '저장';
     main.querySelectorAll('.types label').forEach(l=>l.classList.toggle('on', l.querySelector('input').value===type)); };
@@ -1105,8 +1158,8 @@ async function saveDoc(c, btn){
     await ghWrite(`docs/${c.id}.json`, te.encode(JSON.stringify(Object.assign({}, m, c.lock?{lock:true, wrap}:{}, {ct}))), `save: ${c.title}`);
     await updateIndex(list=>{ const i=list.findIndex(x=>x.id===c.id); if (i>=0) list[i]=m; else list.push(m); });
     const idx=cases.findIndex(x=>x.id===c.id); if (idx>=0){ if (cases[idx]!==c) Object.assign(cases[idx], c); } else cases.push(c);
-    view.draft=null; view.id=c.id; view.dirty=false; location.hash='case='+c.id; toast('저장했습니다'); render();
-  } catch(e){ if (msg){ msg.textContent=(e&&e.message)||String(e); msg.className='msg err'; } if (btn) btn.disabled=false; }
+    view.draft=null; view.id=c.id; view.dirty=false; location.hash='case='+c.id; toast('저장했습니다'); render(); return true;
+  } catch(e){ if (msg){ msg.textContent=(e&&e.message)||String(e); msg.className='msg err'; } if (btn) btn.disabled=false; toast('저장 실패: '+((e&&e.message)||e)); return false; }
 }
 async function deleteDoc(c, btn){
   const msg=$('#saveMsg'); if (msg){ msg.textContent='지우는 중…'; msg.className='msg'; } if (btn) btn.disabled=true;
@@ -1208,8 +1261,8 @@ async function copyText(t, ok){
   try { await navigator.clipboard.writeText(t); toast(ok); }
   catch(e){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast(ok);}catch(_){ toast('복사가 막혀 있습니다. 직접 선택해 복사해 주세요.'); } ta.remove(); }
 }
-$('#btnList').addEventListener('click', async ()=>{ if (view.dirty && !(await ask('저장하지 않은 내용이 있습니다. 버릴까요?','버리기'))) return; view={mode:'list',id:null,draft:null,dirty:false,show:'side'}; location.hash=''; render(); });
-$('#btnNew').addEventListener('click', async ()=>{ if (view.dirty && !(await ask('저장하지 않은 내용이 있습니다. 버릴까요?','버리기'))) return; view={mode:'edit',id:null,draft:null,dirty:false,show:'side'}; render(); });
+$('#btnList').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'list',id:null,draft:null,dirty:false,show:'side'}; location.hash=''; render(); });
+$('#btnNew').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'edit',id:null,draft:null,dirty:false,show:'side'}; render(); });
 const shell=$('.shell');
 const syncFold=()=>{ $('#btnRail').textContent = shell.classList.contains('nrail') ? '목록 펼치기 »' : '« 접기'; };
 const syncTop=()=>{ document.documentElement.style.setProperty('--top-h', $('.top').offsetHeight+'px'); };
