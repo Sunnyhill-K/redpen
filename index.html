@@ -104,7 +104,8 @@ body.zoomed-body .top{left:0;width:100vw}
 .head .hint{margin-top:8px}
 body.zoomed-body .head{left:20px;max-width:calc(100vw - var(--rail-w,240px) - 40px)}
 .head .eyebrow{font-size:12px;color:var(--ink-3);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.head h2{font-family:var(--serif);font-size:24px;font-weight:600;margin:4px 0 6px;text-wrap:balance}
+.head h2{font-family:var(--serif);font-size:24px;font-weight:600;margin:4px 0 6px;text-wrap:balance;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.head h2 .hbtns{display:inline-flex;gap:6px;font-family:var(--sans);font-weight:400}
 .stats{display:flex;gap:18px;font-family:var(--mono);font-size:12px;color:var(--ink-2);flex-wrap:wrap;font-variant-numeric:tabular-nums}
 .stats b{font-weight:500;color:var(--ink)}
 .stats .d b{color:var(--del)} .stats .i b{color:var(--ins)} .stats .m b{color:var(--memo)}
@@ -253,7 +254,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .tcol textarea.over,.pdfpick .zone.over{border-color:var(--rule-strong);background:var(--paper-3)}
 .drop{margin-top:6px;font-size:12px;color:var(--ink-3);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .drop input[type=file],.pdfpick input[type=file]{display:none}
-.pdfpick .zone{border:1px dashed var(--rule);border-radius:4px;padding:28px;text-align:center;color:var(--ink-2);background:var(--paper-2)}
+.pdfpick .zone{display:block;border:1px dashed var(--rule);border-radius:4px;padding:28px;text-align:center;color:var(--ink-2);background:var(--paper-2);cursor:pointer}
 .pdfpick .zone .f{font-family:var(--mono);font-size:12px;color:var(--ink);margin-top:8px}
 .edit .actions{display:flex;gap:8px;margin-top:16px;align-items:center;flex-wrap:wrap}
 .msg{font-size:13px;color:var(--ink-2)}
@@ -517,13 +518,12 @@ function renderHome(main){
 function headHtml(c, statsHtml, toolsHtml){
   const isDraft = !!view.draft;
   return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':esc(c.source||'')}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}<span>${esc(c.client||'')}</span><span>${esc(c.date||'')}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
-    <h2>${esc(c.title||'(제목 없음)')}</h2>
+    <h2>${esc(c.title||'(제목 없음)')}<span class="hbtns">${artifactNs ? `<button class="btn small" id="editCase">정보 수정</button>` : ''}${isPdf(c) ? `<button class="btn small" id="dlPdf" title="저장된 원본 PDF 를 그대로 내려받습니다">원본 PDF 내려받기</button>` : ''}</span></h2>
     <div class="stats">${statsHtml}</div>
     <div class="tools">${toolsHtml}
       <button class="btn small" id="copyLink">링크 복사</button>
       <span class="zoom" title="Ctrl+휠로도 됩니다"><button id="zoomOut" aria-label="축소">−</button><button class="z" id="zoomReset" title="100%로">${Math.round((isPdf(c)?zoom.pdf:zoom.text)*100)}%</button><button id="zoomIn" aria-label="확대">+</button></span>
       <span class="spacer"></span>
-      ${artifactNs ? `<button class="btn small" id="editCase">정보 수정</button>` : ''}
       ${artifactNs && !isDraft ? `<button class="btn small danger" id="delCase">삭제</button>` : ''}
       ${artifactNs ? `<button class="btn small primary" id="saveCase" title="Ctrl+S">저장</button>` : ''}
       <span class="msg" id="saveMsg"></span>
@@ -536,6 +536,12 @@ function bindHead(c, collect){
   $('#zoomIn').addEventListener('click', ()=>setZoom(c, +0.1));
   $('#zoomReset').addEventListener('click', ()=>setZoom(c, 0, true));
   const ec=$('#editCase'); if (ec) ec.addEventListener('click', ()=>{ collect(c); view.mode='edit'; view.draft=c; render(); });
+  const dp=$('#dlPdf'); if (dp) dp.addEventListener('click', ()=>{
+    if (!c.pdf){ toast('PDF 가 아직 열리지 않았습니다'); return; }
+    const url=URL.createObjectURL(new Blob([b64ToBytes(c.pdf)], {type:'application/pdf'}));
+    const a=document.createElement('a'); a.href=url; a.download=(c.title||'문서').replace(/[\/:*?"<>|]+/g,' ').trim()+'.pdf'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 5000);
+  });
   const dc=$('#delCase'); if (dc) dc.addEventListener('click', async ()=>{
     if (!(await ask(`「${c.title}」 기록을 지웁니다. 되돌릴 수 없습니다.`,'지우기'))) return;
     await deleteDoc(c, dc);
