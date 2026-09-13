@@ -126,7 +126,7 @@ body.zoomed-body .top{left:0;width:var(--vw,100vw)}
 /* ── 사건 머리 ── */
 .head{max-width:none;margin:0 0 18px;position:sticky;top:var(--top-h,50px);z-index:4;background:var(--paper);padding-top:16px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
 .head .hint{margin-top:8px}
-body.zoomed-body .head{left:calc(var(--rail-w,240px) + 20px);width:calc(var(--vw,100vw) - var(--rail-w,240px) - 40px);max-width:none}   /* 가로 스크롤 때 머리는 목록 오른쪽부터 창 끝까지, 그 밑으로 문서가 지나간다 */
+body.zoomed-body .head{left:var(--rail-w,240px);width:calc(var(--vw,100vw) - var(--rail-w,240px) - 20px);max-width:none;padding-left:20px;margin-left:-20px;box-sizing:content-box;padding-right:0}   /* 가로 스크롤 때 머리는 목록 오른쪽부터 창 끝까지, 그 밑으로 문서가 지나간다 */
 .head .eyebrow{font-size:calc(12px * var(--ui,1));color:var(--ink-3);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .head h2{font-family:var(--serif);font-size:calc(24px * var(--ui,1));font-weight:600;margin:4px 0 6px;text-wrap:balance;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .head h2 .hbtns{display:inline-flex;gap:6px;font-family:var(--sans);font-weight:400}
@@ -1118,6 +1118,7 @@ async function drawPages(){
   // 2단계: 화면 근처의 쪽만 캔버스+글자층을 그린다(한 번 그리면 유지)
   const renderOne = async (pg)=>{
     if (pg.done || st.token!==token) return; pg.done=true;
+    if (SW.nocanvas){ const tl0=document.createElement('div'); tl0.className='textLayer'; tl0.style.setProperty('--scale-factor', String(pg.scale)); pg.el.prepend(tl0); try { const tc=await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl0, viewport: pg.vp, textDivs: []}).promise; } catch(e){} tmark('쪽 '+pg.p+' 글자층만'); return; }
     const canvas=document.createElement('canvas'); canvas.width=Math.floor(pg.vp.width*dprEff); canvas.height=Math.floor(pg.vp.height*dprEff);
     canvas.style.width=pg.vp.width+'px'; canvas.style.height=pg.vp.height+'px';
     const tl=document.createElement('div'); tl.className='textLayer'; tl.style.setProperty('--scale-factor', String(pg.scale));
@@ -1128,8 +1129,8 @@ async function drawPages(){
     tmark('쪽 '+pg.p+' 그림');
   };
   const io = new IntersectionObserver(entries=>{ entries.forEach(en=>{ if (en.isIntersecting){ const pg=pages.find(x=>x.el===en.target); if (pg){ renderOne(pg); io.unobserve(en.target); } } }); }, {rootMargin:'1200px 0px'});
-  pages.slice(0,2).forEach(pg=>renderOne(pg));
-  pages.slice(2).forEach(pg=>io.observe(pg.el));
+  if (SW.nolazy){ for (const pg of pages) await renderOne(pg); }
+  else { pages.slice(0,2).forEach(pg=>renderOne(pg)); pages.slice(2).forEach(pg=>io.observe(pg.el)); }
   st.io=io;
   if (artifactNs && !cont.dataset.selBound){ cont.dataset.selBound='1'; bindSelection(cont, st.c); }
   fitOverall();
@@ -1586,6 +1587,9 @@ async function migrateEditorSecret(key, kr, t){
 let me=null;   // {id, name, role:'admin'|'editor'|'viewer'}
 // ── 단계별 시간 재기(?debug) ──
 const T0=performance.now(); const TL=[]; const DEBUG=/[?&]debug/.test(location.search);
+const SW={nocanvas:/[?&]nocanvas/.test(location.search), nofont:/[?&]nofont/.test(location.search), nosticky:/[?&]nosticky/.test(location.search), nolazy:/[?&]nolazy/.test(location.search)};
+if (SW.nofont){ document.querySelectorAll('link[href*="fonts.googleapis"]').forEach(l=>l.remove()); }
+if (SW.nosticky){ const st=document.createElement('style'); st.textContent='.top,.rail,.head{position:static!important}'; document.head.appendChild(st); }
 document.addEventListener('visibilitychange', ()=>tmark('창 상태: '+document.visibilityState));
 ['focus','blur','resize','pageshow'].forEach(ev=>window.addEventListener(ev, ()=>tmark('창 이벤트: '+ev)));
 // 1초마다 시계: 이 시계가 멈춰 있으면 크롬이 화면을 안 그리는 것, 시계는 가는데 내용이 옛것이면 데이터 문제
