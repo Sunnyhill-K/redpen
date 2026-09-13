@@ -90,8 +90,8 @@ a{color:var(--ins)}
 .cases li.sel .ck{margin:3px 0 0;grid-row:1/3}
 .cases li.sel .t{grid-column:2} .cases li.sel .m{grid-column:2}
 .railhead{display:flex;align-items:flex-start;justify-content:space-between;padding:0 12px 6px}
-.railrow{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 12px 8px}
-.seg.sort button{padding:3px 7px;font-size:calc(11.5px * var(--ui,1))}
+.railrow{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 12px 8px;flex-wrap:nowrap}
+.railrow .btn.small{white-space:nowrap}
 .shell.nrail .railrow{display:none}
 .railhead h2{margin:0;padding-top:4px}
 .railbtns{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
@@ -372,7 +372,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 <div class="shell">
   <aside class="rail" id="rail">
     <div class="railhead"><h2 id="railTitle"><span class="t">목록</span></h2><div class="railbtns"><button class="fold" id="btnRail" title="목록 접기/펼치기" aria-label="목록 접기/펼치기">« 접기</button></div></div>
-    <div class="railrow"><div class="seg sort" id="sortSeg" title="정렬"><button data-s="new">최신순</button><button data-s="old">오래된순</button><button data-s="name">이름순</button></div><button class="btn small" id="btnSel" hidden>다수 선택</button></div>
+    <div class="railrow"><button class="btn small" id="sortBtn" title="누를 때마다 최신순 → 오래된순 → 이름순">⇅ 최신순</button><button class="btn small" id="btnSel" hidden>다수 선택</button></div>
     <div class="selbar" id="selBar" hidden><button class="btn small danger" id="selDel">선택 삭제 (0)</button><button class="btn small" id="selAll">전체</button></div>
     <ul class="cases" id="caseList"></ul>
     <div class="empty" id="caseEmpty" hidden>아직 문서가 없습니다. 「새 퇴고」로 시작하세요.</div>
@@ -404,7 +404,7 @@ function renderList(){
   const ul=$('#caseList'); ul.innerHTML='';
   $('#caseEmpty').hidden = cases.length>0;
   const cmp = sortMode==='name' ? (a,b)=>(a.title||'').localeCompare(b.title||'','ko') : sortMode==='old' ? (a,b)=>(a.date||'').localeCompare(b.date||'') || (a.id||'').localeCompare(b.id||'') : (a,b)=>(b.date||'').localeCompare(a.date||'') || (b.id||'').localeCompare(a.id||'');
-  document.querySelectorAll('#sortSeg button').forEach(b=>b.classList.toggle('on', b.dataset.s===sortMode));
+  const sb=$('#sortBtn'); if (sb) sb.textContent = '⇅ ' + ({new:'최신순', old:'오래된순', name:'이름순'}[sortMode]||'최신순');
   [...cases].sort(cmp).forEach(c=>{
     const li=document.createElement('li'); li.className = (view.mode==='case' && view.id===c.id) ? 'on' : ''; li.title = c.title||''; li.dataset.id=c.id;
     if (selMode) li.classList.add('sel');
@@ -447,7 +447,7 @@ async function editCaseById(id){
 // ── 다수 선택 삭제 ──
 let selMode=false, lastSel=-1; const selIds=new Set();
 let sortMode='new'; try { sortMode=localStorage.getItem('redpen.sort')||'new'; } catch(e){}
-document.querySelectorAll('#sortSeg button').forEach(b=>b.addEventListener('click', ()=>{ sortMode=b.dataset.s; try { localStorage.setItem('redpen.sort', sortMode); } catch(e){} renderList(); }));
+$('#sortBtn').addEventListener('click', ()=>{ sortMode = {new:'old', old:'name', name:'new'}[sortMode] || 'new'; try { localStorage.setItem('redpen.sort', sortMode); } catch(e){} renderList(); });
 function syncSelBar(){
   const bar=$('#selBar'); if (!bar) return;
   bar.hidden=!selMode; $('#selDel').textContent=`선택 삭제 (${selIds.size})`; $('#selDel').disabled=!selIds.size;
