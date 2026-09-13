@@ -51,7 +51,7 @@ a{color:var(--ins)}
 
 /* ── 상단 바 ── */
 .top{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--rule);background:var(--paper);position:sticky;top:0;z-index:5;flex-wrap:wrap}
-.brand{display:flex;align-items:baseline;gap:8px;margin-right:auto}
+.brand{display:flex;align-items:baseline;gap:8px;margin-right:auto;cursor:pointer}
 .brand h1{font-family:var(--serif);font-weight:600;font-size:24px;margin:0;letter-spacing:.02em}
 .brand .sub{color:var(--ink-3);font-size:12px}
 .pen{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--del);transform:translateY(-1px)}
@@ -100,6 +100,7 @@ a{color:var(--ins)}
 .cases .m{color:var(--ink-3);font-size:12px;display:flex;gap:8px;margin-top:2px;font-variant-numeric:tabular-nums;flex-wrap:wrap}
 .chip{display:inline-block;font-size:11px;padding:1px 6px;border-radius:3px;background:var(--paper-3);color:var(--ink-2);line-height:1.5}
 .chip.pdf{background:var(--del-bg);color:var(--del)}
+.chip.last{background:var(--ins-bg);color:var(--ins)}
 .empty{padding:16px;color:var(--ink-3);font-size:13px}
 
 main{padding-block:0 60px;padding-inline:20px;min-width:0}
@@ -196,7 +197,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .sheet.pdf.zoomed{max-width:none;width:max-content;grid-template-columns:auto 280px}
 .sheet.pdf.zoomed .pages{overflow:visible;max-width:none}
 .sheet.pdf .notes-title{position:static;margin-bottom:8px}
-.pages{display:flex;flex-direction:column;gap:18px;position:relative;overflow:auto;max-width:100%}
+.pages{display:flex;flex-direction:column;gap:18px;position:relative;overflow:auto;max-width:100%;background:var(--paper-3);padding:14px;border-radius:3px}
 .page{position:relative;width:100%;margin:0 auto;flex:none;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);overflow:hidden}
 .page canvas{display:block;width:100%;height:auto}
 .page .pno{position:absolute;right:8px;bottom:6px;font-family:var(--mono);font-size:10px;color:#8A909B;pointer-events:none;z-index:4}
@@ -322,10 +323,10 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="pen"></span><h1>쑤닐의 퇴고장</h1><span class="sub">받은 글, 고친 자리, 고친 이유</span></div>
+  <div class="brand" id="brand" role="link" tabindex="0" title="홈으로"><span class="pen"></span><h1>쑤닐의 퇴고장</h1><span class="sub">받은 글, 고친 자리, 고친 이유</span></div>
   <span id="whoami" class="chip"></span>
   <button class="btn" id="btnPw" hidden>비밀번호 바꾸기</button>
-  <button class="btn" id="btnLock">잠그기</button>
+  <button class="btn" id="btnLock">로그아웃</button>
   <button class="btn" id="btnList">홈</button>
   <button class="btn primary" id="btnNew">새 퇴고</button>
 </header>
@@ -626,7 +627,7 @@ function listItems(c, rows){
 function listHtml(items, withWhere){
   if (!items.length) return `<div class="mlist"><div class="none">표시가 없습니다.</div></div>`;
   return `<div class="mlist"><table><thead><tr><th>#</th>${withWhere?'<th>위치</th>':''}<th>종류</th><th>원문</th><th>바꿀 문장</th><th>이유</th></tr></thead><tbody>${items.map(it=>`
-    <tr><td class="n"><button class="jump" data-n="${it.n}" title="문서의 이 자리로 이동">${it.n}</button></td>${withWhere?`<td class="w">${esc(it.where)}</td>`:''}<td><span class="chip">${esc(it.kind)}</span></td><td class="before">${esc(it.before)}</td><td class="after">${esc(it.after)}</td><td class="reason">${md(it.reason)}</td></tr>`).join('')}</tbody></table></div>`;
+    <tr><td class="n"><button class="jump" data-n="${it.n}" title="문서의 이 자리로 이동">${it.n}</button></td>${withWhere?`<td class="w">${esc(it.where)}</td>`:''}<td><span class="chip">${esc(it.kind)}</span>${it.n===items.length?' <span class="chip last">마지막</span>':''}</td><td class="before">${esc(it.before)}</td><td class="after">${esc(it.after)}</td><td class="reason">${md(it.reason)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function listText(c, items){
   const head = `${c.title||''} · 퇴고 메모 ${items.length}곳 (${c.date||''})`;
@@ -705,7 +706,7 @@ function renderCase(main, c){
         <button data-show="marked" class="${view.show==='marked'?'on':''}">겹쳐 보기</button>
         <button data-show="orig" class="${view.show==='orig'?'on':''}">원문 그대로</button>
         <button data-show="rev" class="${view.show==='rev'?'on':''}">수정본 그대로</button>
-        <button data-show="list" class="${view.show==='list'?'on':''}">목록만</button>
+        <button data-show="list" class="${view.show==='list'?'on':''}">메모 목록만</button>
       </div><button class="btn small" id="copyRev">수정본 복사</button><button class="btn small" id="copyList">목록 복사</button>`)
     + (artifactNs ? `<div class="hint">메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X (목록 복사 때는 슬랙 표기로 나감)</div>` : '');
   main.appendChild(head);
@@ -871,14 +872,14 @@ function refreshPdfHead(c){
   const canEdit = !!artifactNs;
   head.innerHTML = headHtml(c,
     `<span>표시 <b>${c.marks.length}</b>곳</span><span class="d">삭제 <b>${n('del')}</b></span><span class="i">바꾸기 <b>${n('rep')}</b></span><span class="m">메모 <b>${n('memo')}</b></span><span>쪽 <b>${c.pages||'?'}</b></span>`,
-    `<div class="seg"><button id="modeDoc" class="${pdfListMode?'':'on'}">문서 위 표시</button><button id="modeList" class="${pdfListMode?'on':''}">목록만</button></div>
+    `<div class="seg"><button id="modeDoc" class="${pdfListMode?'':'on'}">문서 위 메모 표시</button><button id="modeList" class="${pdfListMode?'on':''}">메모 목록만</button></div>
      <span class="pager" title="쪽 이동: Alt+W 이전 · Alt+S 다음 · Alt+G 번호 입력"><button id="pgPrev" aria-label="이전 쪽" title="Alt+W">‹</button><input id="pgIn" inputmode="numeric" value="${currentPage()||1}" aria-label="쪽 번호"><span class="sl">/</span><b id="pgTot">${c.pages||'?'}</b><button id="pgNext" aria-label="다음 쪽" title="Alt+S">›</button></span>
      <button class="btn small" id="toggleMarks" ${pdfListMode?'disabled':''}>${hidden?'표시 보이기':'표시 감추기'}</button>
-     <button class="btn small" id="copyList">목록 복사</button>
-     ${canEdit ? `<button class="btn small" id="undoBtn" title="Ctrl+Z${hist.undo.length?' · '+esc(hist.undo[hist.undo.length-1].l):''}" ${hist.undo.length?'':'disabled'}>↶ 되돌리기${hist.undo.length?' '+hist.undo.length:''}</button>
+     ${canEdit ? `<button class="btn small danger" id="clearBtn" ${c.marks.length?'':'disabled'}>표시 모두 지우기</button>
+     <button class="btn small" id="undoBtn" title="Ctrl+Z${hist.undo.length?' · '+esc(hist.undo[hist.undo.length-1].l):''}" ${hist.undo.length?'':'disabled'}>↶ 되돌리기${hist.undo.length?' '+hist.undo.length:''}</button>
      <button class="btn small" id="redoBtn" title="Ctrl+Shift+Z${hist.redo.length?' · '+esc(hist.redo[hist.redo.length-1].l):''}" ${hist.redo.length?'':'disabled'}>↷ 다시 실행${hist.redo.length?' '+hist.redo.length:''}</button>
-     <button class="btn small" id="histBtn" title="되돌리기 이력을 보고 골라서 되돌아가기" ${(hist.undo.length||hist.redo.length)?'':'disabled'}>실행 기록</button>
-     <button class="btn small danger" id="clearBtn" ${c.marks.length?'':'disabled'}>표시 모두 지우기</button>` : ''}`)
+     <button class="btn small" id="histBtn" title="되돌리기 이력을 보고 골라서 되돌아가기" ${(hist.undo.length||hist.redo.length)?'':'disabled'}>실행 기록</button>` : ''}
+     <button class="btn small" id="copyList">목록 복사</button>`)
     + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모를 얹을 수 있습니다 (Alt+1/2/3)':''} · Ctrl+휠 확대·축소 · 쪽 이동 Alt+W/S, 번호 Alt+G · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
   $('#modeDoc').addEventListener('click', ()=>{ pdfListMode=false; refreshPdfHead(c); });
@@ -916,7 +917,7 @@ function renderPdfNotes(c){
   const notes=$('#notes'); if (!notes) return;
   const canEdit = !!artifactNs;
   notes.innerHTML = `<div class="notes-title">교정 메모 ${c.marks.length}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
-    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span><span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
+    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
     ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지') : `<div class="txt">${md(m.reason||'')}</div>`}</div>`; }).join('');
   notes.querySelectorAll('.x').forEach(b=>b.addEventListener('click', ()=>{
@@ -957,12 +958,12 @@ async function drawPages(){
   cont.innerHTML=''; cont.classList.remove('pdfmsg');
   // 기준 폭 = 100%일 때의 문서 열 폭. 확대하면 틀(.pages)을 그 배수로 키운다
   const sheet = cont.closest('.sheet'); const stacked = window.innerWidth <= 980;
-  const mainW = $('#main').clientWidth - 40;
+  const mainW = $('#main').clientWidth - 40 - 28;
   const baseW = stacked ? mainW : Math.max(320, Math.min(1180, mainW) - 280 - 28);
   const width = Math.round(baseW * zoom.pdf); const dpr = Math.min(window.devicePixelRatio||1, 2.5);
   if (sheet){ sheet.classList.toggle('zoomed', !stacked); }              // 100% 에서도 확대 때와 같은 배치
   document.body.classList.toggle('zoomed-body', zoom.pdf > 1 && !stacked); // 창 가로 스크롤은 넘칠 때만
-  cont.style.width = !stacked ? width+'px' : '';
+  cont.style.width = !stacked ? (width+28)+'px' : '';   // 홈통 여백 14px×2
   cont.style.setProperty('--pz', String(zoom.pdf));
   for (let p=1;p<=st.doc.numPages;p++){
     const page = await st.doc.getPage(p); if (st.token!==token) return;
@@ -1416,6 +1417,8 @@ window.addEventListener('beforeunload', e=>{ if (view.dirty){ e.preventDefault()
 document.fonts && document.fonts.ready.then(()=>layoutNotes());
 
 $('#btnLock').addEventListener('click', lockNow);
+$('#brand').addEventListener('click', ()=>$('#btnList').click());
+$('#brand').addEventListener('keydown', e=>{ if (e.key==='Enter') $('#btnList').click(); });
 $('#btnSel').addEventListener('click', ()=>{ selMode=!selMode; lastSel=-1; if (!selMode) selIds.clear(); renderList(); });
 $('#selAll').addEventListener('click', ()=>{ if (selIds.size===cases.length) selIds.clear(); else cases.forEach(c=>selIds.add(c.id)); renderList(); });
 $('#selDel').addEventListener('click', async ()=>{ const ids=[...selIds]; if (!ids.length) return;
