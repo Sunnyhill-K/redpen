@@ -333,7 +333,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 <div class="shell">
   <aside class="rail" id="rail">
     <h2 id="railTitle"><span class="t">목록</span><button class="fold" id="btnRail" title="목록 접기/펼치기" aria-label="목록 접기/펼치기">« 접기</button></h2>
-    <div class="selrow"><button class="btn small" id="btnSel" hidden>선택</button></div>
+    <div class="selrow"><button class="btn small" id="btnSel" hidden>다수 선택</button></div>
     <div class="selbar" id="selBar" hidden><button class="btn small danger" id="selDel">선택 삭제 (0)</button><button class="btn small" id="selAll">전체</button></div>
     <ul class="cases" id="caseList"></ul>
     <div class="empty" id="caseEmpty" hidden>아직 문서가 없습니다. 「새 퇴고」로 시작하세요.</div>
@@ -516,7 +516,7 @@ let selMode=false, lastSel=-1; const selIds=new Set();
 function syncSelBar(){
   const bar=$('#selBar'); if (!bar) return;
   bar.hidden=!selMode; $('#selDel').textContent=`선택 삭제 (${selIds.size})`; $('#selDel').disabled=!selIds.size;
-  $('#btnSel').textContent = selMode ? '선택 끝' : '선택';
+  $('#btnSel').textContent = selMode ? '선택 끝' : '다수 선택';
 }
 async function deleteMany(ids){
   if (!token){ toast('편집자만 지울 수 있습니다'); return; }
@@ -576,7 +576,7 @@ function render(){
 function renderHome(main){
   main.innerHTML = `<div class="head"><div class="eyebrow">퇴고 기록 ${cases.length}건</div>
     <h2>왼쪽에서 기록을 고르거나, 새 퇴고를 시작하세요.</h2>
-    <p class="msg" style="font-size:14.5px;line-height:1.7">두 가지 유형이 있습니다. <b>PDF 문서</b>는 쪽을 원본 그대로 그리고 그 위에 글자를 드래그해 <span style="color:var(--del)">삭제</span>·<span style="color:var(--ins)">바꾸기</span>·<span style="color:var(--memo)">메모</span>를 얹습니다. <b>텍스트</b>(슬랙·블로그)는 원문과 수정본을 문장 단위로 비교해 <del>지운 곳</del>과 <ins>넣은 곳</ins>을 표시합니다. 내용은 암호화되어 깃헙에 저장되고, 뷰어 비밀번호를 아는 사람은 읽기만, 편집자 비밀번호를 아는 사람은 저장까지 할 수 있습니다.</p></div>`;
+    <p class="msg" style="font-size:14.5px;line-height:1.7">두 가지 유형이 있습니다. <b>PDF 문서</b>는 쪽을 원본 그대로 그리고 그 위에 글자를 드래그해 <span style="color:var(--del)">삭제</span>·<span style="color:var(--ins)">바꾸기</span>·<span style="color:var(--memo)">메모</span>를 얹습니다. <b>텍스트</b>(슬랙·블로그)는 원문과 수정본을 문장 단위로 비교해 <del>지운 곳</del>과 <ins>넣은 곳</ins>을 표시합니다.<br>내용은 암호화되어 깃헙에 저장되고, 뷰어 비밀번호를 아는 사람은 읽기만, 편집자 비밀번호를 아는 사람은 저장까지 할 수 있습니다.</p></div>`;
 }
 
 // ══════════════ 사건 머리(공통) ══════════════
