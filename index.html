@@ -340,6 +340,8 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .note .n .who{font-family:var(--sans);font-size:calc(11px * var(--ui,1));color:var(--ink);background:var(--paper-3);border-radius:3px;padding:0 5px}
 .note .n .who.ed{color:var(--ins);background:var(--ins-bg)}
 .nm{color:var(--nc,var(--ink-2));font-weight:700}
+.ins-by{background:color-mix(in srgb, var(--nc,var(--ins)) 14%, transparent);box-shadow:inset 0 -2px 0 var(--nc,var(--ins));border-radius:2px;padding:0 2px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.ins-by::before{content:attr(data-by);font-family:var(--sans);font-size:.72em;font-weight:700;color:var(--nc,var(--ins));margin-right:4px;vertical-align:.15em;user-select:none}
 .note .n .who{color:var(--nc,var(--ink));border:1px solid var(--nc,var(--ink-3));background:transparent}
 .note .n .who.ed{color:var(--nc,var(--ins));border-color:var(--nc,var(--ins));background:transparent}
 .ask .box.users{max-width:640px}
@@ -593,11 +595,14 @@ function bindHead(c, collect){
     collect(c);
     await saveDoc(c, sc);
   });
-  const na=$('#noteAll'); if (na){ bindMd(na.closest('.overall')); na.addEventListener('input', ()=>{ autosize(na); view.dirty=true; }); }
+  const na=$('#noteAll'); if (na){ bindMd(na.closest('.overall')); na.addEventListener('input', ()=>{ autosize(na); view.dirty=true; });
+    const nf=na.closest('.fld').querySelector('.md'); let nb=null;
+    nf.addEventListener('focus', ()=>{ nb=na.value; }); nf.addEventListener('blur', ()=>{ if (nb!==null && nb!==na.value){ const owner=(cfg.users||[]).find(u=>u.id===c.owner); const on=owner?owner.name:''; c.noteSegs=updSegs(c.noteSegs, nb, na.value, (me && on && on!==me.name) ? me.name : null); nf.innerHTML=md(na.value, c.noteSegs); } nb=null; }); }
 }
 // ── 메모 목록(표) + 복사용 텍스트: 텍스트형·PDF형 공통 ──
 function listItems(c){
-  return (c.marks||[]).map((m,i)=>({n:i+1, where: isPdf(c) ? m.page+'쪽' : '', kind:KIND[m.kind], before:m.text||'', after:m.after||'', reason:m.reason||'', who:(m.by||'')+(m.editedBy?` (수정 ${m.editedBy})`:'')}));
+  const withTags=(t,segs)=>{ if (!segs||!segs.length) return t||''; let out='', pos=0; for (const g of [...segs].sort((x,y)=>x.s-y.s)){ out+=t.slice(pos,g.s)+'['+g.by+'] '+t.slice(g.s,g.e); pos=g.e; } return out+t.slice(pos); };
+  return (c.marks||[]).map((m,i)=>({n:i+1, where: isPdf(c) ? m.page+'쪽' : '', kind:KIND[m.kind], before:m.text||'', after:m.after||'', reason:withTags(m.reason||'', m.segs), who:(m.by||'')+(m.editedBy?` (수정 ${m.editedBy})`:'')}));
 }
 function listHtml(items, withWhere){
   if (!items.length) return `<div class="mlist"><div class="none">표시가 없습니다.</div></div>`;
@@ -611,11 +616,22 @@ function listText(c, items){
 }
 function overallHtml(c){
   const ph='전체 인상, 남겨 둔 것, 의뢰인에게 전할 말';
-  return `<div class="box"><h3>총평</h3>${artifactNs ? mdField(c.note||'', 'id="noteAll"', ph, 'txt') : `<div class="txt">${md(c.note||'')}</div>`}</div>`;
+  return `<div class="box"><h3>총평</h3>${artifactNs ? mdField(c.note||'', 'id="noteAll"', ph, 'txt', c.noteSegs) : `<div class="txt">${md(c.note||'', c.noteSegs)}</div>`}</div>`;
 }
 // ── 슬랙식 서식: *굵게* _기울임_ __밑줄__ ~취소선~ `코드` ──
 // ⟦이름|글⟧ = 다른 사람이 덧붙인 부분. 화면에선 이름표가 붙은 색 띠로, 복사 땐 [이름] 글 로
-function md(s){
+// segs=[{by,s,e}] 가 있으면 그 구간을 작성자 색 띠로 감싼다. 조각마다 따로 서식 변환하므로 띠 경계를 넘는 *굵게* 는 서식이 풀린다
+function md(s, segs){
+  if (segs && segs.length){
+    const cuts=[...new Set(segs.flatMap(g=>[g.s,g.e]).filter(x=>x>=0 && x<=s.length))].sort((a,b)=>a-b);
+    let out='', pos=0; const pts=[...cuts, s.length];
+    for (const cut of pts){ if (cut<=pos) continue; const piece=s.slice(pos,cut); const g=segs.find(x=>x.s<=pos && x.e>=cut); const inner=mdOne(piece);
+      out += g ? `<span class="ins-by" data-by="${esc(g.by)}" style="--nc:${userColor(g.by)||'var(--ins)'}">${inner}</span>` : inner; pos=cut; }
+    return out;
+  }
+  return mdOne(s);
+}
+function mdOne(s){
   let h=esc(s);
   h=h.replace(/\[([^\]\n]{1,20})\]/g, (m0,nm)=>{ const col=userColor(nm); return col ? `<span class="nm" style="--nc:${col}">[${nm}]</span>` : m0; });
   h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>');
@@ -626,8 +642,33 @@ function md(s){
   return h.replace(/\n/g,'<br>');
 }
 // 서식이 바로 보이는 편집칸. 화면은 contenteditable, 저장은 숨은 textarea 에 슬랙 표기(*_~__`)로 동기화한다
-function mdField(raw, attrs, ph, cls){
-  return `<div class="fld"><textarea rows="1" ${attrs} hidden>${esc(raw)}</textarea><div class="${cls||'txt'} md" contenteditable="true" spellcheck="false" data-ph="${esc(ph)}">${md(raw)}</div></div>`;
+function mdField(raw, attrs, ph, cls, segs){
+  return `<div class="fld"><textarea rows="1" ${attrs} hidden>${esc(raw)}</textarea><div class="${cls||'txt'} md" contenteditable="true" spellcheck="false" data-ph="${esc(ph)}">${md(raw, segs)}</div></div>`;
+}
+// 편집칸의 textarea 로부터 해당 구간 목록을 찾는다(메모 이유 / 총평)
+function segsFor(t){
+  const c=view.draft||cases.find(x=>x.id===view.id); if (!c) return null;
+  if (t.id==='noteAll') return c.noteSegs||null;
+  if (t.dataset.f==='reason'){ const m=c.marks[+t.dataset.i]; return m ? (m.segs||null) : null; }
+  return null;
+}
+// 글이 바뀌면 구간을 따라 옮긴다. name 이 있으면(남의 메모를 고친 경우) 새로 넣은 글을 그 사람 구간으로
+function updSegs(segs, oldT, newT, name){
+  segs=(segs||[]).map(g=>({by:g.by, s:g.s, e:g.e}));
+  let a=0; while (a<oldT.length && a<newT.length && oldT[a]===newT[a]) a++;
+  let b=0; while (b<oldT.length-a && b<newT.length-a && oldT[oldT.length-1-b]===newT[newT.length-1-b]) b++;
+  const oldLen=oldT.length-a-b, newLen=newT.length-a-b, delta=newLen-oldLen; const res=[];
+  for (const g of segs){
+    if (g.e<=a){ res.push(g); continue; }
+    if (g.s>=a+oldLen){ res.push({by:g.by, s:g.s+delta, e:g.e+delta}); continue; }
+    if (g.s<a && g.e>a+oldLen){ if (g.by===name || !name || newLen===0) res.push({by:g.by, s:g.s, e:g.e+delta}); else { res.push({by:g.by, s:g.s, e:a}); res.push({by:g.by, s:a+newLen, e:g.e+delta}); } continue; }
+    if (g.s<a) res.push({by:g.by, s:g.s, e:a});
+    if (g.e>a+oldLen) res.push({by:g.by, s:a+newLen, e:g.e+delta});
+  }
+  if (newLen>0 && name) res.push({by:name, s:a, e:a+newLen});
+  res.sort((x,y)=>x.s-y.s); const out=[];
+  for (const g of res){ if (g.e<=g.s) continue; const l=out[out.length-1]; if (l && l.by===g.by && g.s<=l.e){ l.e=Math.max(l.e,g.e); } else out.push(g); }
+  return out;
 }
 // HTML → 슬랙 표기
 function htmlToMd(node){
@@ -668,7 +709,7 @@ function bindMd(root){
     const t=f.querySelector('textarea'), d=f.querySelector('.md'); if (!t||!d||t.dataset.md) return; t.dataset.md='1';
     const sync=()=>{ if (d.innerHTML==='<br>') d.innerHTML=''; const v=htmlToMd(d).replace(/\n+$/,''); if (v!==t.value){ t.value=v; t.dispatchEvent(new Event('input')); } };
     d.addEventListener('input', sync);
-    d.addEventListener('blur', ()=>{ sync(); d.innerHTML=md(t.value); });   // 나올 때 표준형으로 다시 그려 잡티 제거
+    d.addEventListener('blur', ()=>{ sync(); d.innerHTML=md(t.value, segsFor(t)); });   // 나올 때 표준형으로 다시 그려 잡티 제거
     d.addEventListener('paste', e=>{ e.preventDefault(); const txt=(e.clipboardData||window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, txt); });
     d.addEventListener('keydown', e=>{
       if (!(e.ctrlKey||e.metaKey)) return; const k=e.key.toLowerCase();
@@ -958,7 +999,7 @@ function renderPdfNotes(c){
   notes.innerHTML = `<div class="notes-title">교정 메모 ${c.marks.length}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
     <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by)||'var(--ink-2)'}">${esc(m.by)}</span>`:''}${m.editedBy?`<span class="who ed" title="수정자" style="--nc:${userColor(m.editedBy)||'var(--ins)'}">수정 ${esc(m.editedBy)}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
-    ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지') : `<div class="txt">${md(m.reason||'')}</div>`}</div>`; }).join('');
+    ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', m.segs) : `<div class="txt">${md(m.reason||'', m.segs)}</div>`}</div>`; }).join('');
   notes.querySelectorAll('.x').forEach(b=>b.addEventListener('click', ()=>{
     pushHist(c, `표시 ${+b.dataset.i+1} 지움`); c.marks.splice(+b.dataset.i,1); view.dirty=true; drawAllMarks(c); refreshPdfHead(c); layoutNotes();
   }));
@@ -969,8 +1010,8 @@ function renderPdfNotes(c){
     let before=null;
     f.addEventListener('focus', ()=>{ before = t.value; });
     f.addEventListener('blur', ()=>{ if (before!==null && before!==t.value){ let cur=t.value; t.value=before; pushHist(c, `메모 ${+t.dataset.i+1} 수정`);
-        const m=c.marks[+t.dataset.i]; if (m && me && m.by && m.by!==me.name && t.dataset.f!=='after') cur=tagInsertion(before, cur, me.name);
-        t.value=cur; collectMarks(c); if (f.isContentEditable) f.innerHTML=md(cur); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
+        const m=c.marks[+t.dataset.i]; if (m && t.dataset.f==='reason') m.segs=updSegs(m.segs, before, cur, (me && m.by && m.by!==me.name) ? me.name : null);
+        t.value=cur; collectMarks(c); if (f.isContentEditable) f.innerHTML=md(cur, m ? m.segs : null); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
   });
   bindNotes();
   requestAnimationFrame(()=>layoutNotes());
@@ -1375,7 +1416,7 @@ async function saveDoc(c, btn){
   const msg=$('#saveMsg'); if (msg){ msg.textContent='저장하는 중…'; msg.className='msg'; } if (btn) btn.disabled=true;
   try {
     if (!token) throw new Error('편집자만 저장할 수 있습니다');
-    const payload = isPdf(c) ? {marks:c.marks||[], note:c.note||'', pages:c.pages||0} : {src:c.src||'', html:c.html||'', marks:c.marks||[], note:c.note||''};
+    const payload = isPdf(c) ? {marks:c.marks||[], note:c.note||'', pages:c.pages||0, noteSegs:c.noteSegs||[]} : {src:c.src||'', html:c.html||'', marks:c.marks||[], note:c.note||'', noteSegs:c.noteSegs||[]};
     // 문서 열쇠 정하기: 잠금 없음 = 사이트키 K / 잠금 = 문서키(문서 비밀번호와 편집자키 Ke 로 각각 감쌈)
     let key=K, wrap=null; const wasLocked=!!c.lock; let keyChanged=false;
     if (c.unlockReq){ c.lock=false; keyChanged=wasLocked; }
