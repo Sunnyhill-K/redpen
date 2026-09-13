@@ -813,7 +813,7 @@ function locate(root, idx){ let acc=0; const nodes=textNodes(root); for (const n
 function wrapRange(root, start, end, cls, h, withBadge){
   if (end<=start) return;
   const b=locate(root,end); if (!b) return; if (b.off>0 && b.off<b.node.data.length) b.node.splitText(b.off);
-  const a=locate(root,start); if (!a) return; let first=a.node; if (a.off>0){ if (a.off>=a.node.data.length) { const nodes=textNodes(root); first=nodes[nodes.indexOf(a.node)+1]; if (!first) return; } else first=a.node.splitText(a.off); }
+  const a=locate(root,start); if (!a) return; let first=a.node; if (a.off>0){ if (a.off>=a.node.data.length) { const nodes=textNodes(root); first=nodes[nodes.indexOf(a.node)+1]; if (!first) return; } else { const sameNode=(b.node===a.node); first=a.node.splitText(a.off); if (sameNode){ b.node=first; b.off=first.data.length; } } }   // 시작·끝이 같은 노드면 자른 뒤쪽이 구간 전체
   const all=textNodes(root); const i0=all.indexOf(first); let i1=all.indexOf(b.node); if (b.off===0) i1-=1; if (i0<0||i1<i0) return;
   let firstDone=false;
   for (let i=i0;i<=i1;i++){ const n=all[i]; if (!n.data.length) continue;
