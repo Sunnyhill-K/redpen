@@ -1,0 +1,5 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>시계 시험</title>
+<style>body{font:22px/1.6 sans-serif;padding:40px} #c{font-size:48px;font-family:monospace} .box{width:40px;height:40px;background:#c4342d;animation:m 2s linear infinite;margin-top:20px} @keyframes m{from{transform:translateX(0)}to{transform:translateX(300px)}}</style></head>
+<body><h1>시계 시험</h1><p>새로고침 직후 아래 숫자가 매초 바뀌고 빨간 네모가 움직이면 정상입니다.</p><div id="c">--:--:--</div><div class="box"></div>
+<script>setInterval(()=>{document.getElementById("c").textContent=new Date().toTimeString().slice(0,8);},500);</script>
+</body></html>
