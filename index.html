@@ -132,8 +132,9 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .note textarea:focus{border-bottom-color:var(--focus);outline:none}
 .note textarea.after{color:var(--ins);font-family:var(--serif)}
 .note .txt{white-space:pre-wrap;line-height:1.45;color:var(--ink)}
-.md{cursor:text;min-height:22px;border-bottom:1px dashed transparent}
-.md:hover{border-bottom-color:var(--rule)}
+.md{cursor:text;min-height:22px;border-bottom:1px dashed var(--rule);outline:none;white-space:pre-wrap}
+.md:focus{border-bottom-color:var(--focus)}
+.md b{font-weight:600}
 .md:empty::before{content:attr(data-ph);color:var(--ink-3)}
 .md code,.mlist code{font-family:var(--mono);font-size:.92em;background:var(--paper-3);padding:0 3px;border-radius:2px}
 .md u{text-decoration-thickness:1px;text-underline-offset:2px}
@@ -518,21 +519,41 @@ function md(s){
   h=h.replace(/~([^~\n]+)~/g,'<s>$1</s>');
   return h.replace(/\n/g,'<br>');
 }
-// 평소엔 서식 적용된 글로 보이고, 누르면 편집칸으로 바뀌는 필드. textarea 는 항상 DOM 에 있어 collect 함수가 그대로 읽는다
+// 서식이 바로 보이는 편집칸. 화면은 contenteditable, 저장은 숨은 textarea 에 슬랙 표기(*_~__`)로 동기화한다
 function mdField(raw, attrs, ph, cls){
-  return `<div class="fld"><textarea rows="1" ${attrs} placeholder="${esc(ph)}" hidden>${esc(raw)}</textarea><div class="${cls||'txt'} md" tabindex="0" data-ph="${esc(ph)}">${md(raw)}</div></div>`;
+  return `<div class="fld"><textarea rows="1" ${attrs} hidden>${esc(raw)}</textarea><div class="${cls||'txt'} md" contenteditable="true" spellcheck="false" data-ph="${esc(ph)}">${md(raw)}</div></div>`;
+}
+// HTML → 슬랙 표기
+function htmlToMd(node){
+  let out='';
+  node.childNodes.forEach(n=>{
+    if (n.nodeType===3){ out+=n.nodeValue.replace(/ /g,' '); return; }
+    if (n.nodeType!==1) return;
+    const tag=n.tagName.toLowerCase(); const inner=htmlToMd(n);
+    const st=(n.getAttribute('style')||'').toLowerCase();
+    if (tag==='br'){ out+='\n'; return; }
+    if (tag==='div'||tag==='p'){ out+=(out && !out.endsWith('\n') ? '\n' : '')+inner; if (tag==='p') out+='\n'; return; }
+    if (!inner.trim()){ out+=inner; return; }
+    if (tag==='b'||tag==='strong'||/font-weight:\s*(bold|[6-9]00)/.test(st)) out+='*'+inner+'*';
+    else if (tag==='i'||tag==='em'||/font-style:\s*italic/.test(st)) out+='_'+inner+'_';
+    else if (tag==='u'||/text-decoration[^;]*underline/.test(st)) out+='__'+inner+'__';
+    else if (tag==='s'||tag==='strike'||tag==='del'||/text-decoration[^;]*line-through/.test(st)) out+='~'+inner+'~';
+    else if (tag==='code') out+='`'+inner+'`';
+    else out+=inner;
+  });
+  return out;
 }
 function bindMd(root){
   (root||document).querySelectorAll('.fld').forEach(f=>{
     const t=f.querySelector('textarea'), d=f.querySelector('.md'); if (!t||!d||t.dataset.md) return; t.dataset.md='1';
-    const open=()=>{ d.hidden=true; t.hidden=false; autosize(t); t.focus(); };
-    const close=()=>{ d.innerHTML=md(t.value); t.hidden=true; d.hidden=false; layoutNotes(); };
-    d.addEventListener('click', open); d.addEventListener('keydown', e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } });
-    t.addEventListener('blur', close);
-    t.addEventListener('keydown', e=>{
+    const sync=()=>{ if (d.innerHTML==='<br>') d.innerHTML=''; const v=htmlToMd(d).replace(/\n+$/,''); if (v!==t.value){ t.value=v; t.dispatchEvent(new Event('input')); } };
+    d.addEventListener('input', sync);
+    d.addEventListener('blur', ()=>{ sync(); d.innerHTML=md(t.value); });   // 나올 때 표준형으로 다시 그려 잡티 제거
+    d.addEventListener('paste', e=>{ e.preventDefault(); const txt=(e.clipboardData||window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, txt); });
+    d.addEventListener('keydown', e=>{
       if (!(e.ctrlKey||e.metaKey)) return; const k=e.key.toLowerCase();
-      const mark = k==='b' ? '*' : k==='i' ? '_' : k==='u' ? '__' : (k==='x' && e.shiftKey) ? '~' : null;
-      if (!mark) return; e.preventDefault(); wrapSel(t, mark);
+      const cmd = k==='b' ? 'bold' : k==='i' ? 'italic' : k==='u' ? 'underline' : (k==='x' && e.shiftKey) ? 'strikeThrough' : null;
+      if (!cmd) return; e.preventDefault(); document.execCommand(cmd, false, null); sync();
     });
   });
 }
@@ -559,7 +580,7 @@ function renderCase(main, c){
         <button data-show="rev" class="${view.show==='rev'?'on':''}">수정본 그대로</button>
         <button data-show="list" class="${view.show==='list'?'on':''}">목록만</button>
       </div><button class="btn small" id="copyRev">수정본 복사</button><button class="btn small" id="copyList">목록 복사</button>`)
-    + (artifactNs ? `<div class="hint">메모 서식: *굵게* _기울임_ __밑줄__ ~취소선~ (Ctrl+B / I / U / Shift+X) · 메모를 누르면 편집</div>` : '');
+    + (artifactNs ? `<div class="hint">메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X (목록 복사 때는 슬랙 표기로 나감)</div>` : '');
   main.appendChild(head);
 
   const canEdit = !!artifactNs;
@@ -707,7 +728,7 @@ function refreshPdfHead(c){
      ${canEdit ? `<button class="btn small" id="undoBtn" title="Ctrl+Z" ${hist.undo.length?'':'disabled'}>↶ 되돌리기</button>
      <button class="btn small" id="redoBtn" title="Ctrl+Y" ${hist.redo.length?'':'disabled'}>↷ 다시 실행</button>
      <button class="btn small danger" id="clearBtn" ${c.marks.length?'':'disabled'}>표시 모두 지우기</button>` : ''}`)
-    + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모를 얹을 수 있습니다':''} · Ctrl+휠로 확대·축소 · 메모 서식: *굵게* _기울임_ __밑줄__ ~취소선~ (Ctrl+B / I / U / Shift+X)</div>`;
+    + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모를 얹을 수 있습니다':''} · Ctrl+휠로 확대·축소 · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
   $('#modeDoc').addEventListener('click', ()=>{ pdfListMode=false; refreshPdfHead(c); });
   $('#modeList').addEventListener('click', ()=>{ collectMarks(c); pdfListMode=true; refreshPdfHead(c); });
@@ -742,10 +763,12 @@ function renderPdfNotes(c){
     pushHist(c); c.marks.splice(+b.dataset.i,1); view.dirty=true; drawAllMarks(c); refreshPdfHead(c); layoutNotes();
   }));
   // 메모 글 편집도 되돌리기 대상: 칸에 들어갈 때 스냅샷을 잡고, 나올 때 바뀌었으면 확정
-  notes.querySelectorAll('textarea[data-i]').forEach(t=>{
+  notes.querySelectorAll('textarea[data-i], .fld').forEach(el=>{
+    const t = el.tagName==='TEXTAREA' ? el : el.querySelector('textarea'); const f = el.tagName==='TEXTAREA' ? el : el.querySelector('.md');
+    if (!t || !f || t.hidden && el.tagName==='TEXTAREA') return;
     let before=null;
-    t.addEventListener('focus', ()=>{ before = t.value; });
-    t.addEventListener('blur', ()=>{ if (before!==null && before!==t.value){ const cur=t.value; t.value=before; pushHist(c); t.value=cur; collectMarks(c); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
+    f.addEventListener('focus', ()=>{ before = t.value; });
+    f.addEventListener('blur', ()=>{ if (before!==null && before!==t.value){ const cur=t.value; t.value=before; pushHist(c); t.value=cur; collectMarks(c); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
   });
   bindNotes();
   requestAnimationFrame(()=>layoutNotes());
