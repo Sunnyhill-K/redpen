@@ -602,7 +602,7 @@ function bindHead(c, collect){
 // ── 메모 목록(표) + 복사용 텍스트: 텍스트형·PDF형 공통 ──
 function listItems(c){
   const withTags=(t,segs)=>{ if (!segs||!segs.length) return t||''; let out='', pos=0; for (const g of [...segs].sort((x,y)=>x.s-y.s)){ out+=t.slice(pos,g.s)+'['+g.by+'] '+t.slice(g.s,g.e); pos=g.e; } return out+t.slice(pos); };
-  return (c.marks||[]).map((m,i)=>({n:i+1, where: isPdf(c) ? m.page+'쪽' : '', kind:KIND[m.kind], before:m.text||'', after:m.after||'', reason:withTags(m.reason||'', m.segs), who:(m.by||'')+(m.editedBy?` (수정 ${m.editedBy})`:'')}));
+  return (c.marks||[]).map((m,i)=>({n:i+1, where: isPdf(c) ? m.page+'쪽' : '', kind:KIND[m.kind], before:m.text||'', after:m.after||'', reason:withTags(m.reason||'', m.segs), who:(m.by||'')}));
 }
 function listHtml(items, withWhere){
   if (!items.length) return `<div class="mlist"><div class="none">표시가 없습니다.</div></div>`;
@@ -1000,7 +1000,7 @@ function renderPdfNotes(c){
   const notes=$('#notes'); if (!notes) return;
   const canEdit = !!artifactNs;
   notes.innerHTML = `<div class="notes-title">교정 메모 ${c.marks.length}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
-    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(m.by)}</span>`:''}${m.editedBy?`<span class="who ed" title="수정자" style="--nc:${userColor(m.editedBy, m.editedById)||'var(--ins)'}">수정 ${esc(m.editedBy)}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
+    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(m.by)}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
     ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', m.segs) : `<div class="txt">${md(m.reason||'', m.segs)}</div>`}</div>`; }).join('');
   notes.querySelectorAll('.x').forEach(b=>b.addEventListener('click', ()=>{
