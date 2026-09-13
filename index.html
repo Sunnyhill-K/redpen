@@ -52,7 +52,7 @@ a{color:var(--ins)}
 /* ── 상단 바 ── */
 .top{display:flex;align-items:center;gap:14px;padding:10px 20px;border-bottom:1px solid var(--rule);background:var(--paper);position:sticky;top:0;z-index:5;flex-wrap:wrap}
 .brand{display:flex;align-items:baseline;gap:8px;margin-right:auto}
-.brand h1{font-family:var(--serif);font-weight:600;font-size:18px;margin:0;letter-spacing:.02em}
+.brand h1{font-family:var(--serif);font-weight:600;font-size:24px;margin:0;letter-spacing:.02em}
 .brand .sub{color:var(--ink-3);font-size:12px}
 .pen{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--del);transform:translateY(-1px)}
 .btn{border:1px solid var(--ink-2);background:transparent;border-radius:4px;padding:6px 12px;cursor:pointer;line-height:1.2;white-space:nowrap}
@@ -575,7 +575,7 @@ function render(){
 }
 function renderHome(main){
   main.innerHTML = `<div class="head"><div class="eyebrow">퇴고 기록 ${cases.length}건</div>
-    <h2>왼쪽에서 기록을 고르거나, 새 퇴고를 시작하세요.</h2>
+    <h2>왼쪽 목록에서 문서를 고르거나, 새 퇴고를 시작하세요.</h2>
     <p class="msg" style="font-size:14.5px;line-height:1.7">두 가지 유형이 있습니다. <b>PDF 문서</b>는 쪽을 원본 그대로 그리고 그 위에 글자를 드래그해 <span style="color:var(--del)">삭제</span>·<span style="color:var(--ins)">바꾸기</span>·<span style="color:var(--memo)">메모</span>를 얹습니다. <b>텍스트</b>(슬랙·블로그)는 원문과 수정본을 문장 단위로 비교해 <del>지운 곳</del>과 <ins>넣은 곳</ins>을 표시합니다.<br>내용은 암호화되어 깃헙에 저장되고, 뷰어 비밀번호를 아는 사람은 읽기만, 편집자 비밀번호를 아는 사람은 저장까지 할 수 있습니다.</p></div>`;
 }
 
