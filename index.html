@@ -1054,7 +1054,7 @@ function refreshPdfHead(c){
      <button class="btn small" id="undoBtn" title="Ctrl+Z${hist.undo.length?' · '+esc(hist.undo[hist.undo.length-1].l):''}" ${hist.undo.length?'':'disabled'}>↶ 되돌리기${hist.undo.length?' '+fmtN(hist.undo.length):''}</button>
      <button class="btn small" id="redoBtn" title="Ctrl+Shift+Z${hist.redo.length?' · '+esc(hist.redo[hist.redo.length-1].l):''}" ${hist.redo.length?'':'disabled'}>↷ 다시 실행${hist.redo.length?' '+fmtN(hist.redo.length):''}</button>
      <button class="btn small" id="histBtn" title="되돌리기 이력을 보고 골라서 되돌아가기" ${(hist.undo.length||hist.redo.length)?'':'disabled'}>실행 기록</button>` : ''}
-     ${(isPdf(c)&&canEdit)?`<button class="btn small ${areaMode?'on':''}" id="areaBtn" title="글자가 없는 그림 부분에 네모를 그려 메모 · Alt+R">${areaMode?'영역 선택 끝':'영역 선택'}</button>`:''}
+     ${(isPdf(c)&&canEdit)?`<button class="btn small ${areaMode?'on':''}" id="areaBtn" title="글자가 없는 그림 부분에 네모를 그려 메모 · Alt+A">${areaMode?'영역 선택 끝':'영역 선택'}</button>`:''}
      <button class="btn small" id="copyList">메모 복사</button>${(isPdf(c)&&canEdit)?`<button class="btn small" id="ocrBtn" title="캡처본 PDF 처럼 글자층이 없는 문서의 글자를 인식해 드래그할 수 있게 합니다">${c.ocr?'글자 다시 인식':'글자 인식(OCR)'}</button>`:''}`)
     + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모를 얹을 수 있습니다 (Alt+1/2/3)':''} · Ctrl+휠 확대·축소${isPdf(c)?' · 쪽 이동 Alt+W/S, 번호 Alt+G':''} · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
@@ -1389,7 +1389,7 @@ window.addEventListener('scroll', ()=>{ clearTimeout(pgT); pgT=setTimeout(()=>{ 
 document.addEventListener('keydown', e=>{
   if (!e.altKey || e.ctrlKey || e.metaKey) return;
   if (e.code==='KeyN'){ e.preventDefault(); if (!$('#btnNew').hidden) $('#btnNew').click(); return; }
-  if (e.code==='KeyR'){ const ab=$('#areaBtn'); if (ab){ e.preventDefault(); ab.click(); } return; }
+  if (e.code==='KeyA'){ const ab=$('#areaBtn'); if (ab){ e.preventDefault(); ab.click(); } return; }
   if (!document.querySelector('.page')) return;
   if (e.code==='KeyW'){ e.preventDefault(); goPage((currentPage()||1)-1); }
   else if (e.code==='KeyS'){ e.preventDefault(); goPage((currentPage()||1)+1); }
