@@ -236,9 +236,8 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;opacity:1;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:2}
 .textLayer span,.textLayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}
 .textLayer ::selection{background:rgba(45,91,185,.35)}
-.textLayer.ocr .ol{position:absolute;left:0;width:100%;white-space:pre}
-.textLayer.ocr .ol span{position:absolute;color:transparent;white-space:pre;transform-origin:0 0;cursor:text;font-family:Arial,sans-serif;letter-spacing:0}
-.textLayer.ocr.show .ol span{color:rgba(196,52,45,.75);outline:1px solid rgba(196,52,45,.5)}
+.textLayer.ocr .oline{position:absolute;color:transparent;white-space:pre;transform-origin:0 0;cursor:text;font-family:Arial,sans-serif;letter-spacing:0}
+.textLayer.ocr.show .oline{color:rgba(196,52,45,.75);outline:1px solid rgba(196,52,45,.5)}
 .marks{position:absolute;inset:0;z-index:3;pointer-events:none}
 /* 쪽은 항상 흰 종이이므로 표시 색은 고정값 */
 .mbox{position:absolute;border-radius:1px}
@@ -248,7 +247,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .mbox.area{background:rgba(196,52,45,.08)!important;border:2px dashed #C4342D;border-radius:3px;box-sizing:border-box}
 .mbox.area.memo{background:rgba(46,125,79,.08)!important;border-color:#2E7D4F}
 .mbox.area.rep{border-style:solid}
-body.area-mode .page{cursor:crosshair} body.area-mode .textLayer{pointer-events:none}
+body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLayer{pointer-events:none} body.area-mode .page canvas{-webkit-user-drag:none;user-drag:none}
 .arearubber{position:absolute;border:2px dashed #C4342D;background:rgba(196,52,45,.08);pointer-events:none;z-index:5}
 .marks .mk{position:absolute;pointer-events:auto;transform:translate(2px,-55%);background:#fff;z-index:4;font-size:calc(10.5px*var(--pz,1));padding:calc(2px*var(--pz,1)) calc(4px*var(--pz,1));border-radius:calc(8px*var(--pz,1));border-width:calc(1px*var(--pz,1))}
 .marks .mk.memo{color:#2E7D4F;border-color:#7FC49A}
@@ -947,7 +946,7 @@ async function ocrDoc(c, btn){
     for (let p=1;p<=total;p++){
       cur=p; say(`글자 인식 ${p}/${total}쪽…`);
       const page=await pdfState.doc.getPage(p); const base=page.getViewport({scale:1}); const scale=Math.min(4, 2400/base.width); const vp=page.getViewport({scale});
-      const W=Math.floor(vp.width), H=Math.floor(vp.height); const TILE=3000, OV=40; const lines=[];
+      const W=Math.floor(vp.width), H=Math.floor(vp.height); const TILE=3000, OV=160; const lines=[];
       for (let y=0; y<H; y+=TILE-OV){
         const h=Math.min(TILE, H-y); if (h<8) break;
         const cv=document.createElement('canvas'); cv.width=W; cv.height=h;
@@ -956,18 +955,20 @@ async function ocrDoc(c, btn){
         say(`글자 인식 ${p}/${total}쪽 · ${Math.min(100, Math.round((y+h)/H*100))}%`);
         const {data}=await worker.recognize(cv, {}, {text:true, blocks:true});
         let ls=data.lines||[]; if (!ls.length && data.blocks) ls=data.blocks.flatMap(b=>(b.paragraphs||[]).flatMap(pg=>pg.lines||[]));
-        ls.forEach(l=>{ if (y>0 && l.bbox && l.bbox.y0 < OV/2) return;   // 겹친 띠에서 중복된 줄은 버림
-          const words=(l.words||[]).filter(w=>w.text && w.text.trim() && (w.confidence==null || w.confidence>=45)); if (!words.length) return;
-          lines.push({bbox:{x0:l.bbox.x0, y0:l.bbox.y0+y, x1:l.bbox.x1, y1:l.bbox.y1+y}, words:words.map(w=>({text:w.text, bbox:{x0:w.bbox.x0, y0:w.bbox.y0+y, x1:w.bbox.x1, y1:w.bbox.y1+y}}))}); });
+        const last = (y+h>=H); ls.forEach(l=>{ if (!l.bbox) return; const mid=(l.bbox.y0+l.bbox.y1)/2;
+          if (y>0 && mid < OV/2) return; if (!last && mid > h-OV/2) return;   // 줄의 중점이 이 띠의 담당 구간(겹침 절반 기준)에 있을 때만 채택
+          const t=(l.text||(l.words||[]).map(w=>w.text).join(' ')||'').replace(/\s+/g,' ').trim();
+          if (!t || !/[가-힣A-Za-z0-9]/.test(t) || (l.confidence!=null && l.confidence<45)) return;   // 사진 속 무늬 등 쓰레기 줄 제외
+          lines.push({bbox:{x0:l.bbox.x0, y0:l.bbox.y0+y, x1:l.bbox.x1, y1:l.bbox.y1+y}, t}); });
       }
       const nb=b=>[+(b.x0/W).toFixed(4), +(b.y0/H).toFixed(4), +((b.x1-b.x0)/W).toFixed(4), +((b.y1-b.y0)/H).toFixed(4)];
-      out[p]=lines.map(l=>({b:nb(l.bbox), w:l.words.map(w=>({t:w.text.trim(), b:nb(w.bbox)}))}));
-      counts.push(out[p].reduce((a,l)=>a+l.w.length,0)); if (DEBUG) tmark('OCR '+p+'쪽 단어 '+counts[counts.length-1]+' · '+(data.text||'').trim().slice(0,40));
+      out[p]=lines.map(l=>({b:nb(l.bbox), t:l.t}));
+      counts.push(out[p].length); if (DEBUG) tmark('OCR '+p+'쪽 단어 '+counts[counts.length-1]+' · '+(data.text||'').trim().slice(0,40));
     }
     c.ocr=out; c.ocrAt=new Date().toISOString(); view.dirty=true;
     // 이미 그려진 쪽의 글자층을 OCR 층으로 바꿔 끼운다
     document.querySelectorAll('.page').forEach(el=>{ const p=+el.dataset.p; const tl=el.querySelector('.textLayer'); if (tl && out[p]){ const vw=el.getBoundingClientRect().width; tl.innerHTML=''; buildOcrLayer(tl, out[p], {width:vw, height:el.getBoundingClientRect().height}); } });
-    toast(`글자 인식 끝. 쪽별 단어 수 ${counts.join(', ')} · 저장(Ctrl+S)하면 다른 사람도 드래그할 수 있습니다`);
+    toast(`글자 인식 끝. 쪽별 줄 수 ${counts.join(', ')} · 저장(Ctrl+S)하면 다른 사람도 드래그할 수 있습니다`);
     say('글자 다시 인식');
   } catch(e){ toast('글자 인식 실패: '+((e&&e.message)||e)); say('글자 인식(OCR)'); }
   finally { ocrBusy=false; if (btn) btn.disabled=false; }
@@ -976,14 +977,12 @@ async function ocrDoc(c, btn){
 function buildOcrLayer(tl, lines, vp){
   tl.classList.add('ocr'); if (DEBUG) tl.classList.add('show'); const ctx=document.createElement('canvas').getContext('2d');
   lines.forEach(l=>{
-    const ld=document.createElement('div'); ld.className='ol'; ld.style.top=(l.b[1]*100)+'%'; ld.style.height=(l.b[3]*100)+'%';
-    l.w.forEach((w,i)=>{
-      const sp=document.createElement('span'); const hpx=w.b[3]*vp.height, wpx=w.b[2]*vp.width; const fs=Math.max(6, hpx*0.85);
-      sp.textContent=w.t+(i<l.w.length-1?' ':''); sp.style.left=(w.b[0]*100)+'%'; sp.style.top=((w.b[1]-l.b[1])/Math.max(l.b[3],1e-6)*100)+'%'; sp.style.fontSize=fs+'px'; sp.style.height=hpx+'px'; sp.style.lineHeight=hpx+'px';
-      ctx.font=fs+'px Arial, sans-serif'; const mw=ctx.measureText(w.t).width||1; sp.style.transform='scaleX('+(wpx/mw).toFixed(3)+')';   // 글자층 글꼴과 같은 글꼴로 재야 폭이 맞는다
-      ld.appendChild(sp);
-    });
-    tl.appendChild(ld);
+    const t = l.t != null ? l.t : (l.w||[]).map(w=>w.t).join(' '); if (!t) return;
+    const hpx=l.b[3]*vp.height, wpx=l.b[2]*vp.width; const fs=Math.max(6, hpx*0.8);
+    const sp=document.createElement('span'); sp.className='oline'; sp.textContent=t+' ';   // 줄 끝 공백: 여러 줄을 드래그해도 글이 붙지 않게
+    sp.style.left=(l.b[0]*100)+'%'; sp.style.top=(l.b[1]*100)+'%'; sp.style.fontSize=fs+'px'; sp.style.height=hpx+'px'; sp.style.lineHeight=hpx+'px';
+    ctx.font=fs+'px Arial, sans-serif'; const mw=ctx.measureText(t).width||1; sp.style.transform='scaleX('+(wpx/mw).toFixed(3)+')';
+    tl.appendChild(sp);
   });
 }
 
@@ -1298,6 +1297,8 @@ function bindSelection(cont, c0){
   document.addEventListener('mousedown', e=>{ if (pop && !pop.contains(e.target)) kill(); });
   // 영역 드래그: 영역 선택 모드에서 쪽 위에 네모를 그리면 같은 메뉴가 뜨고, 표시는 점선 상자로 남는다
   let rb=null, rbPage=null, rbStart=null;
+  cont.addEventListener('dragstart', e=>{ if (areaMode) e.preventDefault(); });
+  cont.addEventListener('selectstart', e=>{ if (areaMode) e.preventDefault(); });
   cont.addEventListener('mousedown', e=>{
     if (!areaMode || e.button!==0) return; const pageEl=e.target.closest && e.target.closest('.page'); if (!pageEl) return;
     e.preventDefault(); kill(); const pr=pageEl.getBoundingClientRect(); rbPage=pageEl; rbStart=[(e.clientX-pr.left)/pr.width, (e.clientY-pr.top)/pr.height];
