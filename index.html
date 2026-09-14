@@ -950,7 +950,9 @@ async function ocrDoc(c, btn){
       const cv=document.createElement('canvas'); cv.width=Math.floor(vp.width); cv.height=Math.floor(vp.height);
       await page.render({canvasContext: cv.getContext('2d'), viewport: vp}).promise;
       const {data}=await worker.recognize(cv, {}, {text:true, blocks:true});
-      if (!data.lines || !data.lines.length){ const words=(data.words||[]); if (words.length) data.lines=[{bbox:{x0:0,y0:0,x1:W,y1:H}, words}]; }
+      let lines=data.lines||[];
+      if (!lines.length && data.blocks) lines=data.blocks.flatMap(b=>(b.paragraphs||[]).flatMap(pg=>pg.lines||[]));
+      data.lines=lines;
       const W=cv.width, H=cv.height; const nb=b=>[+(b.x0/W).toFixed(4), +(b.y0/H).toFixed(4), +((b.x1-b.x0)/W).toFixed(4), +((b.y1-b.y0)/H).toFixed(4)];
       out[p]=(data.lines||[]).map(l=>({b:nb(l.bbox), w:(l.words||[]).filter(w=>w.text && w.text.trim()).map(w=>({t:w.text.trim(), b:nb(w.bbox)}))})).filter(l=>l.w.length);
       counts.push(out[p].reduce((a,l)=>a+l.w.length,0)); if (DEBUG) tmark('OCR '+p+'쪽 단어 '+counts[counts.length-1]+' · '+(data.text||'').trim().slice(0,40));
@@ -1252,6 +1254,7 @@ function bindSelection(cont, c0){
   const cur = ()=> (pdfState && pdfState.c) || c0;
   const kill=()=>{ if (pop){ pop.remove(); pop=null; } };
   cont.addEventListener('mouseup', ()=>{
+    if (areaMode) return;
     setTimeout(()=>{
       kill();
       const sel=window.getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
