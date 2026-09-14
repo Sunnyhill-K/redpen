@@ -947,14 +947,21 @@ async function ocrDoc(c, btn){
     for (let p=1;p<=total;p++){
       cur=p; say(`글자 인식 ${p}/${total}쪽…`);
       const page=await pdfState.doc.getPage(p); const base=page.getViewport({scale:1}); const scale=Math.min(4, 2400/base.width); const vp=page.getViewport({scale});
-      const cv=document.createElement('canvas'); cv.width=Math.floor(vp.width); cv.height=Math.floor(vp.height);
-      await page.render({canvasContext: cv.getContext('2d'), viewport: vp}).promise;
-      const {data}=await worker.recognize(cv, {}, {text:true, blocks:true});
-      let lines=data.lines||[];
-      if (!lines.length && data.blocks) lines=data.blocks.flatMap(b=>(b.paragraphs||[]).flatMap(pg=>pg.lines||[]));
-      data.lines=lines;
-      const W=cv.width, H=cv.height; const nb=b=>[+(b.x0/W).toFixed(4), +(b.y0/H).toFixed(4), +((b.x1-b.x0)/W).toFixed(4), +((b.y1-b.y0)/H).toFixed(4)];
-      out[p]=(data.lines||[]).map(l=>({b:nb(l.bbox), w:(l.words||[]).filter(w=>w.text && w.text.trim()).map(w=>({t:w.text.trim(), b:nb(w.bbox)}))})).filter(l=>l.w.length);
+      const W=Math.floor(vp.width), H=Math.floor(vp.height); const TILE=3000, OV=40; const lines=[];
+      for (let y=0; y<H; y+=TILE-OV){
+        const h=Math.min(TILE, H-y); if (h<8) break;
+        const cv=document.createElement('canvas'); cv.width=W; cv.height=h;
+        const tvp=page.getViewport({scale, offsetX:0, offsetY:-y});
+        await page.render({canvasContext: cv.getContext('2d'), viewport: tvp}).promise;
+        say(`글자 인식 ${p}/${total}쪽 · ${Math.min(100, Math.round((y+h)/H*100))}%`);
+        const {data}=await worker.recognize(cv, {}, {text:true, blocks:true});
+        let ls=data.lines||[]; if (!ls.length && data.blocks) ls=data.blocks.flatMap(b=>(b.paragraphs||[]).flatMap(pg=>pg.lines||[]));
+        ls.forEach(l=>{ if (y>0 && l.bbox && l.bbox.y0 < OV/2) return;   // 겹친 띠에서 중복된 줄은 버림
+          const words=(l.words||[]).filter(w=>w.text && w.text.trim() && (w.confidence==null || w.confidence>=45)); if (!words.length) return;
+          lines.push({bbox:{x0:l.bbox.x0, y0:l.bbox.y0+y, x1:l.bbox.x1, y1:l.bbox.y1+y}, words:words.map(w=>({text:w.text, bbox:{x0:w.bbox.x0, y0:w.bbox.y0+y, x1:w.bbox.x1, y1:w.bbox.y1+y}}))}); });
+      }
+      const nb=b=>[+(b.x0/W).toFixed(4), +(b.y0/H).toFixed(4), +((b.x1-b.x0)/W).toFixed(4), +((b.y1-b.y0)/H).toFixed(4)];
+      out[p]=lines.map(l=>({b:nb(l.bbox), w:l.words.map(w=>({t:w.text.trim(), b:nb(w.bbox)}))}));
       counts.push(out[p].reduce((a,l)=>a+l.w.length,0)); if (DEBUG) tmark('OCR '+p+'쪽 단어 '+counts[counts.length-1]+' · '+(data.text||'').trim().slice(0,40));
     }
     c.ocr=out; c.ocrAt=new Date().toISOString(); view.dirty=true;
@@ -1217,11 +1224,14 @@ async function drawPages(){
   const renderOne = async (pg)=>{
     if (pg.done || st.token!==token) return; pg.done=true;
     if (SW.nocanvas){ const tl0=document.createElement('div'); tl0.className='textLayer'; tl0.style.setProperty('--scale-factor', String(pg.scale)); pg.el.prepend(tl0); try { const tc=await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl0, viewport: pg.vp, textDivs: []}).promise; } catch(e){} tmark('쪽 '+pg.p+' 글자층만'); return; }
-    const canvas=document.createElement('canvas'); canvas.width=Math.floor(pg.vp.width*dprEff); canvas.height=Math.floor(pg.vp.height*dprEff);
+    let d=dprEff; const MAXD=16000, MAXA=1.2e8;
+    if (pg.vp.width*d>MAXD || pg.vp.height*d>MAXD) d=Math.min(MAXD/pg.vp.width, MAXD/pg.vp.height);
+    if (pg.vp.width*pg.vp.height*d*d>MAXA) d=Math.sqrt(MAXA/(pg.vp.width*pg.vp.height));
+    const canvas=document.createElement('canvas'); canvas.width=Math.floor(pg.vp.width*d); canvas.height=Math.floor(pg.vp.height*d);
     canvas.style.width=pg.vp.width+'px'; canvas.style.height=pg.vp.height+'px';
     const tl=document.createElement('div'); tl.className='textLayer'; tl.style.setProperty('--scale-factor', String(pg.scale));
     pg.el.prepend(canvas, tl);
-    await pg.page.render({canvasContext: canvas.getContext('2d'), viewport: pg.vp, transform: dprEff!==1 ? [dprEff,0,0,dprEff,0,0] : null}).promise;
+    await pg.page.render({canvasContext: canvas.getContext('2d'), viewport: pg.vp, transform: d!==1 ? [d,0,0,d,0,0] : null}).promise;
     if (st.token!==token) return;
     if (st.c.ocr && st.c.ocr[pg.p]) buildOcrLayer(tl, st.c.ocr[pg.p], pg.vp);
     else { try { const tc = await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl, viewport: pg.vp, textDivs: []}).promise; } catch(e){} }
