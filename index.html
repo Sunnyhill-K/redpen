@@ -238,12 +238,18 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .textLayer ::selection{background:rgba(45,91,185,.35)}
 .textLayer.ocr .ol{position:absolute;left:0;width:100%;white-space:pre}
 .textLayer.ocr .ol span{position:absolute;color:transparent;white-space:pre;transform-origin:0 0;cursor:text}
+.textLayer.ocr.show .ol span{color:rgba(196,52,45,.75);outline:1px solid rgba(196,52,45,.5)}
 .marks{position:absolute;inset:0;z-index:3;pointer-events:none}
 /* 쪽은 항상 흰 종이이므로 표시 색은 고정값 */
 .mbox{position:absolute;border-radius:1px}
 .mbox.del,.mbox.rep{background:linear-gradient(to bottom,rgba(196,52,45,.10) 0,rgba(196,52,45,.10) calc(50% - 1px*var(--pz,1)),#C4342D calc(50% - 1px*var(--pz,1)),#C4342D calc(50% + 1px*var(--pz,1)),rgba(196,52,45,.10) calc(50% + 1px*var(--pz,1)))}
 .mbox.memo{background:linear-gradient(to bottom,rgba(46,125,79,.10) 0,rgba(46,125,79,.10) calc(100% - 2px*var(--pz,1)),#2E7D4F calc(100% - 2px*var(--pz,1)))}
 .mbox.hot{outline:2px solid rgba(196,52,45,.5)}
+.mbox.area{background:rgba(196,52,45,.08)!important;border:2px dashed #C4342D;border-radius:3px;box-sizing:border-box}
+.mbox.area.memo{background:rgba(46,125,79,.08)!important;border-color:#2E7D4F}
+.mbox.area.rep{border-style:solid}
+body.area-mode .page{cursor:crosshair} body.area-mode .textLayer{pointer-events:none}
+.arearubber{position:absolute;border:2px dashed #C4342D;background:rgba(196,52,45,.08);pointer-events:none;z-index:5}
 .marks .mk{position:absolute;pointer-events:auto;transform:translate(2px,-55%);background:#fff;z-index:4;font-size:calc(10.5px*var(--pz,1));padding:calc(2px*var(--pz,1)) calc(4px*var(--pz,1));border-radius:calc(8px*var(--pz,1));border-width:calc(1px*var(--pz,1))}
 .marks .mk.memo{color:#2E7D4F;border-color:#7FC49A}
 .marks .mk.memo:hover,.marks .mk.memo.hot{background:#2E7D4F;color:#fff}
@@ -936,27 +942,30 @@ async function ocrDoc(c, btn){
   const say=(t)=>{ if (btn) btn.textContent=t; };
   try {
     say('OCR 준비 중…'); const worker=await getTess(p=>say(`글자 인식 ${cur}/${total}쪽 · ${Math.round(p*100)}%`));
-    const out={};
+    try { await worker.setParameters({tessedit_pageseg_mode:'3', preserve_interword_spaces:'1', user_defined_dpi:'300'}); } catch(e){}
+    const out={}; const counts=[];
     for (let p=1;p<=total;p++){
       cur=p; say(`글자 인식 ${p}/${total}쪽…`);
-      const page=await pdfState.doc.getPage(p); const base=page.getViewport({scale:1}); const scale=Math.min(3, 1800/base.width); const vp=page.getViewport({scale});
+      const page=await pdfState.doc.getPage(p); const base=page.getViewport({scale:1}); const scale=Math.min(4, 2400/base.width); const vp=page.getViewport({scale});
       const cv=document.createElement('canvas'); cv.width=Math.floor(vp.width); cv.height=Math.floor(vp.height);
       await page.render({canvasContext: cv.getContext('2d'), viewport: vp}).promise;
-      const {data}=await worker.recognize(cv);
+      const {data}=await worker.recognize(cv, {}, {text:true, blocks:true});
+      if (!data.lines || !data.lines.length){ const words=(data.words||[]); if (words.length) data.lines=[{bbox:{x0:0,y0:0,x1:W,y1:H}, words}]; }
       const W=cv.width, H=cv.height; const nb=b=>[+(b.x0/W).toFixed(4), +(b.y0/H).toFixed(4), +((b.x1-b.x0)/W).toFixed(4), +((b.y1-b.y0)/H).toFixed(4)];
       out[p]=(data.lines||[]).map(l=>({b:nb(l.bbox), w:(l.words||[]).filter(w=>w.text && w.text.trim()).map(w=>({t:w.text.trim(), b:nb(w.bbox)}))})).filter(l=>l.w.length);
+      counts.push(out[p].reduce((a,l)=>a+l.w.length,0)); if (DEBUG) tmark('OCR '+p+'쪽 단어 '+counts[counts.length-1]+' · '+(data.text||'').trim().slice(0,40));
     }
     c.ocr=out; c.ocrAt=new Date().toISOString(); view.dirty=true;
     // 이미 그려진 쪽의 글자층을 OCR 층으로 바꿔 끼운다
     document.querySelectorAll('.page').forEach(el=>{ const p=+el.dataset.p; const tl=el.querySelector('.textLayer'); if (tl && out[p]){ const vw=el.getBoundingClientRect().width; tl.innerHTML=''; buildOcrLayer(tl, out[p], {width:vw, height:el.getBoundingClientRect().height}); } });
-    toast(`글자 인식 끝. ${fmtN(Object.values(out).reduce((a,l)=>a+l.reduce((x,y)=>x+y.w.length,0),0))}단어 · 저장(Ctrl+S)하면 다른 사람도 드래그할 수 있습니다`);
+    toast(`글자 인식 끝. 쪽별 단어 수 ${counts.join(', ')} · 저장(Ctrl+S)하면 다른 사람도 드래그할 수 있습니다`);
     say('글자 다시 인식');
   } catch(e){ toast('글자 인식 실패: '+((e&&e.message)||e)); say('글자 인식(OCR)'); }
   finally { ocrBusy=false; if (btn) btn.disabled=false; }
 }
 // OCR 단어를 투명 글자로 깔아 드래그 선택이 되게 한다(줄 단위 상자 안에 단어 상자)
 function buildOcrLayer(tl, lines, vp){
-  tl.classList.add('ocr'); const ctx=document.createElement('canvas').getContext('2d');
+  tl.classList.add('ocr'); if (DEBUG) tl.classList.add('show'); const ctx=document.createElement('canvas').getContext('2d');
   lines.forEach(l=>{
     const ld=document.createElement('div'); ld.className='ol'; ld.style.top=(l.b[1]*100)+'%'; ld.style.height=(l.b[3]*100)+'%';
     l.w.forEach((w,i)=>{
@@ -973,7 +982,7 @@ function buildOcrLayer(tl, lines, vp){
 let pdfState = null; // {c, doc, token}
 // 되돌리기/다시 실행: 표시 배열의 스냅샷 스택(사건별)
 let hist = {id:null, undo:[], redo:[]};
-let pdfListMode = false, textRevMode = false;
+let pdfListMode = false, textRevMode = false, areaMode = false;
 const DOC_BASE_W = 860;   // 문서 100% 폭(px). 창 크기와 무관
 let zoom = {pdf:1, text:1};
 try { const z=JSON.parse(localStorage.getItem('redpen.zoom')||'{}'); if (z.pdf) zoom.pdf=z.pdf; if (z.text) zoom.text=z.text; } catch(e){}
@@ -1008,7 +1017,7 @@ const redoMarks = c => applyHist(c, hist.redo, hist.undo);
 
 function renderDocCase(main, c){
   c.marks = c.marks || [];
-  if (hist.id!==c.id){ hist={id:c.id, undo:[], redo:[]}; pdfListMode=false; textRevMode=false; }
+  if (hist.id!==c.id){ hist={id:c.id, undo:[], redo:[]}; pdfListMode=false; textRevMode=false; areaMode=false; document.body.classList.remove('area-mode'); }
   const head = document.createElement('div'); head.className='head';
   main.appendChild(head);
   const sheet=document.createElement('div'); sheet.className='sheet pdf'; sheet.id='pdfSheet';
@@ -1036,6 +1045,7 @@ function refreshPdfHead(c){
      <button class="btn small" id="undoBtn" title="Ctrl+Z${hist.undo.length?' · '+esc(hist.undo[hist.undo.length-1].l):''}" ${hist.undo.length?'':'disabled'}>↶ 되돌리기${hist.undo.length?' '+fmtN(hist.undo.length):''}</button>
      <button class="btn small" id="redoBtn" title="Ctrl+Shift+Z${hist.redo.length?' · '+esc(hist.redo[hist.redo.length-1].l):''}" ${hist.redo.length?'':'disabled'}>↷ 다시 실행${hist.redo.length?' '+fmtN(hist.redo.length):''}</button>
      <button class="btn small" id="histBtn" title="되돌리기 이력을 보고 골라서 되돌아가기" ${(hist.undo.length||hist.redo.length)?'':'disabled'}>실행 기록</button>` : ''}
+     ${(isPdf(c)&&canEdit)?`<button class="btn small ${areaMode?'on':''}" id="areaBtn" title="글자가 없는 그림 부분에 네모를 그려 메모 · Alt+R">${areaMode?'영역 선택 끝':'영역 선택'}</button>`:''}
      <button class="btn small" id="copyList">메모 복사</button>${(isPdf(c)&&canEdit)?`<button class="btn small" id="ocrBtn" title="캡처본 PDF 처럼 글자층이 없는 문서의 글자를 인식해 드래그할 수 있게 합니다">${c.ocr?'글자 다시 인식':'글자 인식(OCR)'}</button>`:''}`)
     + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모를 얹을 수 있습니다 (Alt+1/2/3)':''} · Ctrl+휠 확대·축소${isPdf(c)?' · 쪽 이동 Alt+W/S, 번호 Alt+G':''} · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
@@ -1048,6 +1058,7 @@ function refreshPdfHead(c){
   if (ub) ub.addEventListener('click', ()=>undoMarks(c));
   if (rb) rb.addEventListener('click', ()=>redoMarks(c));
   const hb=$('#histBtn'); if (hb) hb.addEventListener('click', ()=>showHistory(c));
+  const ab=$('#areaBtn'); if (ab) ab.addEventListener('click', ()=>{ areaMode=!areaMode; document.body.classList.toggle('area-mode', areaMode); refreshPdfHead(c); });
   const ob=$('#ocrBtn'); if (ob){ if (ocrBusy) ob.disabled=true; ob.addEventListener('click', async ()=>{ if (c.ocr && !(await ask('이미 인식한 글자가 있습니다. 다시 인식하면 덮어씁니다.','다시 인식'))) return; ocrDoc(c, ob); }); }
   const pi=$('#pgIn'); if (pi){
     pi.addEventListener('focus', ()=>pi.select());
@@ -1227,7 +1238,7 @@ function drawMarks(c, p){
   el.innerHTML='';
   c.marks.forEach((m,i)=>{ if (m.page!==p) return; const h=i+1;
     m.rects.forEach((r,ri)=>{
-      const d=document.createElement('div'); d.className=`mbox ${m.kind} hunk`; d.dataset.h=h;
+      const d=document.createElement('div'); d.className=`mbox ${m.kind} hunk${m.area?' area':''}`; d.dataset.h=h;
       d.style.left=(r[0]*100)+'%'; d.style.top=(r[1]*100)+'%'; d.style.width=(r[2]*100)+'%'; d.style.height=(r[3]*100)+'%';
       el.appendChild(d);
       if (ri===0){ const k=document.createElement('span'); k.className=`mk ${m.kind}`; k.dataset.h=h; k.textContent=h; k.title='메모 '+h;
@@ -1272,6 +1283,33 @@ function bindSelection(cont, c0){
     }, 0);
   });
   document.addEventListener('mousedown', e=>{ if (pop && !pop.contains(e.target)) kill(); });
+  // 영역 드래그: 영역 선택 모드에서 쪽 위에 네모를 그리면 같은 메뉴가 뜨고, 표시는 점선 상자로 남는다
+  let rb=null, rbPage=null, rbStart=null;
+  cont.addEventListener('mousedown', e=>{
+    if (!areaMode || e.button!==0) return; const pageEl=e.target.closest && e.target.closest('.page'); if (!pageEl) return;
+    e.preventDefault(); kill(); const pr=pageEl.getBoundingClientRect(); rbPage=pageEl; rbStart=[(e.clientX-pr.left)/pr.width, (e.clientY-pr.top)/pr.height];
+    rb=document.createElement('div'); rb.className='arearubber'; pageEl.appendChild(rb);
+  });
+  document.addEventListener('mousemove', e=>{
+    if (!rb || !rbPage) return; const pr=rbPage.getBoundingClientRect(); const x=Math.min(Math.max((e.clientX-pr.left)/pr.width,0),1), y=Math.min(Math.max((e.clientY-pr.top)/pr.height,0),1);
+    const l=Math.min(rbStart[0],x), t=Math.min(rbStart[1],y), w=Math.abs(x-rbStart[0]), h=Math.abs(y-rbStart[1]);
+    rb.style.left=(l*100)+'%'; rb.style.top=(t*100)+'%'; rb.style.width=(w*100)+'%'; rb.style.height=(h*100)+'%'; rb._r=[l,t,w,h];
+  });
+  document.addEventListener('mouseup', ()=>{
+    if (!rb) return; const r=rb._r, pageEl=rbPage; rb.remove(); rb=null; rbPage=null;
+    if (!r || r[2]<0.01 || r[3]<0.01) return;
+    const c=cur(); const rect=r.map(v=>+v.toFixed(4)); const text='[영역] '+pageEl.dataset.p+'쪽';
+    pop=document.createElement('div'); pop.className='pop'; pop.style.left=((rect[0]+rect[2]/2)*100)+'%'; pop.style.top=((rect[1]+rect[3])*100)+'%';
+    pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
+    pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
+      const c=cur(); pushHist(c, `${KIND[b.dataset.k]} 영역 추가 · ${pageEl.dataset.p}쪽`);
+      c.marks.push({page:+pageEl.dataset.p, rects:[rect], area:true, kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : '', byId: me ? me.id : '', mid:newMid(), mt:Date.now()});
+      c.marks.sort((a,b)=>a.page-b.page || a.rects[0][1]-b.rects[0][1] || a.rects[0][0]-b.rects[0][0]);
+      view.dirty=true; kill(); drawAllMarks(c); refreshPdfHead(c);
+      const idx=c.marks.findIndex(m=>m.area && m.page===+pageEl.dataset.p && m.rects[0][0]===rect[0] && m.rects[0][1]===rect[1]); setTimeout(()=>focusHunk(idx+1), 50);
+    }));
+    pageEl.appendChild(pop);
+  });
   // 메뉴가 떠 있을 때 Alt+1/2/3 = 삭제/바꾸기/메모
   document.addEventListener('keydown', e=>{
     if (!pop || !e.altKey) return;
@@ -1338,6 +1376,7 @@ window.addEventListener('scroll', ()=>{ clearTimeout(pgT); pgT=setTimeout(()=>{ 
 document.addEventListener('keydown', e=>{
   if (!e.altKey || e.ctrlKey || e.metaKey) return;
   if (e.code==='KeyN'){ e.preventDefault(); if (!$('#btnNew').hidden) $('#btnNew').click(); return; }
+  if (e.code==='KeyR'){ const ab=$('#areaBtn'); if (ab){ e.preventDefault(); ab.click(); } return; }
   if (!document.querySelector('.page')) return;
   if (e.code==='KeyW'){ e.preventDefault(); goPage((currentPage()||1)-1); }
   else if (e.code==='KeyS'){ e.preventDefault(); goPage((currentPage()||1)+1); }
