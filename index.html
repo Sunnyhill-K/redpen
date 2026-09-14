@@ -1315,7 +1315,7 @@ function bindSelection(cont, c0){
   });
   document.addEventListener('mouseup', ()=>{
     if (!rb) return; const r=rb._r, pageEl=rbPage; rb.remove(); rb=null; rbPage=null; setTimeout(()=>{ rbActive=false; }, 0);
-    if (!r || r[2]<0.01 || r[3]<0.01) return;
+    const prr=pageEl.getBoundingClientRect(); if (!r || r[2]*prr.width<8 || r[3]*prr.height<8) return;   // 8px 미만 네모는 무시(쪽 크기와 무관)
     const c=cur(); const rect=r.map(v=>+v.toFixed(4)); const text='[영역] '+pageEl.dataset.p+'쪽';
     pop=document.createElement('div'); pop.className='pop'; pop.style.left=((rect[0]+rect[2]/2)*100)+'%'; pop.style.top=((rect[1]+rect[3])*100)+'%';
     pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
