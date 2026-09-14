@@ -1271,11 +1271,12 @@ function bindSelection(cont, c0){
       const pageEl = (range.commonAncestorContainer.nodeType===1 ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement).closest('.page');
       if (!pageEl) return;
       const pr=pageEl.getBoundingClientRect();
-      let rects=[...range.getClientRects()].map(r=>[(r.left-pr.left)/pr.width,(r.top-pr.top)/pr.height,r.width/pr.width,r.height/pr.height]).filter(r=>r[2]>0.002 && r[3]>0.002);
+      let rects=[...range.getClientRects()].filter(r=>r.width>2 && r.height>2).map(r=>[(r.left-pr.left)/pr.width,(r.top-pr.top)/pr.height,r.width/pr.width,r.height/pr.height]);   // 2px 미만 조각만 버림(쪽 크기와 무관)
       if (!rects.length) return;
       // 같은 줄끼리 합치기
       rects.sort((a,b)=>a[1]-b[1]||a[0]-b[0]); const merged=[];
-      rects.forEach(r=>{ const l=merged[merged.length-1]; if (l && Math.abs(l[1]-r[1])<0.004){ const x1=Math.max(l[0]+l[2], r[0]+r[2]); l[0]=Math.min(l[0],r[0]); l[2]=x1-l[0]; l[3]=Math.max(l[3],r[3]); } else merged.push(r.slice()); });
+      const tol=4/pr.height;   // 같은 줄 판정도 픽셀(4px) 기준
+      rects.forEach(r=>{ const l=merged[merged.length-1]; if (l && Math.abs(l[1]-r[1])<tol){ const x1=Math.max(l[0]+l[2], r[0]+r[2]); l[0]=Math.min(l[0],r[0]); l[2]=x1-l[0]; l[3]=Math.max(l[3],r[3]); } else merged.push(r.slice()); });
       const text = norm(sel.toString()); if (!text) return;
       const last = merged[merged.length-1];
       pop=document.createElement('div'); pop.className='pop';
