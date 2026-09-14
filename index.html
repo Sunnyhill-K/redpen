@@ -926,6 +926,28 @@ function bindTextSelection(cont, c0){
   document.addEventListener('keydown', e=>{ if (!pop || !e.altKey) return; const i={Digit1:0, Digit2:1, Digit3:2, Numpad1:0, Numpad2:1, Numpad3:2}[e.code]; if (i===undefined) return; e.preventDefault(); const b=pop.querySelectorAll('button')[i]; if (b) b.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true})); });
 }
 
+// ══════════════ PDF 압축(선택): 쪽을 JPEG 로 다시 찍어 가벼운 PDF 로 ══════════════
+async function compressPdf(bytes, say){
+  await ensurePdfjs(); if (!window.PDFLib) await loadScript('vendor/pdf-lib.min.js');
+  const src=await window.pdfjsLib.getDocument({data: bytes.slice()}).promise; const n=src.numPages;
+  const tries=[{w:1600,q:0.72},{w:1300,q:0.6},{w:1000,q:0.5}]; let last=null;
+  for (const t of tries){
+    const out=await window.PDFLib.PDFDocument.create();
+    for (let p=1;p<=n;p++){
+      say(`압축 중 ${p}/${n}쪽`);
+      const page=await src.getPage(p); const base=page.getViewport({scale:1});
+      const scale=Math.min(t.w/base.width, 16000/base.height, 4); const vp=page.getViewport({scale});
+      const cv=document.createElement('canvas'); cv.width=Math.floor(vp.width); cv.height=Math.floor(vp.height);
+      const ctx=cv.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+      await page.render({canvasContext: ctx, viewport: vp}).promise;
+      const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',t.q)); const jpg=await out.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+      const pg=out.addPage([base.width, base.height]); pg.drawImage(jpg, {x:0, y:0, width:base.width, height:base.height});
+    }
+    last=await out.save({useObjectStreams:true}); if (last.length <= 7*1024*1024) break;
+  }
+  return last;
+}
+
 // ══════════════ 글자층 없는 PDF(캡처본)용 OCR ══════════════
 let tessWorker=null, ocrBusy=false;
 async function getTess(onProg){
@@ -1480,11 +1502,18 @@ function renderEdit(main){
   wz.addEventListener('dragover', e=>{ e.preventDefault(); wz.classList.add('over'); }); wz.addEventListener('dragleave', ()=>wz.classList.remove('over'));
   wz.addEventListener('drop', e=>{ e.preventDefault(); wz.classList.remove('over'); const f=e.dataTransfer.files[0]; if (f) takeWord(f); });
   $('#fWord').addEventListener('change', ()=>{ const f=$('#fWord').files[0]; if (f) takeWord(f); });
+  let pdfBytes=null;
+  const setPdf=(bytes, name, label)=>{ let bin=''; for (let i=0;i<bytes.length;i+=0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000));
+    pdfB64 = btoa(bin); pdfBytes=bytes; pdfName = name; pdfDirty = true; view.dirty=true;
+    $('#pdfName').innerHTML = `${esc(label)} · ${fmtN(Math.round(bytes.length/1024))}KB` + (bytes.length > 3*1024*1024 ? ` <button type="button" class="btn small" id="pdfShrink">가볍게 압축</button>` : '');
+    const sb=$('#pdfShrink'); if (sb) sb.addEventListener('click', async e=>{ e.preventDefault(); e.stopPropagation(); sb.disabled=true;
+      try { const out=await compressPdf(pdfBytes, t=>{ sb.textContent=t; }); setPdf(out, pdfName, pdfName+' (압축)'); toast(`압축 끝: ${fmtN(Math.round(bytes.length/1024))}KB → ${fmtN(Math.round(out.length/1024))}KB · 글자층은 사라지니 저장 후 「글자 인식」을 돌리세요`); }
+      catch(ex){ sb.textContent='압축 실패'; toast('압축 실패: '+((ex&&ex.message)||ex)); } });
+  };
   const takePdf = async f => {
     if (!/\.pdf$/i.test(f.name)){ $('#pdfName').textContent='PDF 파일만 넣을 수 있습니다.'; return; }
-    if (f.size > 8*1024*1024){ $('#pdfName').textContent='8MB를 넘는 PDF는 페이지에 담기 어렵습니다. 쪽을 줄여 주세요.'; return; }
-    const buf = new Uint8Array(await f.arrayBuffer()); let bin=''; for (let i=0;i<buf.length;i+=0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i,i+0x8000));
-    pdfB64 = btoa(bin); pdfName = f.name; pdfDirty = true; $('#pdfName').textContent = `${f.name} · ${fmtN(Math.round(f.size/1024))}KB`; view.dirty=true;
+    if (f.size > 50*1024*1024){ $('#pdfName').textContent='50MB를 넘는 PDF는 넣을 수 없습니다. 쪽을 나누거나 압축해 주세요.'; return; }
+    const buf = new Uint8Array(await f.arrayBuffer()); setPdf(buf, f.name, f.name);
     if (!$('#fTitle').value.trim()) $('#fTitle').value = f.name.replace(/\.pdf$/i,'');
   };
   const zone=$('#zone');
