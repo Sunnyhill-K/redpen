@@ -1301,6 +1301,7 @@ function bindSelection(cont, c0){
   cont.addEventListener('selectstart', e=>{ if (areaMode || rbActive) e.preventDefault(); });
   let rbActive=false;
   cont.addEventListener('mousedown', e=>{
+    rbActive=false; if (rb){ rb.remove(); rb=null; rbPage=null; }   // 창 밖에서 놓아 남은 끌기 상태 정리
     if (e.button!==0) return; const pageEl=e.target.closest && e.target.closest('.page'); if (!pageEl) return;
     const onText = e.target.closest && e.target.closest('.textLayer'); if (!areaMode && onText) return;   // 글자 위: 글자 선택
     if (e.target.closest && e.target.closest('.pop, .mk')) return;
@@ -1313,8 +1314,9 @@ function bindSelection(cont, c0){
     const l=Math.min(rbStart[0],x), t=Math.min(rbStart[1],y), w=Math.abs(x-rbStart[0]), h=Math.abs(y-rbStart[1]);
     rb.style.left=(l*100)+'%'; rb.style.top=(t*100)+'%'; rb.style.width=(w*100)+'%'; rb.style.height=(h*100)+'%'; rb._r=[l,t,w,h];
   });
+  window.addEventListener('blur', ()=>{ if (rb){ rb.remove(); rb=null; rbPage=null; } rbActive=false; });
   document.addEventListener('mouseup', ()=>{
-    if (!rb) return; const r=rb._r, pageEl=rbPage; rb.remove(); rb=null; rbPage=null; setTimeout(()=>{ rbActive=false; }, 0);
+    if (!rb){ rbActive=false; return; } const r=rb._r, pageEl=rbPage; rb.remove(); rb=null; rbPage=null; setTimeout(()=>{ rbActive=false; }, 0);
     const prr=pageEl.getBoundingClientRect(); if (!r || r[2]*prr.width<8 || r[3]*prr.height<8) return;   // 8px 미만 네모는 무시(쪽 크기와 무관)
     const c=cur(); const rect=r.map(v=>+v.toFixed(4)); const text='[영역] '+pageEl.dataset.p+'쪽';
     pop=document.createElement('div'); pop.className='pop'; pop.style.left=((rect[0]+rect[2]/2)*100)+'%'; pop.style.top=((rect[1]+rect[3])*100)+'%';
