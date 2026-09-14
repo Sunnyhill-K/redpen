@@ -237,7 +237,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .textLayer span,.textLayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}
 .textLayer ::selection{background:rgba(45,91,185,.35)}
 .textLayer.ocr .ol{position:absolute;left:0;width:100%;white-space:pre}
-.textLayer.ocr .ol span{position:absolute;color:transparent;white-space:pre;transform-origin:0 0;cursor:text}
+.textLayer.ocr .ol span{position:absolute;color:transparent;white-space:pre;transform-origin:0 0;cursor:text;font-family:Arial,sans-serif;letter-spacing:0}
 .textLayer.ocr.show .ol span{color:rgba(196,52,45,.75);outline:1px solid rgba(196,52,45,.5)}
 .marks{position:absolute;inset:0;z-index:3;pointer-events:none}
 /* 쪽은 항상 흰 종이이므로 표시 색은 고정값 */
@@ -979,9 +979,9 @@ function buildOcrLayer(tl, lines, vp){
     const ld=document.createElement('div'); ld.className='ol'; ld.style.top=(l.b[1]*100)+'%'; ld.style.height=(l.b[3]*100)+'%';
     l.w.forEach((w,i)=>{
       const sp=document.createElement('span'); const hpx=w.b[3]*vp.height, wpx=w.b[2]*vp.width; const fs=Math.max(6, hpx*0.85);
-      sp.textContent=w.t; sp.style.left=(w.b[0]*100)+'%'; sp.style.top=((w.b[1]-l.b[1])/Math.max(l.b[3],1e-6)*100)+'%'; sp.style.fontSize=fs+'px'; sp.style.height=hpx+'px'; sp.style.lineHeight=hpx+'px';
-      ctx.font=fs+'px sans-serif'; const mw=ctx.measureText(w.t).width||1; sp.style.transform='scaleX('+(wpx/mw).toFixed(3)+')';
-      ld.appendChild(sp); if (i<l.w.length-1) ld.appendChild(document.createTextNode(' '));
+      sp.textContent=w.t+(i<l.w.length-1?' ':''); sp.style.left=(w.b[0]*100)+'%'; sp.style.top=((w.b[1]-l.b[1])/Math.max(l.b[3],1e-6)*100)+'%'; sp.style.fontSize=fs+'px'; sp.style.height=hpx+'px'; sp.style.lineHeight=hpx+'px';
+      ctx.font=fs+'px Arial, sans-serif'; const mw=ctx.measureText(w.t).width||1; sp.style.transform='scaleX('+(wpx/mw).toFixed(3)+')';   // 글자층 글꼴과 같은 글꼴로 재야 폭이 맞는다
+      ld.appendChild(sp);
     });
     tl.appendChild(ld);
   });
