@@ -848,7 +848,7 @@ function sanitizeHtml(html){
     walk(ch); }); };
   walk(doc.body); return doc.body.innerHTML;
 }
-function textNodes(root){ const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const arr=[]; let n; while ((n=w.nextNode())) arr.push(n); return arr; }
+function textNodes(root){ const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode:n=>{ const e=n.parentElement; return (e && e.closest && e.closest('.mk, .pop')) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }}); const arr=[]; let n; while ((n=w.nextNode())) arr.push(n); return arr; }
 function locate(root, idx){ let acc=0; const nodes=textNodes(root); for (const n of nodes){ const L=n.data.length; if (idx<=acc+L) return {node:n, off:idx-acc}; acc+=L; } const last=nodes[nodes.length-1]; return last ? {node:last, off:last.data.length} : null; }
 // [start,end) 구간의 글자들을 span 으로 감싼다. 여러 텍스트 노드에 걸치면 조각마다 감싸고 첫 조각에 first 표시
 function wrapRange(root, start, end, cls, h, withBadge){
@@ -902,7 +902,17 @@ function revisedText(c){
 function bindTextSelection(cont, c0){
   let pop=null; const cur=()=>(view.draft||cases.find(x=>x.id===view.id))||c0;
   const kill=()=>{ if (pop){ pop.remove(); pop=null; } };
-  const offsetIn=(node, off)=>{ const r=document.createRange(); r.setStart(cont,0); r.setEnd(node,off); return r.toString().length; };
+  // 본문 글자 위치: 번호 딱지·메뉴 글자는 빼고 센다(안 빼면 앞선 메모 개수만큼 밀린다)
+  const offsetIn=(node, off)=>{
+    let target=node, o=off;
+    if (node.nodeType!==3){ const ch=node.childNodes[off]; if (ch){ const w=document.createTreeWalker(ch, NodeFilter.SHOW_TEXT); const first=(ch.nodeType===3)?ch:w.nextNode(); if (first){ target=first; o=0; } else { target=null; } }
+      else { target=null; } }
+    const nodes=textNodes(cont); let acc=0;
+    if (!target){ // 요소 끝: 그 요소 안 마지막 텍스트까지 전부 센다
+      const r=document.createRange(); r.setStart(cont,0); r.setEnd(node,off); const inside=nodes.filter(n=>r.comparePoint(n,0)<=0); return inside.reduce((a,n)=>a+n.data.length,0); }
+    for (const n of nodes){ if (n===target) return acc+o; acc+=n.data.length; }
+    return acc;
+  };
   cont.addEventListener('mouseup', ()=>{ setTimeout(()=>{
     kill(); if (textRevMode) return;
     const sel=window.getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
