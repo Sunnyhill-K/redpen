@@ -1053,9 +1053,9 @@ function refreshPdfHead(c){
      <button class="btn small" id="undoBtn" title="Ctrl+Z${hist.undo.length?' · '+esc(hist.undo[hist.undo.length-1].l):''}" ${hist.undo.length?'':'disabled'}>↶ 되돌리기${hist.undo.length?' '+fmtN(hist.undo.length):''}</button>
      <button class="btn small" id="redoBtn" title="Ctrl+Shift+Z${hist.redo.length?' · '+esc(hist.redo[hist.redo.length-1].l):''}" ${hist.redo.length?'':'disabled'}>↷ 다시 실행${hist.redo.length?' '+fmtN(hist.redo.length):''}</button>
      <button class="btn small" id="histBtn" title="되돌리기 이력을 보고 골라서 되돌아가기" ${(hist.undo.length||hist.redo.length)?'':'disabled'}>실행 기록</button>` : ''}
-     ${(isPdf(c)&&canEdit)?`<button class="btn small ${areaMode?'on':''}" id="areaBtn" title="글자가 없는 그림 부분에 네모를 그려 메모 · Alt+A">${areaMode?'영역 선택 끝':'영역 선택'}</button>`:''}
+     ${(isPdf(c)&&canEdit)?`<button class="btn small ${areaMode?'on':''}" id="areaBtn" title="글자 위에서도 네모로 영역을 잡고 싶을 때 켭니다. 그림 부분은 켜지 않아도 그냥 끌면 됩니다 · Alt+A">${areaMode?'영역 선택 끝':'영역 선택'}</button>`:''}
      <button class="btn small" id="copyList">메모 복사</button>${(isPdf(c)&&canEdit)?`<button class="btn small" id="ocrBtn" title="캡처본 PDF 처럼 글자층이 없는 문서의 글자를 인식해 드래그할 수 있게 합니다">${c.ocr?'글자 다시 인식':'글자 인식(OCR)'}</button>`:''}`)
-    + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모를 얹을 수 있습니다 (Alt+1/2/3)':''} · Ctrl+휠 확대·축소${isPdf(c)?' · 쪽 이동 Alt+W/S, 번호 Alt+G':''} · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
+    + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모, 그림 부분은 네모로 끌면 영역 메모 (Alt+1/2/3)':''} · Ctrl+휠 확대·축소${isPdf(c)?' · 쪽 이동 Alt+W/S, 번호 Alt+G':''} · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
   $('#modeDoc').addEventListener('click', ()=>{ pdfListMode=false; textRevMode=false; refreshPdfHead(c); });
   $('#modeList').addEventListener('click', ()=>{ collectMarks(c); pdfListMode=true; textRevMode=false; refreshPdfHead(c); });
@@ -1263,7 +1263,7 @@ function bindSelection(cont, c0){
   const cur = ()=> (pdfState && pdfState.c) || c0;
   const kill=()=>{ if (pop){ pop.remove(); pop=null; } };
   cont.addEventListener('mouseup', ()=>{
-    if (areaMode) return;
+    if (areaMode || rbActive) return;
     setTimeout(()=>{
       kill();
       const sel=window.getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
@@ -1297,10 +1297,14 @@ function bindSelection(cont, c0){
   document.addEventListener('mousedown', e=>{ if (pop && !pop.contains(e.target)) kill(); });
   // 영역 드래그: 영역 선택 모드에서 쪽 위에 네모를 그리면 같은 메뉴가 뜨고, 표시는 점선 상자로 남는다
   let rb=null, rbPage=null, rbStart=null;
-  cont.addEventListener('dragstart', e=>{ if (areaMode) e.preventDefault(); });
-  cont.addEventListener('selectstart', e=>{ if (areaMode) e.preventDefault(); });
+  cont.addEventListener('dragstart', e=>{ if (areaMode || rbActive) e.preventDefault(); });
+  cont.addEventListener('selectstart', e=>{ if (areaMode || rbActive) e.preventDefault(); });
+  let rbActive=false;
   cont.addEventListener('mousedown', e=>{
-    if (!areaMode || e.button!==0) return; const pageEl=e.target.closest && e.target.closest('.page'); if (!pageEl) return;
+    if (e.button!==0) return; const pageEl=e.target.closest && e.target.closest('.page'); if (!pageEl) return;
+    const onText = e.target.closest && e.target.closest('.textLayer'); if (!areaMode && onText) return;   // 글자 위: 글자 선택
+    if (e.target.closest && e.target.closest('.pop, .mk')) return;
+    rbActive=true;
     e.preventDefault(); kill(); const pr=pageEl.getBoundingClientRect(); rbPage=pageEl; rbStart=[(e.clientX-pr.left)/pr.width, (e.clientY-pr.top)/pr.height];
     rb=document.createElement('div'); rb.className='arearubber'; pageEl.appendChild(rb);
   });
@@ -1310,7 +1314,7 @@ function bindSelection(cont, c0){
     rb.style.left=(l*100)+'%'; rb.style.top=(t*100)+'%'; rb.style.width=(w*100)+'%'; rb.style.height=(h*100)+'%'; rb._r=[l,t,w,h];
   });
   document.addEventListener('mouseup', ()=>{
-    if (!rb) return; const r=rb._r, pageEl=rbPage; rb.remove(); rb=null; rbPage=null;
+    if (!rb) return; const r=rb._r, pageEl=rbPage; rb.remove(); rb=null; rbPage=null; setTimeout(()=>{ rbActive=false; }, 0);
     if (!r || r[2]<0.01 || r[3]<0.01) return;
     const c=cur(); const rect=r.map(v=>+v.toFixed(4)); const text='[영역] '+pageEl.dataset.p+'쪽';
     pop=document.createElement('div'); pop.className='pop'; pop.style.left=((rect[0]+rect[2]/2)*100)+'%'; pop.style.top=((rect[1]+rect[3])*100)+'%';
