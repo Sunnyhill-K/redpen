@@ -941,7 +941,7 @@ async function ocrDoc(c, btn){
   const say=(t)=>{ if (btn) btn.textContent=t; };
   try {
     say('OCR 준비 중…'); const worker=await getTess(p=>say(`글자 인식 ${cur}/${total}쪽 · ${Math.round(p*100)}%`));
-    try { await worker.setParameters({tessedit_pageseg_mode:'3', preserve_interword_spaces:'1', user_defined_dpi:'300'}); } catch(e){}
+    try { await worker.setParameters({tessedit_pageseg_mode:'4', preserve_interword_spaces:'1', user_defined_dpi:'300'}); } catch(e){}
     const out={}; const counts=[];
     for (let p=1;p<=total;p++){
       cur=p; say(`글자 인식 ${p}/${total}쪽…`);
