@@ -1072,7 +1072,7 @@ function showHistory(c){
 const undoMarks = c => applyHist(c, hist.undo, hist.redo);
 const redoMarks = c => applyHist(c, hist.redo, hist.undo);
 
-function renderDocCase(main, c){
+function renderDocCase(main, c){ if (renderDocCase._last!==c.id){ jumpCur=null; renderDocCase._last=c.id; }
   c.marks = c.marks || [];
   if (hist.id!==c.id){ hist={id:c.id, undo:[], redo:[]}; pdfListMode=false; textRevMode=false; areaMode=false; document.body.classList.remove('area-mode'); }
   const head = document.createElement('div'); head.className='head';
@@ -1425,15 +1425,24 @@ function bindJumps(root, before){
 }
 
 // ── 메모 이동: 화면 위쪽 선을 기준으로 위/아래에서 가장 가까운 표시로 ──
+let jumpCur=null;   // 마지막으로 다녀간 메모 번호(Alt+Q/X 한 칸씩 이동의 기준)
 function jumpMemo(dir){
   const line=headLine()+6; const hunks=[...document.querySelectorAll('#doc .hunk[data-h], .page .hunk[data-h]')];
   const seen=new Set(); const items=[]; hunks.forEach(el=>{ const h=el.dataset.h; if (seen.has(h)) return; seen.add(h); items.push({h, top:el.getBoundingClientRect().top}); });
   if (!items.length){ toast('메모가 없습니다'); return; }
+  items.sort((a,b)=>a.top-b.top);   // 문서 위치 순(번호 순이 아니라 글 순서)
+  // 기준 = 커서가 들어가 있는 메모 > 마지막으로 다녀간 메모 > 지금 화면 위쪽 선 바로 아래의 메모
+  let cur=null; const ae=document.activeElement; const nb=ae && ae.closest && ae.closest('.note[data-h]'); if (nb) cur=nb.dataset.h;
+  if (!cur && jumpCur && items.some(x=>x.h===jumpCur)) cur=jumpCur;
+  let idx=cur ? items.findIndex(x=>x.h===cur) : -1;
   let pick=null;
-  // 아래 = 지금 화면 아래쪽 밖에 있는 첫 표시(화면 안에 보이는 것은 건너뛴다). 위 = 화면 위쪽 밖의 마지막 표시
-  if (dir>0){ const bottom=window.innerHeight-20; const cand=items.filter(x=>x.top>bottom).sort((a,b)=>a.top-b.top); pick=cand[0]; }
-  else { const cand=items.filter(x=>x.top<line-30).sort((a,b)=>b.top-a.top); pick=cand[0]; }
-  if (!pick){ toast(dir>0?'아래에 더 없습니다':'위에 더 없습니다'); return; }
+  if (idx>=0){ pick=items[idx+dir]; if (!pick){ toast(dir>0?'마지막 메모입니다':'첫 메모입니다'); return; } }
+  else {
+    if (dir>0){ const cand=items.filter(x=>x.top>line+30); pick=cand[0]; }
+    else { const cand=items.filter(x=>x.top<line-30); pick=cand[cand.length-1]; }
+    if (!pick){ toast(dir>0?'아래에 더 없습니다':'위에 더 없습니다'); return; }
+  }
+  jumpCur=pick.h;
   const y=pick.top+window.scrollY-headLine()-40; window.scrollTo({top:Math.max(0,y), behavior:'smooth'});
   hot(pick.h,true); setTimeout(()=>hot(pick.h,false), 1800);
   const n=document.getElementById('note'+pick.h); const f=n && n.querySelector('textarea:not([hidden]), .md[contenteditable]'); if (f) setTimeout(()=>f.focus({preventScroll:true}), 350);
