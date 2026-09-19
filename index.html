@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
+<meta name="build" content="2026-09-19T20:22:04+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -117,7 +118,7 @@ a{color:var(--ins)}
 .chip.last{background:var(--ins-bg);color:var(--ins)}
 .chip.lostc{background:var(--del-bg);color:var(--del)}
 .btn.ico{padding-left:8px;padding-right:8px;font-size:calc(15px * var(--ui,1));line-height:1}.btn.ico sup{font-size:.55em;margin-left:2px;vertical-align:.6em;font-family:var(--mono)}
-.beta{font-size:.55em;font-weight:500;color:var(--ink-3);letter-spacing:.02em;margin-left:.15em;vertical-align:.15em}
+.beta{font-size:.55em;font-weight:500;color:var(--ink-3);letter-spacing:.02em;margin-left:.15em;vertical-align:.15em}#buildAt{font-family:var(--mono);font-size:.9em;letter-spacing:0}
 .empty{padding:16px;color:var(--ink-3);font-size:calc(13px * var(--ui,1))}
 
 main{padding-block:0 60px;padding-inline:20px;min-width:0}
@@ -413,7 +414,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
 </head>
 <body>
 <header class="top">
-  <div class="brand" id="brand" role="link" tabindex="0" title="홈으로"><svg class="mark" width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M15.5 3.5v5h5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 13h8M9 17h8" stroke="#8A909B" stroke-width="1.5" stroke-linecap="round"/><path d="M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0" stroke="#C4342D" stroke-width="1.8" stroke-linecap="round"/></svg><h1>SN Docs <small class="beta">(Beta)</small></h1></div>
+  <div class="brand" id="brand" role="link" tabindex="0" title="홈으로"><svg class="mark" width="26" height="26" viewBox="0 0 26 26" fill="none" aria-hidden="true"><path d="M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M15.5 3.5v5h5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 13h8M9 17h8" stroke="#8A909B" stroke-width="1.5" stroke-linecap="round"/><path d="M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0" stroke="#C4342D" stroke-width="1.8" stroke-linecap="round"/></svg><h1>SN Docs <small class="beta">(Beta)<span id="buildAt" title="이 시스템이 마지막으로 업데이트된 시각"></span></small></h1></div>
   <span id="whoami" class="chip"></span>
   <button class="btn" id="btnUsers" hidden>사용자 관리</button>
   <button class="btn" id="btnPw" hidden>비밀번호 바꾸기</button>
@@ -1405,7 +1406,7 @@ function collectMarks(c){
 async function readRemotePayload(c){
   const u=await ghRead(`docs/${c.id}.json`); if (!u) return null;
   const d=JSON.parse(td.decode(u)); let key=K;
-  if (d.lock){ key=docKeys[c.id]; if (!key) return null; }
+  if (d.lock || d.uw){ key=docKeys[c.id]; if (!key) return null; }
   try { const pl=JSON.parse(td.decode(await decB(key, ub64(d.ct)))); return {pl, ts:d.ts||''}; } catch(e){ return null; }
 }
 async function mergeRemote(c){
@@ -1710,12 +1711,12 @@ function renderEdit(main){
       <div><label for="fTitle">제목</label><input id="fTitle" value="${esc(c.title)}" placeholder="글 제목이나 의뢰 건명"></div>
       <div><label for="fClient">의뢰인</label><input id="fClient" value="${esc(c.client)}" placeholder="누가 보냈나"></div>
     </div>
-    <div class="visbox" id="visBox"><div class="lab"><label>볼 수 있는 사람</label><span class="hint">관리자와 올린 사람은 항상 봅니다. 나머지는 체크한 사람만 목록에서 보고 열 수 있습니다. Shift+클릭으로 범위 선택.</span><span class="spacer"></span><button class="btn small" type="button" id="visAll">전체 선택</button><button class="btn small" type="button" id="visNone">전체 해제</button></div>
-      <div class="vislist" id="visList">${(cfg.users||[]).map(u=>`<label class="${(u.role==='admin' || (me && u.id===me.id))?'fixed':''}"><input type="checkbox" data-id="${esc(u.id)}" ${(u.role==='admin' || (me && u.id===me.id)) ? 'checked disabled' : ((!Array.isArray(c.vis) || c.vis.includes(u.id)) ? 'checked' : '')}> <b>${esc(u.name)}</b> <span class="mono">${esc(u.id)}</span> <span class="chip">${({admin:'관리자',editor:'편집자',viewer:'뷰어'})[u.role]||''}</span></label>`).join('')}</div></div>
+    <div class="visbox" id="visBox"><div class="lab"><label>볼 수 있는 사람</label><span class="hint">관리자와 올린 사람은 항상 봅니다. 나머지는 체크한 사람만 열 수 있고, 체크 안 된 사람은 열쇠가 없어 암호를 풀 수 없습니다(전체 선택이면 봉인 없이 모두). 문서 비밀번호까지 걸면 지정된 사람도 비밀번호를 넣어야 엽니다. Shift+클릭으로 범위 선택.</span><span class="spacer"></span><button class="btn small" type="button" id="visAll">전체 선택</button><button class="btn small" type="button" id="visNone">전체 해제</button></div>
+      <div class="vislist" id="visList">${(cfg.users||[]).map(u=>`<label class="${(u.role==='admin' || (me && u.id===me.id))?'fixed':''}"><input type="checkbox" data-id="${esc(u.id)}" ${(u.role==='admin' || (me && u.id===me.id)) ? 'checked disabled' : ((!Array.isArray(c.vis) || c.vis.includes(u.id)) ? 'checked' : '')}> <b>${esc(u.name)}</b> <span class="mono">${esc(u.id)}</span> ${u.pub?'':'<span class="chip lostc" title="아직 새 방식으로 로그인하지 않아 열쇠가 없습니다. 지정해도 이 문서를 열 수 없습니다">열쇠 없음</span>'}<span class="chip">${({admin:'관리자',editor:'편집자',viewer:'뷰어'})[u.role]||''}</span></label>`).join('')}</div></div>
     <div class="frow lockrow">
       <div><label for="fLock">문서 비밀번호 (선택)</label><input id="fLock" type="password" autocomplete="new-password" placeholder="${c.lock ? '설정되어 있음 · 바꾸려면 새로 입력' : '비워 두면 로그인만으로 열림'}"></div>
       <div class="lockhint">${c.lock ? `<label class="rm"><input type="checkbox" id="fUnlock"> 문서 비밀번호 풀기</label>` : ''}</div>
-      <div class="lockhint msg">뷰어는 이 비밀번호를 한 번 더 넣어야 열립니다. 편집자는 그냥 열립니다.</div>
+      <div class="lockhint msg">뷰어는 이 비밀번호를 한 번 더 넣어야 열립니다. 편집자는 그냥 열립니다. 「볼 수 있는 사람」을 지정한 문서에서는 지정된 사람 모두(편집자 포함) 비밀번호가 필요합니다.</div>
     </div>
     <div id="textPart" class="tcol"><div class="lab"><label for="fOrig">원문</label><span class="cnt" id="cOrig"></span></div>
       <textarea id="fOrig" placeholder="받은 글을 그대로 붙여 넣으세요.">${esc(c.src||'')}</textarea>
@@ -1989,6 +1990,31 @@ async function deriveKe(kraw, tok){
   return crypto.subtle.deriveKey({name:'HKDF', hash:'SHA-256', salt:te.encode(tok), info:te.encode('redpen-editor-key')}, km, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
 }
 const docKeys = {};   // id → CryptoKey (이 페이지 안에서만 기억)
+// ── 사용자별 열쇠쌍(RSA-OAEP 2048) — 「볼 수 있는 사람」을 화면 제한이 아니라 암호로 강제한다 ──
+// 지정 문서는 문서키 Kd 를 지정된 사람들의 공개키로 각각 봉해 둔다(uw). 지정 안 된 사람은 사이트키 K 가 있어도 못 연다.
+// 개인키는 본인 비밀번호로 감싸고(pk), 관리자 공개키로도 봉해 둔다(pkA) — 관리자가 비밀번호를 재설정해도 열쇠가 이어진다.
+let myPriv=null, myPrivJwk=null;
+const RSA={name:'RSA-OAEP', hash:'SHA-256'};
+async function genKeyPair(){ const kp=await crypto.subtle.generateKey({name:'RSA-OAEP', modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:'SHA-256'}, true, ['encrypt','decrypt']); return {pub: await crypto.subtle.exportKey('jwk', kp.publicKey), privJwk: JSON.stringify(await crypto.subtle.exportKey('jwk', kp.privateKey))}; }
+const importPub = jwk => crypto.subtle.importKey('jwk', jwk, RSA, false, ['encrypt']);
+const importPriv = jwkStr => crypto.subtle.importKey('jwk', JSON.parse(jwkStr), RSA, false, ['decrypt']);
+async function sealTo(pubJwk, u8){ const ek=crypto.getRandomValues(new Uint8Array(32)); const wk=new Uint8Array(await crypto.subtle.encrypt({name:'RSA-OAEP'}, await importPub(pubJwk), ek)); return {k:b64(wk), c:b64(await encB(await importK(ek), u8))}; }
+async function openFrom(priv, sealed){ const ek=new Uint8Array(await crypto.subtle.decrypt({name:'RSA-OAEP'}, priv, ub64(sealed.k))); return decB(await importK(ek), ub64(sealed.c)); }
+async function pbkdfRaw(pw, saltB64, iter){ const km=await crypto.subtle.importKey('raw', te.encode(pw), 'PBKDF2', false, ['deriveBits']); return new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2', salt:ub64(saltB64), iterations:iter, hash:'SHA-256'}, km, 256)); }
+// 지정 문서에 문서 비밀번호까지 걸면 내용 열쇠 = HKDF(문서키, 비밀번호 파생값) → 열쇠와 비밀번호가 둘 다 있어야 열린다
+async function contentKey(kdRaw, pwRaw){ const km=await crypto.subtle.importKey('raw', kdRaw, 'HKDF', false, ['deriveKey']); return crypto.subtle.deriveKey({name:'HKDF', hash:'SHA-256', salt:pwRaw, info:te.encode('sndocs-content-key')}, km, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); }
+const admins = () => (cfg && cfg.users ? cfg.users : []).filter(u=>u.role==='admin');
+// 로그인 직후: 내 열쇠쌍을 꺼내고, 없으면 만들어 설정에 적는다(저장 권한이 있을 때만). 관리자 에스크로가 빠져 있으면 채운다
+async function ensureMyKeys(u, kekKey){
+  myPriv=null; myPrivJwk=null;
+  if (u.pub && u.pk){ try { myPrivJwk=td.decode(await decB(kekKey, ub64(u.pk))); myPriv=await importPriv(myPrivJwk); } catch(e){ myPriv=null; myPrivJwk=null; } }
+  if (!token) return;
+  const c2=JSON.parse(JSON.stringify(cfg)); const uu=c2.users.find(x=>x.id===u.id); if (!uu) return; let dirty=false;
+  if (!myPriv){ const kp=await genKeyPair(); uu.pub=kp.pub; uu.pk=b64(await encB(kekKey, te.encode(kp.privJwk))); uu.pkA={}; myPrivJwk=kp.privJwk; myPriv=await importPriv(myPrivJwk); dirty=true; }
+  uu.pkA=uu.pkA||{};
+  for (const a of admins()){ if (a.pub && a.id!==u.id && !uu.pkA[a.id]){ uu.pkA[a.id]=await sealTo(a.pub, te.encode(myPrivJwk)); dirty=true; } }
+  if (dirty){ await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'keys: '+u.id); cfg=c2; Object.assign(u, uu); }
+}
 function askPw(title){
   return new Promise(res=>{
     const ov=document.createElement('div'); ov.className='ask';
@@ -2050,8 +2076,20 @@ async function loadDoc(c){
   if (!K) throw new Error('먼저 비밀번호로 열어 주세요');
   tmark('문서 열기 시작'); const u=await ghRead(`docs/${c.id}.json`); if (!u) throw new Error('문서 파일이 없습니다'); tmark('문서 파일 받음');
   const d=JSON.parse(td.decode(u));
-  let key=K;
-  if (d.lock){ key=await docKey(c, d); if (!key) throw new Error('문서 비밀번호가 필요합니다'); c.lock=true; c._wrap=d.wrap; } else { c.lock=false; }
+  let key=K; c._uw=null; c._legacyVis=false;
+  if (d.uw){   // 지정 문서: 내 개인키로 문서키를 연다
+    c._uw=d.uw;
+    if (!me || !d.uw[me.id]) throw new Error('이 문서를 볼 수 있는 사람으로 지정되지 않았습니다');
+    if (!myPriv) throw new Error('내 열쇠가 없습니다. 로그아웃 후 다시 로그인해 주세요');
+    let kr; try { kr=await openFrom(myPriv, d.uw[me.id]); } catch(_){ throw new Error('내 열쇠로 이 문서를 열지 못했습니다. 편집자가 이 문서를 다시 저장하면 풀립니다'); }
+    c._kdRaw=kr;
+    if (d.lock){ key=docKeys[c.id]||null;
+      while (!key){ const pw=await askPw(c.title||''); if (pw===null) throw new Error('문서 비밀번호가 필요합니다');
+        const kc=await contentKey(kr, await pbkdfRaw(pw, d.wrap.pw.salt, cfg.iter)); try { await decB(kc, ub64(d.ct)); key=docKeys[c.id]=kc; } catch(_){ toast('문서 비밀번호가 맞지 않습니다.'); } }
+      c.lock=true; c._wrap=d.wrap; }
+    else { key=docKeys[c.id]=await importK(kr); c.lock=false; }
+  } else if (d.lock){ key=await docKey(c, d); if (!key) throw new Error('문서 비밀번호가 필요합니다'); c.lock=true; c._wrap=d.wrap; }
+  else { c.lock=false; if (Array.isArray(d.vis)) c._legacyVis=true; }   // 옛 방식(화면 제한만) — 한 번 저장하면 봉인된다
   const payload=JSON.parse(td.decode(await decB(key, ub64(d.ct))));
   Object.assign(c, {title:d.title, date:d.date, ts:d.ts||'', type:d.type||'text', client:d.client, vis:(Array.isArray(d.vis)?d.vis:null), owner:d.owner||''}, payload);
   if (isPdf(c)){ const pe=await ghRead(`docs/${c.id}.pdf.enc`); if (!pe) throw new Error('PDF 파일이 없습니다'); tmark('PDF 파일 받음'); c.pdf=b64(await decB(key, pe)); tmark('PDF 복호화'); }
@@ -2062,6 +2100,7 @@ async function loadDoc(c){
   const unband = t => (t||'').replace(/⟦([^|⟧\n]{1,40})\|([^⟧]*)⟧/g, '[$1] $2').replace(/[⟦⟧]/g,'');
   (c.marks||[]).forEach(m=>{ m.reason=unband(m.reason); }); c.note=unband(c.note);
   ensureMids(c); c._base=new Set(c.marks.map(m=>m.mid)); c._baseTs=d.ts||'';
+  if (c._legacyVis && token) setTimeout(()=>toast('이 문서의 「볼 수 있는 사람」은 아직 화면 제한만 걸려 있습니다. 한 번 저장하면 지정된 사람만 열 수 있게 봉인됩니다'), 300);
   c.loaded=true; return c;
 }
 function meta(c){ return {id:c.id, title:c.title, date:c.date, ts:c.ts||'', type:c.type||'text', client:c.client||'', n:caseCount(c), lock:!!c.lock, vis:(Array.isArray(c.vis)?c.vis:null), owner:c.owner||''}; }
@@ -2082,25 +2121,48 @@ async function saveDoc(c, btn){
     let merged=0; try { merged=await mergeRemote(c); } catch(e){ console.warn('merge', e); }
     if (merged) toast(`다른 사람이 저장한 메모 ${fmtN(merged)}건을 합쳤습니다`);
     const payload = isPdf(c) ? {marks:c.marks||[], note:c.note||'', pages:c.pages||0, noteSegs:c.noteSegs||[], noteMt:c.noteMt||0, ocr:c.ocr||null, ocrAt:c.ocrAt||''} : {src:c.src||'', html:c.html||'', marks:c.marks||[], note:c.note||'', noteSegs:c.noteSegs||[], noteMt:c.noteMt||0};
-    // 문서 열쇠 정하기: 잠금 없음 = 사이트키 K / 잠금 = 문서키(문서 비밀번호와 편집자키 Ke 로 각각 감쌈)
-    let key=K, wrap=null; const wasLocked=!!c.lock; let keyChanged=false;
-    if (c.unlockReq){ c.lock=false; keyChanged=wasLocked; }
-    else if (c.lockPw){
-      if (!Ke) throw new Error('편집자키가 없습니다. 잠갔다가 다시 열어 주세요');
-      const kr = (wasLocked && c._kdRaw) ? c._kdRaw : crypto.getRandomValues(new Uint8Array(32));   // 비밀번호만 바꾸면 열쇠는 유지
-      keyChanged = !wasLocked;
-      const salt=b64(crypto.getRandomValues(new Uint8Array(16))); const kk=await kek(c.lockPw, salt, cfg.iter);
-      wrap={pw:{salt, k:b64(await encB(kk, kr))}, ed:b64(await encB(Ke, kr))};
-      c._kdRaw=kr; c._wrap=wrap; c.lock=true; key=docKeys[c.id]=await importK(kr);
-    } else if (wasLocked){
-      key=docKeys[c.id]; wrap=c._wrap; if (!key || !wrap) throw new Error('잠긴 문서의 열쇠가 없습니다. 문서를 다시 열어 주세요');
+    // 문서 열쇠 정하기
+    //  · 지정 없음·잠금 없음 = 사이트키 K
+    //  · 지정 없음·잠금 = 문서키 Kd 를 문서 비밀번호와 편집자키 Ke 로 각각 감쌈(편집자는 비밀번호 없이 연다)
+    //  · 지정(vis) = 문서키 Kd 를 지정된 사람·관리자·올린 사람의 공개키로 각각 봉함(uw). 잠금까지 걸면 내용 열쇠 = HKDF(Kd, 비밀번호) 로 둘 다 필요
+    let key=K, wrap=null, uw=null; const wasLocked=!!c.lock, wasRes=!!c._uw; let keyChanged=false;
+    const restricted=Array.isArray(c.vis);
+    if (restricted){
+      if (!myPriv || !me) throw new Error('내 열쇠가 없습니다. 로그아웃 후 다시 로그인해 주세요');
+      const rec=new Set([...c.vis, ...admins().map(a=>a.id), me.id]); if (c.owner) rec.add(c.owner);
+      const removed = c._uw ? Object.keys(c._uw).some(id=>!rec.has(id)) : false;
+      const kr = (wasRes && c._kdRaw && !removed) ? c._kdRaw : crypto.getRandomValues(new Uint8Array(32));   // 누군가 빠지면 열쇠를 새로 돌린다(옛 사본으로 못 열게)
+      if (!wasRes || removed) keyChanged=true;
+      uw={}; const noKey=[];
+      for (const id of rec){ const u=(cfg.users||[]).find(x=>x.id===id); if (!u) continue; if (!u.pub){ noKey.push(u.name||id); continue; } uw[id]=await sealTo(u.pub, kr); }
+      if (noKey.length) toast(`열쇠가 없어 이 문서를 못 여는 사람: ${noKey.join(', ')} — 새 방식으로 한 번 로그인한 뒤 이 문서를 다시 저장하면 됩니다`);
+      if (c.unlockReq){ c.lock=false; }
+      if (c.lockPw){ const salt=b64(crypto.getRandomValues(new Uint8Array(16))); wrap={pw:{salt}}; key=await contentKey(kr, await pbkdfRaw(c.lockPw, salt, cfg.iter)); keyChanged=true; c.lock=true; c._wrap=wrap; docKeys[c.id]=key; }
+      else if (c.lock){ if (keyChanged) throw new Error('지정 대상이 바뀌어 열쇠를 새로 만들어야 합니다. 정보 수정에서 문서 비밀번호를 다시 넣어 주세요'); key=docKeys[c.id]; wrap=c._wrap; if (!key || !wrap) throw new Error('잠긴 문서의 열쇠가 없습니다. 문서를 다시 열어 주세요'); }
+      else { key=docKeys[c.id]=await importK(kr); }
+      c._kdRaw=kr; c._uw=uw;
+    } else {
+      if (wasRes) keyChanged=true;   // 지정을 풀면 사이트키로 돌아간다 → PDF 도 다시 싼다
+      c._uw=null;
+      if (c.unlockReq){ c.lock=false; keyChanged=keyChanged||wasLocked; }
+      else if (c.lockPw){
+        if (!Ke) throw new Error('편집자키가 없습니다. 잠갔다가 다시 열어 주세요');
+        const kr = (wasLocked && !wasRes && c._kdRaw) ? c._kdRaw : crypto.getRandomValues(new Uint8Array(32));   // 비밀번호만 바꾸면 열쇠는 유지
+        keyChanged = keyChanged || !wasLocked;
+        const salt=b64(crypto.getRandomValues(new Uint8Array(16))); const kk=await kek(c.lockPw, salt, cfg.iter);
+        wrap={pw:{salt, k:b64(await encB(kk, kr))}, ed:b64(await encB(Ke, kr))};
+        c._kdRaw=kr; c._wrap=wrap; c.lock=true; key=docKeys[c.id]=await importK(kr);
+      } else if (wasLocked){
+        if (wasRes) throw new Error('지정을 풀면서 잠금을 유지하려면 문서 비밀번호를 다시 넣어 주세요');
+        key=docKeys[c.id]; wrap=c._wrap; if (!key || !wrap) throw new Error('잠긴 문서의 열쇠가 없습니다. 문서를 다시 열어 주세요');
+      }
     }
     c.lockPw=''; c.unlockReq=false;
     const ct = b64(await encB(key, te.encode(JSON.stringify(payload))));
     stampNow(c); if (!c.owner && me) c.owner=me.id; c.loaded=true; const m=meta(c);
     if (isPdf(c) && (c.pdfDirty || keyChanged)){ if (!c.pdf) throw new Error('PDF 내용이 메모리에 없습니다. 문서를 다시 열어 주세요'); if (msg) msg.textContent='PDF 올리는 중…'; await ghWrite(`docs/${c.id}.pdf.enc`, await encB(key, b64ToBytes(c.pdf)), `pdf: ${c.title}`); c.pdfDirty=false; }
     if (msg) msg.textContent='문서 저장하는 중…';
-    await ghWrite(`docs/${c.id}.json`, te.encode(JSON.stringify(Object.assign({}, m, c.lock?{lock:true, wrap}:{}, {ct}))), `save: ${c.title}`);
+    await ghWrite(`docs/${c.id}.json`, te.encode(JSON.stringify(Object.assign({}, m, c.lock?{lock:true, wrap}:{}, uw?{uw}:{}, {ct}))), `save: ${c.title}`);
     await updateIndex(list=>{ const i=list.findIndex(x=>x.id===c.id); if (i>=0) list[i]=m; else list.push(m); });
     const idx=cases.findIndex(x=>x.id===c.id); if (idx>=0){ if (cases[idx]!==c) Object.assign(cases[idx], c); } else cases.push(c);
     c._base=new Set(c.marks.map(m=>m.mid)); c._baseTs=c.ts||'';
@@ -2184,14 +2246,19 @@ let rafN=0; if (DEBUG){ const tick=()=>{ rafN++; requestAnimationFrame(tick); };
   setInterval(()=>{ const el=document.getElementById('hb'); if (el) el.textContent='시계 '+new Date().toTimeString().slice(0,8)+' · 그려진 뒤 '+Math.round((performance.now()-T0)/1000)+'초 · 프레임 '+rafN; }, 1000); }
 function tmark(label){ TL.push([label+(document.hidden?' (창 가려짐)':''), Math.round(performance.now()-T0)]); if (!DEBUG) return; let el=$('#tlog'); if (!el){ el=document.createElement('pre'); el.id='tlog'; el.style.cssText='position:fixed;right:8px;bottom:8px;z-index:99;background:rgba(0,0,0,.8);color:#fff;font:11px/1.4 monospace;padding:6px 8px;border-radius:4px;max-height:40vh;overflow:auto'; document.body.appendChild(el); } el.innerHTML='<b id="hb"></b>\n'+TL.map(x=>x[1]+'ms  '+esc(x[0])).join('\n'); }
 function saveSess(remember){
-  const v=JSON.stringify({role, k:b64(Kraw), t:token, s:esec, me});
+  const v=JSON.stringify({role, k:b64(Kraw), t:token, s:esec, me, pk:myPrivJwk||null});
   try { sessionStorage.setItem('redpen.sess', v); if (remember) localStorage.setItem('redpen.sess', v); else localStorage.removeItem('redpen.sess'); } catch(e){}
 }
 // 계정 봉투: 계정 비밀번호로 사이트 열쇠 K 를 감싸고, 편집자·관리자는 편집자 비밀 esec 도 함께
-async function makeUserEnvelope(pw, role){
+async function makeUserEnvelope(pw, role, keys){
   const salt=b64(crypto.getRandomValues(new Uint8Array(16))); const key=await kek(pw, salt, cfg.iter);
   const env={salt, k:b64(await encB(key, Kraw))};
   if (role!=='viewer') env.s=b64(await encB(key, te.encode(esec)));
+  // 열쇠쌍: 이어받을 것이 있으면 그대로(비밀번호만 새로 감쌈), 없으면 새로 만든다
+  let privJwk=keys&&keys.privJwk, pub=keys&&keys.pub, pkA=(keys&&keys.pkA)||{};
+  if (!privJwk){ const kp=await genKeyPair(); privJwk=kp.privJwk; pub=kp.pub; pkA={}; }
+  env.pub=pub; env.pk=b64(await encB(key, te.encode(privJwk))); env.pkA=Object.assign({}, pkA);
+  for (const a of admins()){ if (a.pub && a.id!==(keys&&keys.id) && !env.pkA[a.id]) env.pkA[a.id]=await sealTo(a.pub, te.encode(privJwk)); }
   return env;
 }
 async function unlockUser(id, pw){
@@ -2201,6 +2268,7 @@ async function unlockUser(id, pw){
     const kr=await decB(key, ub64(u.k)); Kraw=kr; K=await importK(kr); me={id:u.id, name:u.name, role:u.role};
     if (u.role!=='viewer'){ esec=td.decode(await decB(key, ub64(u.s))); Ke=await deriveKe(kr, esec); token=td.decode(await decB(Ke, ub64(cfg.tok))); role='editor'; }
     else { esec=null; Ke=null; token=null; role='viewer'; }
+    try { await ensureMyKeys(u, key); } catch(e){ console.warn('keys', e); }
     return true;
   } catch(_){ Kraw=null; K=null; me=null; return false; }
 }
@@ -2266,7 +2334,7 @@ async function changePasswords(){
       const u=cfg.users.find(x=>x.id===me.id); const key=await kek(cur, u.salt, cfg.iter);
       try { await decB(key, ub64(u.k)); } catch(_){ throw new Error('현재 비밀번호가 맞지 않습니다'); }
       const c2=JSON.parse(JSON.stringify(cfg));
-      if (nw){ const env=await makeUserEnvelope(nw, me.role); Object.assign(c2.users.find(x=>x.id===me.id), env); }
+      if (nw){ const env=await makeUserEnvelope(nw, me.role, {id:me.id, privJwk:myPrivJwk, pub:u.pub, pkA:u.pkA}); Object.assign(c2.users.find(x=>x.id===me.id), env); }
       let newTok=token;
       if (nt){
         const r=await fetch(apiUrl('config.json')+`?ref=${GH.branch}&v=${Date.now()}`, {headers:{Authorization:'Bearer '+nt, Accept:'application/vnd.github+json'}, cache:'no-store'});
@@ -2319,8 +2387,11 @@ async function manageUsers(){
     ov.querySelectorAll('[data-a="pw"]').forEach(b=>b.addEventListener('click', async ()=>{
       const tr=b.closest('tr'); const id=tr.dataset.id; const r=tr.querySelector('.rl').value;
       const pw=await askPw2(`${id} 의 새 비밀번호 (8자 이상)`); if (pw===null) return; if (pw.length<8){ err.textContent='8자 이상으로.'; return; }
-      try { const env=await makeUserEnvelope(pw, r); const c2=JSON.parse(JSON.stringify(cfg)); const u=c2.users.find(x=>x.id===id); Object.assign(u, env, {role:r}); if (r==='viewer') delete u.s;
-        await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'user pw: '+id); cfg=c2; toast(`${id} 비밀번호를 재설정했습니다`); draw();
+      try { const c2=JSON.parse(JSON.stringify(cfg)); const u=c2.users.find(x=>x.id===id); let keys=null, fresh=false;
+        if (u.pub && u.pkA && u.pkA[me.id] && myPriv){ try { keys={id, privJwk:td.decode(await openFrom(myPriv, u.pkA[me.id])), pub:u.pub, pkA:u.pkA}; } catch(e){ keys=null; } }
+        if (!keys) fresh=true;
+        const env=await makeUserEnvelope(pw, r, keys); Object.assign(u, env, {role:r}); if (r==='viewer') delete u.s;
+        await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'user pw: '+id); cfg=c2; toast(fresh ? `${id} 비밀번호를 재설정하고 열쇠를 새로 만들었습니다. 이 사람에게 지정된 문서는 한 번 다시 저장해야 보입니다` : `${id} 비밀번호를 재설정했습니다`); draw();
       } catch(ex){ err.textContent=(ex&&ex.message)||String(ex); }
     }));
     ov.querySelectorAll('[data-a="del"]').forEach(b=>b.addEventListener('click', async ()=>{
@@ -2349,12 +2420,16 @@ function applyRole(){
   $('#whoami').textContent = me ? `${me.name} · ${({admin:'관리자', editor:'편집자', viewer:'뷰어'})[me.role]||''}` : (role==='editor' ? '편집자' : '뷰어');
   const col=me?userColor(me.name, me.id):''; $('#whoami').style.cssText = col ? `color:${col};border:1px solid ${col};background:transparent` : '';
 }
+// 배포 시각 표시: tools/stamp.py 가 배포 직전 <meta name="build"> 에 적어 둔다 → (Beta) - 'yy/mm/dd(요일) hh:mm:ss
+function showBuild(){ const m=document.querySelector('meta[name="build"]'); const v=m&&m.getAttribute('content'); const el=$('#buildAt'); if (!el||!v) return; const d=new Date(v); if (isNaN(d)) return; const z=n=>String(n).padStart(2,'0'); const wd='일월화수목금토'[d.getDay()]; el.textContent=` - '${String(d.getFullYear()).slice(2)}/${z(d.getMonth()+1)}/${z(d.getDate())}(${wd}) ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; }
 async function boot(){
-  tmark('시작'); try { await loadConfig(); tmark('설정 읽음'); } catch(e){ $('#main').innerHTML=`<div class="head"><p class="msg err">설정 파일을 읽지 못했습니다: ${esc((e&&e.message)||e)}</p></div>`; return; }
+  showBuild(); tmark('시작'); try { await loadConfig(); tmark('설정 읽음'); } catch(e){ $('#main').innerHTML=`<div class="head"><p class="msg err">설정 파일을 읽지 못했습니다: ${esc((e&&e.message)||e)}</p></div>`; return; }
   let sess=null; try { sess=JSON.parse(sessionStorage.getItem('redpen.sess')||localStorage.getItem('redpen.sess')||'null'); } catch(e){}
   let spot=null;
   if (sess && sess.role && sess.k && sess.me){ role=sess.role; token=sess.t||null; Kraw=ub64(sess.k); K=await importK(Kraw); esec=sess.s||null; me=sess.me;
     if (token && esec) Ke=await deriveKe(Kraw, esec); else if (token){ try { sessionStorage.removeItem('redpen.sess'); localStorage.removeItem('redpen.sess'); } catch(e){} sess=null; }
+    myPrivJwk=(sess && sess.pk)||null; myPriv=null; if (myPrivJwk){ try { myPriv=await importPriv(myPrivJwk); } catch(e){ myPriv=null; myPrivJwk=null; } }
+    if (sess && token && !myPriv){ try { sessionStorage.removeItem('redpen.sess'); localStorage.removeItem('redpen.sess'); } catch(e){} sess=null; toast('열쇠 방식이 새로 도입되어 한 번 다시 로그인해 주세요'); }
     try { spot=JSON.parse(sessionStorage.getItem('redpen.spot')||'null'); } catch(e){} }
   if (!(sess && sess.role && sess.k && sess.me)){ await lockScreen(); try { sessionStorage.removeItem('redpen.spot'); } catch(e){} }
   applyRole();
