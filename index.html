@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T20:41:45+09:00">
+<meta name="build" content="2026-09-19T20:42:56+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -76,7 +76,7 @@ a{color:var(--ins)}
 .rail h2{display:flex;align-items:center;gap:6px;margin:0}
 .rail h2 .fold,.railbtns .fold{margin:0;border:1px solid var(--ink-2);background:transparent;cursor:pointer;color:var(--ink);font-size:calc(12px * var(--ui,1));letter-spacing:0;text-transform:none;font-weight:400;line-height:1.2;padding:3px 8px;border-radius:4px;white-space:nowrap}
 .rail h2 .fold:hover{background:var(--paper-3);color:var(--ink);border-color:var(--ink)}
-.shell.nrail .railbtns .fold{margin:0;writing-mode:vertical-rl;padding:12px 7px;font-size:calc(12.5px * var(--ui,1));letter-spacing:.06em} .fold .chev{display:inline-block;vertical-align:middle;margin-top:4px}
+.shell.nrail .railbtns .fold{margin:0;writing-mode:vertical-rl;padding:12px 7px;font-size:calc(12.5px * var(--ui,1));letter-spacing:.06em} .fold .chev{display:inline-block;vertical-align:-1px} .shell.nrail .fold .chev{vertical-align:middle;margin-top:4px}
 .zoom{display:inline-flex;align-items:center;border:1px solid var(--ink-2);border-radius:4px;overflow:hidden;font-size:calc(12px * var(--ui,1))}
 .top .zoom{font-size:inherit;align-self:stretch} .top .zoom button{padding:0 10px;line-height:1.2;height:100%} .top #whoami{display:inline-flex;align-items:center;align-self:stretch;font-size:inherit;padding:0 10px;border-radius:4px;line-height:1.2}
 #btnHelp{background:#FFF1B8;border-color:#D9B53A;color:var(--ink)} #btnHelp:hover{background:#FFE58A}
@@ -435,7 +435,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
 
 <div class="shell">
   <aside class="rail" id="rail">
-    <div class="railhead"><h2 id="railTitle"><span class="t">목록</span></h2><div class="railbtns"><button class="fold" id="btnRail" title="목록 접기/펼치기" aria-label="목록 접기/펼치기">« 접기</button></div></div>
+    <div class="railhead"><h2 id="railTitle"><span class="t">목록</span></h2><div class="railbtns"><button class="fold" id="btnRail" title="목록 접기/펼치기" aria-label="목록 접기/펼치기"><svg class="chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1.5 4.5 6 9 10.5"/><path d="M5.5 1.5 1 6l4.5 4.5"/></svg> 접기</button></div></div>
     <div class="railrow"><span class="sorts"><button class="btn small" id="sortDate" title="날짜순 · 누르면 최신↔오래된">최신순</button><button class="btn small" id="sortName" title="이름순 · 누르면 AZ↔ZA">이름 AZ</button></span><button class="btn small" id="btnSel" hidden>다수 선택</button></div>
     <div class="selbar" id="selBar" hidden><button class="btn small danger" id="selDel">선택 삭제 (0)</button><button class="btn small" id="selAll">전체</button></div>
     <ul class="cases" id="caseList"></ul>
@@ -2605,7 +2605,7 @@ $('#btnReload').addEventListener('click', async ()=>{ if (!(await leaveOk())) re
 $('#btnHelp').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'help',id:null,draft:null,dirty:false,show:'side'}; location.hash='help'; render(); });
 $('#btnNew').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'edit',id:null,draft:null,dirty:false,show:'side'}; render(); });
 const shell=$('.shell');
-const syncFold=()=>{ const b=$('#btnRail'); if (shell.classList.contains('nrail')) b.innerHTML='목록 펼치기 <svg class="chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 1.5 7.5 6 3 10.5"/><path d="M6.5 1.5 11 6l-4.5 4.5"/></svg>'; else b.textContent='« 접기'; };
+const syncFold=()=>{ const b=$('#btnRail'); if (shell.classList.contains('nrail')) b.innerHTML='목록 펼치기 <svg class="chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 1.5 7.5 6 3 10.5"/><path d="M6.5 1.5 11 6l-4.5 4.5"/></svg>'; else b.innerHTML='<svg class="chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1.5 4.5 6 9 10.5"/><path d="M5.5 1.5 1 6l4.5 4.5"/></svg> 접기'; };
 const syncTop=()=>{ document.documentElement.style.setProperty('--top-h', $('.top').offsetHeight+'px'); };
 syncTop(); window.addEventListener('resize', syncTop);
 // 글꼴이 늦게 로드되면 상단 바 높이가 바뀌어 목록·머리가 그 밑으로 들어간다 → 높이 변화를 계속 감시
