@@ -113,6 +113,7 @@ a{color:var(--ins)}
 .chip{display:inline-block;font-size:calc(11px * var(--ui,1));padding:1px 6px;border-radius:3px;background:var(--paper-3);color:var(--ink-2);line-height:1.5}
 .chip.pdf{background:var(--del-bg);color:var(--del)}
 .chip.last{background:var(--ins-bg);color:var(--ins)}
+.chip.lostc{background:var(--del-bg);color:var(--del)}
 .empty{padding:16px;color:var(--ink-3);font-size:calc(13px * var(--ui,1))}
 
 main{padding-block:0 60px;padding-inline:20px;min-width:0}
@@ -1260,7 +1261,7 @@ function renderPdfNotes(c){
   const notes=$('#notes'); if (!notes) return;
   const canEdit = !!artifactNs;
   notes.innerHTML = `<div class="notes-title">교정 메모 ${fmtN(c.marks.length)}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
-    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
+    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}${m.lost?'<span class="chip lostc" title="본문을 고치면서 이 구절이 사라져 표시할 자리가 없습니다. 글은 남아 있습니다.">자리 잃음</span>':''}<span class="k">${esc(m.text)}</span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
     ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', 'txt', m.segs) : `<div class="txt">${md(m.reason||'', m.segs)}</div>`}</div>`; }).join('');
   notes.querySelectorAll('.x').forEach(b=>b.addEventListener('click', ()=>{
@@ -1606,13 +1607,14 @@ function renderEdit(main){
       <div class="lockhint msg">뷰어는 이 비밀번호를 한 번 더 넣어야 열립니다. 편집자는 그냥 열립니다.</div>
     </div>
     <div id="textPart" class="tcol"><div class="lab"><label for="fOrig">원문</label><span class="cnt" id="cOrig"></span></div>
-      <textarea id="fOrig" ${hasMarks?'readonly':''} placeholder="받은 글을 그대로 붙여 넣으세요.">${esc(c.src||'')}</textarea>
-      <div class="drop">${hasMarks ? '<span>메모가 있는 문서의 원문은 바꿀 수 없습니다. 메모를 모두 지우면 바꿀 수 있습니다.</span>' : '<span>텍스트(.txt)·Word(.docx) 파일을 이 칸에 끌어다 놓으면 글자만 뽑아 넣습니다</span><label class="btn small">파일 선택<input type="file" data-for="fOrig" accept=".docx,.txt"></label>'}<span id="fMsgOrig"></span></div></div>
+      <textarea id="fOrig" placeholder="받은 글을 그대로 붙여 넣으세요.">${esc(c.src||'')}</textarea>
+      <div class="drop"><span>텍스트(.txt)·Word(.docx) 파일을 이 칸에 끌어다 놓으면 글자만 뽑아 넣습니다</span><label class="btn small">파일 선택<input type="file" data-for="fOrig" accept=".docx,.txt"></label><span id="fMsgOrig"></span></div>
+      ${hasMarks ? `<div class="msg">메모 ${fmtN(c.marks.length)}곳이 있는 문서입니다. 저장하면 메모를 새 글의 같은 구절로 다시 맞춥니다. 구절이 사라진 메모는 목록에 「자리 잃음」으로 남습니다.</div>` : ''}</div>
     <div class="pdfpick" id="wordPart"><label class="l">Word · 구글 문서</label>
-      <div class="wedit ${hasMarks?'ro':''}" id="wedBox"><textarea id="${edId}">${esc(wordHtml)}</textarea></div>
+      <div class="wedit" id="wedBox"><textarea id="${edId}">${esc(wordHtml)}</textarea></div>
       <div class="wedhint"><span>여기서 <b>바로 쓰거나</b> 구글 문서·Word 화면에서 복사해 붙여 넣으세요. 표·그림·굵게·글자색이 살아 있습니다.</span><span>단축키는 워드와 같습니다 — 도구줄 맨 끝 <b>⌨ 단축키</b>. 저장 <span class="kbd">Ctrl+S</span></span></div>
       <label class="zone" id="wzone">또는 .docx 파일을 끌어다 놓거나 눌러서 고르세요<input type="file" id="fWord" accept=".docx"><div class="f" id="wordName">${esc(wordName)}</div></label>
-      ${hasMarks ? '<div class="msg">메모가 있는 문서의 본문은 바꿀 수 없습니다. 메모를 모두 지우면 바꿀 수 있습니다.</div>' : ''}</div>
+      ${hasMarks ? `<div class="msg">메모 ${fmtN(c.marks.length)}곳이 있는 문서입니다. 저장하면 메모를 새 글의 같은 구절로 다시 맞춥니다. 구절이 사라진 메모는 목록에 「자리 잃음」으로 남습니다.</div>` : ''}</div>
     <div class="pdfpick" id="pdfPart"><label class="l">PDF 파일</label>
       <label class="zone" id="zone">여기에 PDF를 끌어다 놓거나 눌러서 고르세요<input type="file" id="fPdf" accept=".pdf"><div class="f" id="pdfName">${esc(pdfName)}</div></label></div>
     <div class="actions"><button class="btn primary" id="doCompare" title="Ctrl+S">저장</button><button class="btn" id="cancelEdit">취소</button><span class="msg" id="editMsg"></span></div>
@@ -1623,6 +1625,13 @@ function renderEdit(main){
   $('#visNone').addEventListener('click', ()=>{ visBoxes().forEach(b=>b.checked=false); view.dirty=true; });
   visBoxes().forEach((b,idx)=>b.addEventListener('click', e=>{ if (e.shiftKey && lastVis>=0){ const [a1,b1]=[Math.min(lastVis,idx), Math.max(lastVis,idx)]; visBoxes().slice(a1,b1+1).forEach(x=>x.checked=true); } lastVis=idx; view.dirty=true; }));
   const readVis=()=>{ const all=visBoxes(); const on=all.filter(b=>b.checked).map(b=>b.dataset.id); return (on.length===all.length) ? null : on; };
+  // 편집기는 Word 유형을 고른 순간 한 번만 띄운다(1.3MB 라 미리 안 부른다)
+  let edStarted=false;
+  const startEditor=async ()=>{ if (edStarted) return; edStarted=true;
+    try { await initWordEditor('#'+edId, {readonly:false, onDirty:()=>{ view.dirty=true; }, onSave:()=>{ const b=$('#doCompare'); if (b && !b.disabled) b.click(); }}); }
+    catch(e){ edStarted=false; $('#wordName').textContent='편집기를 못 불러왔습니다: '+((e&&e.message)||e); }
+  };
+  const pullWord=()=>{ const ed=wordEditor(); if (ed){ wordHtml=sanitizeHtml(ed.getContent()); } return wordHtml; };
   const syncType = ()=>{ $('#textPart').hidden = type!=='text'; $('#wordPart').hidden = type!=='word'; $('#pdfPart').hidden = type!=='pdf';
     main.querySelectorAll('.types label').forEach(l=>l.classList.toggle('on', l.querySelector('input').value===type)); };
   syncType(); if (type==='word') startEditor();
@@ -1630,14 +1639,13 @@ function renderEdit(main){
   const count = ()=>{ $('#cOrig').textContent = fmtN($('#fOrig').value.replace(/\s/g,'').length)+'자'; };
   count();
   const t=$('#fOrig'); t.addEventListener('input', ()=>{ count(); view.dirty=true; });
-  if (!hasMarks){
+  {
     t.addEventListener('dragover', e=>{ e.preventDefault(); t.classList.add('over'); });
     t.addEventListener('dragleave', ()=>t.classList.remove('over'));
     t.addEventListener('drop', e=>{ e.preventDefault(); t.classList.remove('over'); const f=e.dataTransfer.files[0]; if (f) loadTextFile(f, t, $('#fMsgOrig')); });
     main.querySelectorAll('.drop input[type=file]').forEach(inp=>inp.addEventListener('change', ()=>{ const f=inp.files[0]; if (f) loadTextFile(f, t, $('#fMsgOrig')); inp.value=''; }));
   }
   const takeWord = async f => {
-    if (hasMarks){ $('#wordName').textContent='메모가 있어 본문을 바꿀 수 없습니다.'; return; }
     if (!/\.docx$/i.test(f.name)){ $('#wordName').textContent='.docx 파일만 넣을 수 있습니다. (.doc 는 Word 에서 .docx 로 저장)'; return; }
     $('#wordName').textContent='읽는 중…';
     try { if (!window.mammoth) await loadScript('vendor/mammoth.browser.min.js');
@@ -1646,13 +1654,6 @@ function renderEdit(main){
       if (!$('#fTitle').value.trim()) $('#fTitle').value=f.name.replace(/\.docx$/i,'');
     } catch(e){ $('#wordName').textContent='실패: '+(e.message||e); }
   };
-  // 편집기는 Word 유형을 고른 순간 한 번만 띄운다(1.3MB 라 미리 안 부른다)
-  let edStarted=false;
-  const startEditor=async ()=>{ if (edStarted) return; edStarted=true;
-    try { await initWordEditor('#'+edId, {readonly:hasMarks, onDirty:()=>{ view.dirty=true; }, onSave:()=>{ const b=$('#doCompare'); if (b && !b.disabled) b.click(); }}); }
-    catch(e){ edStarted=false; $('#wordName').textContent='편집기를 못 불러왔습니다: '+((e&&e.message)||e); }
-  };
-  const pullWord=()=>{ const ed=wordEditor(); if (ed && !hasMarks){ wordHtml=sanitizeHtml(ed.getContent()); } return wordHtml; };
   const wz=$('#wzone');
   wz.addEventListener('dragover', e=>{ e.preventDefault(); wz.classList.add('over'); }); wz.addEventListener('dragleave', ()=>wz.classList.remove('over'));
   wz.addEventListener('drop', e=>{ e.preventDefault(); wz.classList.remove('over'); const f=e.dataTransfer.files[0]; if (f) takeWord(f); });
@@ -1688,15 +1689,37 @@ function renderEdit(main){
       d = Object.assign({}, c, base, {type:'pdf', id, pdf: pdfB64, pdfDirty, marks: c.marks||[], lockPw, unlockReq, vis:readVis()}); delete d.src; delete d.html;
     } else if (type==='word'){
       pullWord(); if (!stripTags(wordHtml).trim() && !/<img|<table/i.test(wordHtml)) return err('본문을 쓰거나 붙여 넣어 주세요.');
-      d = Object.assign({}, c, base, {type:'word', id, html: wordHtml, marks: (hasMarks?c.marks:[]), lockPw, unlockReq, vis:readVis()}); delete d.pdf; delete d.pages; delete d.src;
+      d = Object.assign({}, c, base, {type:'word', id, html: wordHtml, marks: (hasMarks?remapMarks(c.marks, stripTags(c.html||''), stripTags(wordHtml)):[]), lockPw, unlockReq, vis:readVis()}); delete d.pdf; delete d.pages; delete d.src;
     } else {
       const src=$('#fOrig').value; if (!src.trim()) return err('원문을 넣어 주세요.');
-      d = Object.assign({}, c, base, {type:'text', id, src, marks: (hasMarks?c.marks:[]), lockPw, unlockReq, vis:readVis()}); delete d.pdf; delete d.pages; delete d.html;
+      d = Object.assign({}, c, base, {type:'text', id, src, marks: (hasMarks?remapMarks(c.marks, c.src||'', src):[]), lockPw, unlockReq, vis:readVis()}); delete d.pdf; delete d.pages; delete d.html;
     }
     view = {mode:'case', id:d.id, draft:d, dirty:true, show:'side'};
     const btn=$('#doCompare'); const msgEl=$('#editMsg'); msgEl.className='msg'; msgEl.id='saveMsg';
     await saveDoc(d, btn); killWordEditor();
+    if (hasMarks && remapMarks.last){ const r=remapMarks.last; if (r.lost||r.moved) setTimeout(()=>toast(`메모 다시 맞춤: 옮김 ${fmtN(r.moved)} · 자리 잃음 ${fmtN(r.lost)}`), 400); remapMarks.last=null; }
   });
+}
+// ══════════════ 본문을 고친 뒤 메모를 새 자리로 다시 맞춘다 ══════════════
+// 기준은 「표시한 구절(m.text)」. 새 글에서 같은 구절을 찾되 여러 개면 옛 자리에 가깝고 앞뒤 문맥이 같은 것을 고른다.
+// 띄어쓰기만 달라진 구절도 찾는다. 끝내 못 찾으면 표시는 지우고(start=end=-1) 메모는 「자리 잃음」으로 남긴다.
+function remapMarks(marks, oldText, newText){
+  const CTX=12; const used=[]; let lost=0, moved=0;
+  const overlaps=(a,b)=>used.some(([x,y])=>a<y && b>x);
+  const compact=(t)=>{ const map=[]; let out=''; for (let i=0;i<t.length;i++){ if (/\s/.test(t[i])) continue; map.push(i); out+=t[i]; } return {out, map}; };
+  const cNew=compact(newText);
+  const out=marks.map(m0=>{ const m=Object.assign({}, m0); if (m.page!=null || m.rects) return m;   // PDF 표시는 그대로
+    const t=m.text || (m.start>=0 ? oldText.slice(m.start, m.end) : ''); if (!t){ m.lost=true; m.start=m.end=-1; lost++; return m; }
+    const before=oldText.slice(Math.max(0,m.start-CTX), m.start), after=oldText.slice(m.end, m.end+CTX);
+    let cands=[]; let i=newText.indexOf(t); while (i>=0){ cands.push([i, i+t.length]); i=newText.indexOf(t, i+1); }
+    if (!cands.length){ const ct=t.replace(/\s+/g,''); if (ct){ let k=cNew.out.indexOf(ct); while (k>=0){ cands.push([cNew.map[k], cNew.map[k+ct.length-1]+1]); k=cNew.out.indexOf(ct, k+1); } } }
+    cands=cands.filter(([a,b])=>!overlaps(a,b));
+    if (!cands.length){ m.lost=true; m.start=m.end=-1; lost++; return m; }
+    const score=([a,b])=>{ let sc=0; if (before && newText.slice(Math.max(0,a-CTX), a)===before) sc+=2; if (after && newText.slice(b, b+CTX)===after) sc+=2; return sc; };
+    cands.sort((x,y)=>(score(y)-score(x)) || (Math.abs(x[0]-m.start)-Math.abs(y[0]-m.start)));
+    const [a,b]=cands[0]; if (a!==m.start || b!==m.end) moved++; m.start=a; m.end=b; delete m.lost; used.push([a,b]); return m; });
+  remapMarks.last={lost, moved};
+  return out;
 }
 // ══════════════ Word 편집기 (TinyMCE 6.8.6 · MIT · vendor/tinymce) — 워드식 단축키 ══════════════
 let wordEdSeq=0, wordEdId='';
