@@ -736,7 +736,7 @@ a.mk{text-decoration:none}
 .xnotes{display:grid;gap:8px;margin:0 0 8px}
 .xn{border-left:3px solid var(--del-line);padding:5px 10px;background:#fff;border-radius:0 4px 4px 0;break-inside:avoid}.xn.memo{border-left-color:var(--memo)}
 .xh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--del);margin-bottom:3px}.xn.memo .xh{color:var(--memo)}
-.xno{font-weight:700}.xwho{font-family:var(--sans);color:var(--nc,var(--ink-2));border:1px solid var(--nc,var(--ink-3));border-radius:3px;padding:0 5px;font-size:11px}.xpg{color:var(--ink-3);font-family:var(--sans)}
+.xno{font-weight:700;display:inline-block;min-width:1.5em;height:1.5em;line-height:1.4em;text-align:center;border:1px solid currentColor;border-radius:50%;padding:0 .25em;text-decoration:none;color:inherit}a.xno:hover{background:var(--del);color:#fff;border-color:var(--del)}.xn.memo a.xno:hover{background:var(--memo);border-color:var(--memo)}.xwho{font-family:var(--sans);color:var(--nc,var(--ink-2));border:1px solid var(--nc,var(--ink-3));border-radius:3px;padding:0 5px;font-size:11px}.xpg{color:var(--ink-3);font-family:var(--sans)}
 .xsrc{color:var(--ink-2);font-family:var(--serif);font-size:14px}.xn.del .xsrc,.xn.rep .xsrc{text-decoration:line-through;text-decoration-color:var(--del)}.xn.memo .xsrc{text-decoration:underline;text-decoration-color:var(--memo);text-underline-offset:3px}
 .xafter{color:var(--ins);font-family:var(--serif)}.xtxt{white-space:pre-wrap;line-height:1.55}
 .xback{margin-left:auto;font-family:var(--sans);font-size:11px;color:var(--ink-2);text-decoration:none;border:1px solid var(--rule);border-radius:3px;padding:0 6px}.xback:hover{color:var(--ink);border-color:var(--ink-3)}
@@ -770,7 +770,7 @@ function exportMarks(c, p){
 }
 function exportNote(c, m, i){
   const h=i+1; const col=userColor(m.by, m.byId);
-  return `<div class="xn ${m.kind}" id="xn${h}"><div class="xh"><span class="xno">${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="xwho" ${col?`style="--nc:${col}"`:''}>${esc(userLabel(m.by, m.byId))}</span>`:''}${(isPdf(c)&&m.page)?`<span class="xpg">${m.page}쪽</span>`:''}${(m.lost||(m.start<0 && !m.rects))?'':`<a class="xback" href="#xm${h}" title="본문의 표시 자리로 돌아가기">↩ 본문</a>`}</div>`
+  return `<div class="xn ${m.kind}" id="xn${h}"><div class="xh">${(m.lost||(m.start<0 && !m.rects))?`<span class="xno">${h}</span>`:`<a class="xno" href="#xm${h}" title="본문의 표시 자리로">${h}</a>`}<span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="xwho" ${col?`style="--nc:${col}"`:''}>${esc(userLabel(m.by, m.byId))}</span>`:''}${(isPdf(c)&&m.page)?`<span class="xpg">${m.page}쪽</span>`:''}${(m.lost||(m.start<0 && !m.rects))?'':`<a class="xback" href="#xm${h}" title="본문의 표시 자리로 돌아가기">↩ 본문</a>`}</div>`
     + (m.text?`<div class="xsrc">${esc(m.text)}</div>`:'') + (m.kind==='rep'?`<div class="xafter">→ ${esc(m.after||'')}</div>`:'')
     + ((m.reason||'').trim()?`<div class="xtxt">${md(m.reason||'', m.segs)}</div>`:'') + `</div>`;
 }
