@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T21:17:42+09:00">
+<meta name="build" content="2026-09-19T21:18:33+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -247,7 +247,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .sheet.pdf .txtdoc{width:auto;max-width:none;min-width:0;background:var(--paper-3);padding:14px;border:0;box-shadow:none;border-radius:3px}
 .txtdoc .tpage{background:#fff;color:#1F2430;box-shadow:0 1px 3px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);padding:34px 38px;min-height:300px}
 .txtdoc .tpage.hdoc{padding:0;font-family:var(--sans);font-size:16px;line-height:1.5;overflow:hidden} .hbody{position:relative;min-height:200px;overflow-wrap:anywhere} .hbody img{max-width:100%;height:auto} .hbody *{max-width:100%;box-sizing:border-box} .hbody [style*="position:absolute"]{max-width:none}
-.help{max-width:1000px;margin:0 auto;padding:20px 0 60px} .help section{margin:26px 0} .help h3{font-family:var(--serif);font-size:calc(17px * var(--ui,1));margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--rule)} .help ul{margin:0;padding-left:1.3em;line-height:1.75} .help li{margin:4px 0} .help .ht{border-collapse:collapse;width:100%;font-size:calc(13.5px * var(--ui,1));line-height:1.55} .help .ht th,.help .ht td{border:1px solid var(--rule);padding:6px 9px;vertical-align:top;text-align:left} .help .ht th{background:var(--paper-2)} .help .hsub{font-family:var(--sans);font-size:calc(14px * var(--ui,1));margin:14px 0 6px;color:var(--ink-2)}
+.help{max-width:1000px;margin:0 auto;padding:20px 0 60px} .help section{margin:26px 0} .help h3{font-family:var(--serif);font-size:calc(17px * var(--ui,1));margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--rule)} .help ul{margin:0;padding-left:1.3em;line-height:1.75} .help li{margin:4px 0} .help .ht{border-collapse:collapse;width:100%;font-size:calc(13.5px * var(--ui,1));line-height:1.55} .help .ht th,.help .ht td{border:1px solid var(--rule);padding:6px 9px;vertical-align:top;text-align:left} .help .ht th{background:var(--paper-2)} .help .cl{margin:0;padding:0;list-style:none} .help .cl li{padding-left:.9em;text-indent:-.9em} .help .cl li::before{content:'- ';color:var(--ink-3)} .help .hsub{font-family:var(--sans);font-size:calc(14px * var(--ui,1));margin:14px 0 6px;color:var(--ink-2)}
 .hsrc{width:100%;min-height:260px;max-height:50vh;font-family:var(--mono);font-size:calc(12.5px * var(--ui,1));line-height:1.5;border:1px solid var(--rule);border-radius:4px;padding:10px 12px;background:var(--paper-2);resize:vertical;white-space:pre;overflow:auto}
 .hprev{margin-top:10px;border:1px solid var(--rule);border-radius:4px;overflow:hidden;background:#fff;max-height:60vh;overflow-y:auto} .hprev .tpage{box-shadow:none}
 .txtdoc .tpage .pre{color:inherit}
@@ -609,27 +609,27 @@ function renderHelp(main){
   <p class="msg" style="font-size:14.5px;line-height:1.7">글을 쓰는 곳은 구글 문서·Word·챗GPT 등 익숙한 도구를 그대로 쓰시고, 여기에는 <b>퇴고를 받을 원고</b>를 넣으세요. 글자를 드래그해 <span style="color:var(--del)">삭제</span>·<span style="color:var(--rep)">바꾸기</span>·<span style="color:var(--memo)">메모</span>를 얹고, 저장하면 팀원이 같은 화면을 보고 이어서 메모할 수 있습니다.</p></div>
   <section><h3>1. 문서 유형 넷 — 무엇을 넣을 때 어떤 유형인가</h3>
   <table class="ht"><tr><th>유형</th><th>넣는 것</th><th>살아남는 것</th><th>한계</th></tr>
-  <tr><td><b>텍스트</b></td><td>슬랙·카톡·블로그 글을 복사해 붙여 넣기, .txt</td><td>글자와 줄바꿈</td><td>서식 없음(굵게·색 없음)</td></tr>
-  <tr><td><b>Word · 구글 문서</b></td><td>편집기에서 직접 쓰기 / 구글 문서·Word 화면에서 복사해 붙여 넣기 / .docx 파일</td><td>제목·굵게·기울임·밑줄·글자색·형광·글꼴·크기·정렬·줄 간격·자간·목록·표·그림·링크</td><td>쪽 나눔·머리글·각주·변경 내용 추적 없음. 워드의 10분의 1이라 생각하면 맞습니다</td></tr>
-  <tr><td><b>HTML</b></td><td>챗GPT·클로드가 만든 페이지 코드(&lt;!doctype html&gt;부터 끝까지) 붙여 넣기 / .html 파일</td><td>디자인(CSS)·배치·그림·아이콘(SVG)·구글 글꼴</td><td>스크립트(움직임·버튼 동작)는 뺍니다. 외부 이미지·글꼴은 https 주소만. 폭이 860px 틀에 맞춰집니다</td></tr>
-  <tr><td><b>PDF 문서</b></td><td>.pdf 파일(한글 HWP·구글 문서는 PDF 로 내보내 넣기). 50MB 까지</td><td>쪽 모양 그대로</td><td>캡처본은 「글자 인식(OCR)」을 돌려야 드래그가 됩니다. 인식 안 되는 그림은 네모(영역)로 메모</td></tr></table></section>
+  <tr><td><b>텍스트</b></td><td><ul class="cl"><li>슬랙·카톡·블로그 글을 복사해 붙여 넣기</li><li>.txt 파일</li></ul></td><td>글자와 줄바꿈</td><td>서식 없음(굵게·색 없음)</td></tr>
+  <tr><td><b>Word · 구글 문서</b></td><td><ul class="cl"><li>편집기에서 직접 쓰기</li><li>구글 문서·Word 화면에서 복사해 붙여 넣기</li><li>.docx 파일</li></ul></td><td>제목·굵게·기울임·밑줄·글자색·형광·글꼴·크기·정렬·줄 간격·자간·목록·표·그림·링크</td><td><ul class="cl"><li>쪽 나눔·머리글·각주·변경 내용 추적 없음</li><li>워드의 10분의 1이라 생각하면 맞습니다</li></ul></td></tr>
+  <tr><td><b>HTML</b></td><td><ul class="cl"><li>챗GPT·클로드가 만든 페이지 코드(&lt;!doctype html&gt;부터 끝까지) 붙여 넣기</li><li>.html 파일</li></ul></td><td>디자인(CSS)·배치·그림·아이콘(SVG)·구글 글꼴</td><td><ul class="cl"><li>스크립트(움직임·버튼 동작)는 뺍니다</li><li>외부 이미지·글꼴은 https 주소만</li><li>폭이 860px 틀에 맞춰집니다</li></ul></td></tr>
+  <tr><td><b>PDF 문서</b></td><td>.pdf 파일(한글 HWP·구글 문서는 PDF 로 내보내 넣기). 50MB 까지</td><td>쪽 모양 그대로</td><td><ul class="cl"><li>캡처본은 「글자 인식(OCR)」을 돌려야 드래그가 됩니다</li><li>인식 안 되는 그림은 네모(영역)로 메모</li></ul></td></tr></table></section>
   <section><h3>2. 어디서 어디로 — 복사·붙여넣기 방향과 결과</h3>
   <h4 class="hsub">2.1 외부에서 여기로</h4>
   <table class="ht"><tr><th style="width:26%">출발지</th><th style="width:18%">도착지</th><th>결과</th></tr>
-  <tr><td>구글 문서 · Word 화면(복사)</td><td>여기 · Word 유형</td><td><b>잘 됩니다.</b> 굵게·색·글꼴·크기·정렬·표·그림이 따라옵니다. 그림은 문서 안에 담겨 원본 링크가 사라져도 남습니다</td></tr>
-  <tr><td>.docx 파일</td><td>여기 · Word 유형</td><td>제목·굵게·표·그림이 들어옵니다. 머리글·각주·쪽 번호는 빠집니다</td></tr>
-  <tr><td>네이버 블로그 편집기(복사)</td><td>여기 · Word 유형</td><td>글·굵게·색·그림은 옵니다. 스티커·글감 카드·지도·투표는 안 옵니다</td></tr>
-  <tr><td>슬랙 · 카톡 · 블로그 글(복사)</td><td>여기 · 텍스트 유형</td><td>글자와 줄바꿈만 남습니다</td></tr>
-  <tr><td>챗GPT · 클로드가 만든 HTML 코드, .html 파일</td><td>여기 · HTML 유형</td><td>디자인·배치·그림·아이콘·구글 글꼴이 그대로. 스크립트(움직임·버튼 동작)는 빠지고, 폭은 860px 틀에 맞춰집니다</td></tr>
-  <tr><td>.pdf 파일 (한글 HWP·구글 문서는 PDF 로 내보내서)</td><td>여기 · PDF 유형</td><td>쪽 모양 그대로. 캡처본은 「글자 인식(OCR)」을 돌리면 드래그가 됩니다</td></tr></table>
+  <tr><td><ul class="cl"><li>구글 문서 화면(복사)</li><li>Word 화면(복사)</li></ul></td><td>여기 · Word 유형</td><td><ul class="cl"><li><b>잘 됩니다.</b> 굵게·색·글꼴·크기·정렬·표·그림이 따라옵니다</li><li>그림은 문서 안에 담겨 원본 링크가 사라져도 남습니다</li></ul></td></tr>
+  <tr><td>.docx 파일</td><td>여기 · Word 유형</td><td><ul class="cl"><li>제목·굵게·표·그림이 들어옵니다</li><li>머리글·각주·쪽 번호는 빠집니다</li></ul></td></tr>
+  <tr><td>네이버 블로그 편집기(복사)</td><td>여기 · Word 유형</td><td><ul class="cl"><li>글·굵게·색·그림은 옵니다</li><li>스티커·글감 카드·지도·투표는 안 옵니다</li></ul></td></tr>
+  <tr><td><ul class="cl"><li>슬랙</li><li>카톡</li><li>블로그 글(복사)</li></ul></td><td>여기 · 텍스트 유형</td><td>글자와 줄바꿈만 남습니다</td></tr>
+  <tr><td><ul class="cl"><li>챗GPT·클로드가 만든 HTML 코드</li><li>.html 파일</li></ul></td><td>여기 · HTML 유형</td><td><ul class="cl"><li>디자인·배치·그림·아이콘·구글 글꼴이 그대로</li><li>스크립트(움직임·버튼 동작)는 빠집니다</li><li>폭은 860px 틀에 맞춰집니다</li></ul></td></tr>
+  <tr><td><ul class="cl"><li>.pdf 파일</li><li>한글(HWP)·구글 문서는 PDF 로 내보내서</li></ul></td><td>여기 · PDF 유형</td><td><ul class="cl"><li>쪽 모양 그대로</li><li>캡처본은 「글자 인식(OCR)」을 돌리면 드래그가 됩니다</li></ul></td></tr></table>
   <h4 class="hsub">2.2 여기에서 외부로</h4>
   <table class="ht"><tr><th style="width:26%">출발지 (여기)</th><th style="width:18%">도착지</th><th>결과</th></tr>
-  <tr><td>「서식까지 복사」 (수정본, Word·HTML 유형)</td><td>구글 문서 · Word · Gmail · 네이버 편집기</td><td>굵게·색·표가 따라갑니다. <b>단 붙여 넣는 쪽이 자기 규칙으로 일부를 걷어냅니다</b>(네이버는 글꼴·자간·표 폭, Gmail 은 표 테두리 등). 붙여 넣은 뒤 한 번 훑어 주세요</td></tr>
-  <tr><td>「수정본 복사」 (글자만)</td><td>슬랙 · 메모장 · 카톡</td><td>삭제·바꾸기를 반영한 본문이 글자로만 들어갑니다</td></tr>
-  <tr><td>「HTML 복사」 · 「HTML 내려받기」</td><td>홈페이지 · 블로그 HTML 편집기</td><td>수정본을 HTML 코드로, 또는 혼자 열리는 .html 파일로</td></tr>
-  <tr><td>「내보내기」</td><td>메모까지 봐야 하는 사람(파일로)</td><td>HTML 한 파일. 번호 딱지에 마우스를 올리면 메모 팝업, 인쇄로 PDF 저장도 됩니다</td></tr>
-  <tr><td>「주석 PDF」</td><td>PDF 로 받아 보는 사람</td><td>표시가 PDF 주석으로, 메모가 팝업으로 들어갑니다(Acrobat·Edge). 텍스트·Word·HTML 유형은 쪽이 그림이라 PDF 안 글자 선택은 안 됩니다</td></tr>
-  <tr><td>「링크 복사」</td><td>계정이 있는 팀원</td><td>같은 화면을 열어 이어서 메모할 수 있습니다. 계정 없는 사람은 못 엽니다</td></tr></table>
+  <tr><td>「서식까지 복사」 (수정본, Word·HTML 유형)</td><td><ul class="cl"><li>구글 문서</li><li>Word</li><li>Gmail</li><li>네이버 편집기</li></ul></td><td><ul class="cl"><li>굵게·색·표가 따라갑니다</li><li><b>단 붙여 넣는 쪽이 자기 규칙으로 일부를 걷어냅니다</b>(네이버는 글꼴·자간·표 폭, Gmail 은 표 테두리 등)</li><li>붙여 넣은 뒤 한 번 훑어 주세요</li></ul></td></tr>
+  <tr><td>「수정본 복사」 (글자만)</td><td><ul class="cl"><li>슬랙</li><li>메모장</li><li>카톡</li></ul></td><td>삭제·바꾸기를 반영한 본문이 글자로만 들어갑니다</td></tr>
+  <tr><td><ul class="cl"><li>「HTML 복사」</li><li>「HTML 내려받기」</li></ul></td><td><ul class="cl"><li>홈페이지 HTML 편집기</li><li>블로그 HTML 편집기</li></ul></td><td><ul class="cl"><li>HTML 복사: 수정본을 HTML 코드로</li><li>HTML 내려받기: 혼자 열리는 .html 파일로</li></ul></td></tr>
+  <tr><td>「내보내기」</td><td>메모까지 봐야 하는 사람(파일로)</td><td><ul class="cl"><li>HTML 한 파일</li><li>번호 딱지에 마우스를 올리면 메모 팝업</li><li>인쇄로 PDF 저장도 됩니다</li></ul></td></tr>
+  <tr><td>「주석 PDF」</td><td>PDF 로 받아 보는 사람</td><td><ul class="cl"><li>표시가 PDF 주석으로, 메모가 팝업으로 들어갑니다(Acrobat·Edge)</li><li>텍스트·Word·HTML 유형은 쪽이 그림이라 PDF 안 글자 선택은 안 됩니다</li></ul></td></tr>
+  <tr><td>「링크 복사」</td><td>계정이 있는 팀원</td><td><ul class="cl"><li>같은 화면을 열어 이어서 메모할 수 있습니다</li><li>계정 없는 사람은 못 엽니다</li></ul></td></tr></table>
   <p class="msg">「수정본」은 삭제·바꾸기 표시를 반영한 결과이고, 메모 글은 들어가지 않습니다. 메모까지 전하려면 「내보내기」나 「주석 PDF」를 쓰세요.</p></section>
   <section><h3>3. 퇴고 표시와 메모</h3>
   <ul><li>글자를 드래그하면 삭제(Alt+1)·바꾸기(Alt+2)·메모(Alt+3). PDF 의 그림 부분은 네모로 끌면 영역 메모, Alt+A 로 글자 위에서도 네모.</li>
