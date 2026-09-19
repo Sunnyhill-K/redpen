@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>쑤닐의 퇴고장</title>
+<title>SN Docs (Beta)</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 :root{
@@ -114,6 +114,7 @@ a{color:var(--ins)}
 .chip.pdf{background:var(--del-bg);color:var(--del)}
 .chip.last{background:var(--ins-bg);color:var(--ins)}
 .chip.lostc{background:var(--del-bg);color:var(--del)}
+.beta{font-size:.55em;font-weight:500;color:var(--ink-3);letter-spacing:.02em;margin-left:.15em;vertical-align:.15em}
 .empty{padding:16px;color:var(--ink-3);font-size:calc(13px * var(--ui,1))}
 
 main{padding-block:0 60px;padding-inline:20px;min-width:0}
@@ -409,7 +410,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
 </head>
 <body>
 <header class="top">
-  <div class="brand" id="brand" role="link" tabindex="0" title="홈으로"><span class="pen"></span><h1>쑤닐의 퇴고장</h1></div>
+  <div class="brand" id="brand" role="link" tabindex="0" title="홈으로"><span class="pen"></span><h1>SN Docs <small class="beta">(Beta)</small></h1></div>
   <span id="whoami" class="chip"></span>
   <button class="btn" id="btnUsers" hidden>사용자 관리</button>
   <button class="btn" id="btnPw" hidden>비밀번호 바꾸기</button>
@@ -799,7 +800,7 @@ async function exportDoc(c){
     const typeName=isPdf(c)?'PDF':(c.type==='word'?'Word':'텍스트');
     const html=`<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.title||'퇴고')} · 퇴고 메모</title><style>${exportCssBase()}${exportCss()}</style></head><body>
 <div class="xbar no-print"><b>${esc(c.title||'')}</b><span>메모 ${fmtN(c.marks.length)}곳</span><span class="sp"></span><button onclick="window.print()">PDF로 저장(인쇄)</button><button id="dl" data-fn="${esc(fname)}">HTML 파일로 내려받기</button></div>
-<header class="xhead"><h1>${esc(c.title||'')}</h1><div class="xmeta">${c.client?esc(c.client)+' · ':''}${typeName} · 저장 ${esc(fmtWhen(c))} · 메모 ${fmtN(c.marks.length)}곳 (삭제 ${fmtN(n('del'))} · 바꾸기 ${fmtN(n('rep'))} · 메모만 ${fmtN(n('memo'))}) · 쑤닐의 퇴고장에서 내보냄</div></header>
+<header class="xhead"><h1>${esc(c.title||'')}</h1><div class="xmeta">${c.client?esc(c.client)+' · ':''}${typeName} · 저장 ${esc(fmtWhen(c))} · 메모 ${fmtN(c.marks.length)}곳 (삭제 ${fmtN(n('del'))} · 바꾸기 ${fmtN(n('rep'))} · 메모만 ${fmtN(n('memo'))}) · SN Docs (Beta)에서 내보냄</div></header>
 ${body}
 <script>document.getElementById('dl').addEventListener('click',function(){var t=document.querySelector('.xtip');if(t)t.remove();var b=new Blob(['<!doctype html>'+document.documentElement.outerHTML],{type:'text/html'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=this.dataset.fn;document.body.appendChild(a);a.click();a.remove();});
 // 번호 딱지에 마우스를 올리면 그 메모가 팝업으로 뜬다(나무위키 각주처럼). 딱지를 누르면 아래 메모로, 메모의 ↩ 본문을 누르면 되돌아온다
@@ -2205,14 +2206,14 @@ function lockScreen(){
     const ov=document.createElement('div'); ov.className='ask lock';
     const legacy = !(cfg.users && cfg.users.length);
     ov.innerHTML = legacy
-      ? `<form class="box" role="dialog" aria-modal="true"><h3>쑤닐의 퇴고장</h3><p>계정 방식으로 바뀌었습니다. 지금 쓰던 <b>편집자 비밀번호</b>로 한 번 인증하고 관리자 계정을 만드세요. 그 뒤로는 공용 비밀번호가 없어지고 계정으로 들어옵니다.</p>
+      ? `<form class="box" role="dialog" aria-modal="true"><h3>SN Docs <small class="beta">(Beta)</small></h3><p>계정 방식으로 바뀌었습니다. 지금 쓰던 <b>편집자 비밀번호</b>로 한 번 인증하고 관리자 계정을 만드세요. 그 뒤로는 공용 비밀번호가 없어지고 계정으로 들어옵니다.</p>
           <label class="l">현재 편집자 비밀번호</label><input type="password" id="pwOld" autocomplete="current-password">
           <label class="l">관리자 ID</label><input type="text" id="uId" autocomplete="username" placeholder="영문·숫자">
           <label class="l">이름 (메모 말머리에 붙습니다)</label><input type="text" id="uName" placeholder="예: 쑤닐">
           <label class="l">관리자 비밀번호 (8자 이상)</label><input type="password" id="uPw" autocomplete="new-password">
           <div class="msg err" id="pwErr"></div>
           <div class="row"><button class="btn primary" type="submit">관리자 계정 만들기</button></div></form>`
-      : `<form class="box" role="dialog" aria-modal="true"><h3>쑤닐의 퇴고장</h3>
+      : `<form class="box" role="dialog" aria-modal="true"><h3>SN Docs <small class="beta">(Beta)</small></h3>
           <label class="l">ID</label><input type="text" id="uId" autocomplete="username">
           <label class="l">비밀번호</label><input type="password" id="pwIn" autocomplete="current-password">
           <label class="rm"><input type="checkbox" id="pwRemember"> 이 브라우저에 기억</label>
