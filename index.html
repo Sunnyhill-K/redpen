@@ -212,7 +212,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .txtdoc.word p{margin:0 0 .7em} .txtdoc.word ul,.txtdoc.word ol{padding-left:1.6em;margin:0 0 .7em}
 .txtdoc.word table{border-collapse:collapse;margin:.6em 0;font-size:.92em;line-height:1.5}
 .txtdoc.word td,.txtdoc.word th{border:1px solid var(--rule);padding:4px 8px;vertical-align:top}
-.txtdoc.word table{max-width:100%} .txtdoc.word th{background:var(--paper-2);font-weight:600} .txtdoc.word hr{border:0;border-top:1px solid var(--rule);margin:1em 0} .txtdoc.word blockquote{margin:.6em 0;padding:.2em 1em;border-left:3px solid var(--rule);color:var(--ink-2)} .txtdoc.word pre{font-family:var(--mono);font-size:.9em;white-space:pre-wrap;background:var(--paper-2);padding:8px 10px;border-radius:4px} .txtdoc.word a{color:var(--ins);text-decoration:underline} .txtdoc.word figure{margin:.6em 0} .txtdoc.word img{height:auto}
+.txtdoc.word table{max-width:100%} .txtdoc.word p[style*="padding"],.txtdoc.word h1[style*="padding"],.txtdoc.word h2[style*="padding"],.txtdoc.word h3[style*="padding"],.txtdoc.word blockquote[style*="padding"]{box-sizing:border-box} .txtdoc.word th{background:var(--paper-2);font-weight:600} .txtdoc.word hr{border:0;border-top:1px solid var(--rule);margin:1em 0} .txtdoc.word blockquote{margin:.6em 0;padding:.2em 1em;border-left:3px solid var(--rule);color:var(--ink-2)} .txtdoc.word pre{font-family:var(--mono);font-size:.9em;white-space:pre-wrap;background:var(--paper-2);padding:8px 10px;border-radius:4px} .txtdoc.word a{color:var(--ins);text-decoration:underline} .txtdoc.word figure{margin:.6em 0} .txtdoc.word img{height:auto}
 /* 편집기 */
 .wedit{border:1px solid var(--rule);border-radius:4px;overflow:hidden;background:#fff} .wedit .tox-tinymce{border:0!important} .wedit.ro{opacity:.85}
 .wedhint{font-size:calc(12px * var(--ui,1));color:var(--ink-2);margin:6px 0 0;display:flex;gap:12px;flex-wrap:wrap;align-items:center} .wedhint b{color:var(--ink)}
@@ -1059,7 +1059,7 @@ function sanitizeHtml(html){
     if (/font-weight:\s*(bold|[6-9]00)/.test(st)) wrapTags.push('b'); if (/font-style:\s*italic/.test(st)) wrapTags.push('i');
     if (/text-decoration[^;]*underline/.test(st)) wrapTags.push('u'); if (/text-decoration[^;]*line-through/.test(st)) wrapTags.push('s');
     const keep=[]; st.split(';').forEach(d=>{ const m=d.match(/^\s*([a-z-]+)\s*:\s*([^;]+)$/); if (!m) return; const k=m[1], v=m[2].trim();
-      if (!/^(color|background-color|font-size|font-family|font-weight|font-style|text-decoration|text-decoration-line|text-decoration-style|text-decoration-color|text-align|vertical-align|line-height|letter-spacing|text-indent|padding-left|margin-left|width|height|min-width|border|border-color|border-width|border-style|border-collapse|list-style-type)$/.test(k) || /url\(|expression|javascript/i.test(v)) return;
+      if (!/^(color|background-color|font-size|font-family|font-weight|font-style|text-decoration|text-decoration-line|text-decoration-style|text-decoration-color|text-align|vertical-align|line-height|letter-spacing|text-indent|padding|padding-left|margin-left|width|height|min-width|border|border-color|border-width|border-style|border-radius|border-collapse|list-style-type|text-shadow|-webkit-text-stroke|-webkit-text-stroke-width|-webkit-text-stroke-color)$/.test(k) || /url\(|expression|javascript/i.test(v)) return;
       if (/^(width|height|min-width)$/.test(k) && !/^(table|td|th|col|colgroup|figure)$/.test(t)) return;   // 크기는 표·칸에만(글자 상자에 폭이 붙으면 배치가 깨진다)
       // 글자 크기는 절대값(pt/px)을 본문 기준 배수(em)로 바꿔 문서 배율을 따라가게 한다 (구글 문서 기본 11pt)
       if (k==='font-size'){ const mm=v.match(/^(\d+(?:\.\d+)?)(pt|px)$/); if (mm){ const em=(+mm[1])/(mm[2]==='pt'?11:14.67); keep.push('font-size:'+em.toFixed(2)+'em'); } return; }
@@ -1883,7 +1883,7 @@ async function initWordEditor(sel, opt){
     readonly: !!opt.readonly, browser_spellcheck:true, convert_urls:false, entity_encoding:'raw',
     plugins:'table image lists advlist link autolink searchreplace charmap wordcount',
     menubar:'edit insert format table', contextmenu:'link image table',
-    toolbar:'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough forecolor backcolor removeformat | alignleft aligncenter alignright alignjustify | lineheight letterspacing | bullist numlist outdent indent | table image link charmap | searchreplace | wordkeys',
+    toolbar:'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough forecolor backcolor removeformat | alignleft aligncenter alignright alignjustify | lineheight letterspacing textdeco parabox | bullist numlist outdent indent | table image link charmap | searchreplace | wordkeys',
     toolbar_mode:'wrap',
     block_formats:'본문=p; 제목 1=h1; 제목 2=h2; 제목 3=h3; 인용=blockquote; 고정폭=pre',
     font_family_formats:'기본=inherit; 명조=Noto Serif KR,Nanum Myeongjo,Batang,serif; 고딕=IBM Plex Sans KR,Apple SD Gothic Neo,Malgun Gothic,sans-serif; 고정폭=IBM Plex Mono,Consolas,monospace',
@@ -1899,6 +1899,9 @@ async function initWordEditor(sel, opt){
     content_style:'body{font-family:"Noto Serif KR",AppleMyungjo,"Nanum Myeongjo",Batang,serif;font-size:11pt;line-height:1.9;color:#1F2430;padding:26px 34px;max-width:none} p{margin:0 0 .7em} h1,h2,h3{font-family:"IBM Plex Sans KR","Malgun Gothic",sans-serif;line-height:1.35;margin:1.2em 0 .5em} h1{font-size:1.45em} h2{font-size:1.25em} h3{font-size:1.1em} table{border-collapse:collapse;margin:.6em 0;font-size:.92em;line-height:1.5;max-width:100%} td,th{border:1px solid #C3D6CA;padding:4px 8px;vertical-align:top} th{background:#F1F2ED;font-weight:600} img{max-width:100%;height:auto} blockquote{margin:.6em 0;padding:.2em 1em;border-left:3px solid #C3D6CA;color:#5B6270} pre{font-family:Consolas,monospace;font-size:.9em;white-space:pre-wrap;background:#F1F2ED;padding:8px 10px;border-radius:4px} hr{border:0;border-top:1px solid #C3D6CA}',
     setup: (ed)=>{
       ed.on('init', ()=>{ ed.formatter.register('letterspacing', {inline:'span', styles:{letterSpacing:'%value'}, remove_similar:true});
+        ed.formatter.register('textshadow', {inline:'span', styles:{textShadow:'%value'}, remove_similar:true});
+        ed.formatter.register('textstroke', {inline:'span', styles:{'-webkit-text-stroke':'%value'}, remove_similar:true});
+        ed.formatter.register('parabox', {selector:'p,h1,h2,h3,h4,blockquote,pre,li,div', styles:{backgroundColor:'%bg', border:'%bd', padding:'%pd', borderRadius:'%rd'}});
         // 편집기 틀 안에서 바깥 그림을 불러올 때 참조 주소를 보내지 않는다(구글 문서 그림처럼 참조 주소를 따지는 서버 대비)
         try { const d=ed.getDoc(); const m=d.createElement('meta'); m.name='referrer'; m.content='no-referrer'; d.head.appendChild(m); } catch(e){}
         inlineExternalImages(ed); });
@@ -1913,6 +1916,20 @@ async function initWordEditor(sel, opt){
         {type:'menuitem', text:'조금 넓게 (+0.05)', onAction:()=>ed.formatter.apply('letterspacing',{value:'0.05em'})},
         {type:'menuitem', text:'넓게 (+0.1)', onAction:()=>ed.formatter.apply('letterspacing',{value:'0.1em'})},
         {type:'menuitem', text:'아주 넓게 (+0.2)', onAction:()=>ed.formatter.apply('letterspacing',{value:'0.2em'})}])});
+      // 글자 꾸밈: 그림자·테두리
+      const shadows=[['연한 그림자','1px 1px 2px rgba(0,0,0,.35)'],['진한 그림자','2px 2px 3px rgba(0,0,0,.55)'],['번짐(글로우)','0 0 6px rgba(255,200,0,.9)'],['흰 테두리 그림자','0 0 2px #fff, 0 0 2px #fff, 0 0 2px #fff, 0 0 2px #fff']];
+      const strokes=[['가는 테두리','0.5px #333'],['굵은 테두리','1px #333'],['빨간 테두리','0.7px #C4342D'],['흰 테두리','0.8px #fff']];
+      ed.ui.registry.addMenuButton('textdeco', {text:'글자 꾸밈', tooltip:'글자 그림자·테두리', fetch:(cb)=>cb([
+        ...shadows.map(([n,v])=>({type:'menuitem', text:'그림자 · '+n, onAction:()=>ed.formatter.apply('textshadow',{value:v})})),
+        {type:'menuitem', text:'그림자 없애기', onAction:()=>ed.formatter.remove('textshadow')},
+        {type:'separator'},
+        ...strokes.map(([n,v])=>({type:'menuitem', text:'테두리 · '+n, onAction:()=>ed.formatter.apply('textstroke',{value:v})})),
+        {type:'menuitem', text:'테두리 없애기', onAction:()=>ed.formatter.remove('textstroke')}])});
+      // 문단 상자: 배경·테두리·둥근 모서리
+      const boxes=[['연한 회색 상자','#F1F2ED','1px solid #D8DBD3'],['노란 메모 상자','#FFF6D6','1px solid #F0D98A'],['파란 안내 상자','#E7EEFB','1px solid #9DB6EA'],['초록 상자','#E4F1E8','1px solid #9BCBAB'],['빨간 경고 상자','#FBE9E7','1px solid #E39A95'],['테두리만','transparent','1.5px solid #5B6270'],['진한 상자(흰 글자)','#1F2430','1px solid #1F2430']];
+      ed.ui.registry.addMenuButton('parabox', {text:'문단 상자', tooltip:'문단에 배경·테두리 상자', fetch:(cb)=>cb([
+        ...boxes.map(([n,bg,bd])=>({type:'menuitem', text:n, onAction:()=>{ ed.formatter.apply('parabox',{bg, bd, pd:'10px 14px', rd:'6px'}); if (bg==='#1F2430') ed.execCommand('ForeColor', false, '#FFFFFF'); }})),
+        {type:'menuitem', text:'상자 없애기', onAction:()=>ed.formatter.remove('parabox')}])});
       ed.ui.registry.addButton('wordkeys', {text:'⌨ 단축키', tooltip:'워드식 단축키 목록', onAction:()=>{
         const html='<div class="sclist">'+WORD_KEYS.map(([g,rows])=>`<h4>${g}</h4>`+rows.map(([n,k])=>`<div><span>${n}</span><b>${k}</b></div>`).join('')).join('')+'</div>';
         ed.windowManager.open({title:'단축키 (워드와 같게)', size:'medium', body:{type:'panel', items:[{type:'htmlpanel', html}]}, buttons:[{type:'cancel', text:'닫기'}]}); }});
