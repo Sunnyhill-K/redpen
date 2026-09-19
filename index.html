@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T21:32:33+09:00">
+<meta name="build" content="2026-09-19T21:35:21+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -442,6 +442,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   <button class="btn" id="btnHelp" title="용도·유형·복사 방향·한계">안내</button>
   <button class="btn ico" id="btnList" title="홈" aria-label="홈"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" style="vertical-align:-3px"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-6h4v6"/></svg></button>
   <button class="btn ico" id="btnReload" title="새로고침 (최신 판으로)" aria-label="새로고침">↻</button>
+  <button class="btn ico" id="btnTheme" title="어둡게" aria-label="화면 밝기"></button>
   <button class="btn primary" id="btnNew" title="새 문서를 넣거나 직접 씁니다 · Alt+N">새 퇴고(새 글 작성)</button>
 </header>
 
@@ -2599,7 +2600,7 @@ async function boot(){
     if (sess && token && !myPriv){ try { sessionStorage.removeItem('redpen.sess'); localStorage.removeItem('redpen.sess'); } catch(e){} sess=null; toast('열쇠 방식이 새로 도입되어 한 번 다시 로그인해 주세요'); }
     try { spot=JSON.parse(sessionStorage.getItem('redpen.spot')||'null'); } catch(e){} }
   if (!(sess && sess.role && sess.k && sess.me)){ await lockScreen(); try { sessionStorage.removeItem('redpen.spot'); } catch(e){} }
-  applyRole();
+  applyRole(); loadPref();
   tmark('로그인 상태 확인'); try { await loadIndex(); tmark('목록 읽음'); } catch(e){ toast('목록을 읽지 못했습니다: '+((e&&e.message)||e)); }
   if (location.hash==='#help') view={mode:'help', id:null, draft:null, dirty:false, show:'side'};
   const m=location.hash.match(/case=([\w-]+)/);
@@ -2661,10 +2662,38 @@ document.fonts && document.fonts.ready.then(()=>layoutNotes());
 $('#btnLock').addEventListener('click', lockNow);
 // 화면 글자 크기(문서 제외)
 var uiScale=1; try { uiScale=parseFloat(localStorage.getItem('redpen.ui'))||1; } catch(e){}
-function applyUi(){ document.documentElement.style.setProperty('--ui', uiScale); $('#uiReset').textContent=Math.round(uiScale*100)+'%'; try { localStorage.setItem('redpen.ui', uiScale); } catch(e){} syncTop(); layoutNotes(); fitOverall(); if (pdfState && $('#doc')) drawPages(); else layoutTextDoc(); }
+function applyUi(save){ document.documentElement.style.setProperty('--ui', uiScale); $('#uiReset').textContent=Math.round(uiScale*100)+'%'; if (save!==false) savePref({ui:uiScale}); syncTop(); layoutNotes(); fitOverall(); if (pdfState && $('#doc')) drawPages(); else layoutTextDoc(); }
 function setUi(d, reset){ uiScale = reset ? 1 : Math.min(1.6, Math.max(0.8, Math.round((uiScale+d)*10)/10)); applyUi(); }
 $('#uiMinus').addEventListener('click', ()=>setUi(-0.1)); $('#uiPlus').addEventListener('click', ()=>setUi(0.1)); $('#uiReset').addEventListener('click', ()=>setUi(0,true));
 document.documentElement.style.setProperty('--ui', uiScale); $('#uiReset').textContent=Math.round(uiScale*100)+'%';
+// ── 개인 설정(화면 배율·밝기): ID 별로 설정 파일에 저장(편집자), 이 브라우저에도 사본. 뷰어는 브라우저 사본만 ──
+const ICON_SUN='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-3px"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>';
+const ICON_MOON='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>';
+let prefSaveT=null;
+function prefKey(){ return 'redpen.pref.'+(me?me.id:'_'); }
+function applyTheme(t){
+  if (t==='dark'||t==='light') document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
+  const dark = t==='dark' || (t!=='light' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  const b=$('#btnTheme'); if (b){ b.innerHTML = dark ? ICON_SUN : ICON_MOON; b.title = dark ? '밝게' : '어둡게'; }
+}
+function savePref(patch){
+  let cur={}; try { cur=JSON.parse(localStorage.getItem(prefKey())||'{}'); } catch(e){}
+  Object.assign(cur, patch); try { localStorage.setItem(prefKey(), JSON.stringify(cur)); } catch(e){}
+  if (!token || !me) return;
+  clearTimeout(prefSaveT); prefSaveT=setTimeout(async ()=>{   // 설정 파일은 최신본을 다시 읽어 내 pref 만 바꿔 쓴다(남의 변경을 덮지 않게)
+    try { const c2=await readConfigFresh(); const u=(c2.users||[]).find(x=>x.id===me.id); if (!u) return; u.pref=Object.assign({}, u.pref||{}, cur); await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'pref: '+me.id); cfg=c2; }
+    catch(e){ console.warn('pref 저장 실패', e); }
+  }, 2500);
+}
+function loadPref(){
+  let loc={}; try { loc=JSON.parse(localStorage.getItem(prefKey())||'{}'); } catch(e){}
+  const u=me && cfg && (cfg.users||[]).find(x=>x.id===me.id); const remote=(u && u.pref)||{};
+  const pref=Object.assign({}, loc, remote);   // 설정 파일이 우선 — 다른 PC 에서 바꾼 것이 따라온다
+  if (pref.ui){ uiScale=Math.min(1.6, Math.max(0.8, +pref.ui||1)); applyUi(false); }
+  applyTheme(pref.theme||'');
+}
+$('#btnTheme').addEventListener('click', ()=>{ const cur=document.documentElement.getAttribute('data-theme'); const dark = cur==='dark' || (cur!=='light' && matchMedia('(prefers-color-scheme: dark)').matches); const next = dark ? 'light' : 'dark'; applyTheme(next); savePref({theme:next}); });
+applyTheme('');
 
 $('#brand').addEventListener('click', ()=>$('#btnList').click());
 $('#brand').addEventListener('keydown', e=>{ if (e.key==='Enter') $('#btnList').click(); });
