@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T21:16:54+09:00">
+<meta name="build" content="2026-09-19T21:17:23+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -624,7 +624,7 @@ function renderHelp(main){
   <tr><td>.pdf 파일 (한글 HWP·구글 문서는 PDF 로 내보내서)</td><td>여기 · PDF 유형</td><td>쪽 모양 그대로. 캡처본은 「글자 인식(OCR)」을 돌리면 드래그가 됩니다</td></tr></table>
   <h4 class="hsub">2.2 여기에서 외부로</h4>
   <table class="ht"><tr><th style="width:26%">출발지 (여기)</th><th style="width:18%">도착지</th><th>결과</th></tr>
-  <tr><td>「서식 복사」 (수정본, Word·HTML 유형)</td><td>구글 문서 · Word · Gmail · 네이버 편집기</td><td>굵게·색·표가 따라갑니다. <b>단 붙여 넣는 쪽이 자기 규칙으로 일부를 걷어냅니다</b>(네이버는 글꼴·자간·표 폭, Gmail 은 표 테두리 등). 붙여 넣은 뒤 한 번 훑어 주세요</td></tr>
+  <tr><td>「서식까지 복사」 (수정본, Word·HTML 유형)</td><td>구글 문서 · Word · Gmail · 네이버 편집기</td><td>굵게·색·표가 따라갑니다. <b>단 붙여 넣는 쪽이 자기 규칙으로 일부를 걷어냅니다</b>(네이버는 글꼴·자간·표 폭, Gmail 은 표 테두리 등). 붙여 넣은 뒤 한 번 훑어 주세요</td></tr>
   <tr><td>「수정본 복사」 (글자만)</td><td>슬랙 · 메모장 · 카톡</td><td>삭제·바꾸기를 반영한 본문이 글자로만 들어갑니다</td></tr>
   <tr><td>「HTML 복사」 · 「HTML 내려받기」</td><td>홈페이지 · 블로그 HTML 편집기</td><td>수정본을 HTML 코드로, 또는 혼자 열리는 .html 파일로</td></tr>
   <tr><td>「내보내기」</td><td>메모까지 봐야 하는 사람(파일로)</td><td>HTML 한 파일. 번호 딱지에 마우스를 올리면 메모 팝업, 인쇄로 PDF 저장도 됩니다</td></tr>
@@ -1432,7 +1432,7 @@ function refreshPdfHead(c){
   head.innerHTML = headHtml(c,
     `<span>메모 <b>${fmtN(c.marks.length)}</b>곳</span><span class="d">삭제 <b>${fmtN(n('del'))}</b></span><span class="i">바꾸기 <b>${fmtN(n('rep'))}</b></span><span class="m">메모만 <b>${fmtN(n('memo'))}</b></span>${isPdf(c)?`<span>쪽 <b>${c.pages?fmtN(c.pages):'?'}</b></span>`:`<span>글자 <b>${fmtN((hasHtml(c)?stripTags(c.html||''):(c.src||'')).replace(/\s/g,'').length)}</b>자</span>`}`,
     `<div class="seg"><button id="modeDoc" class="${(!pdfListMode&&!textRevMode)?'on':''}">${isPdf(c)?'문서':'원문'} 위 메모 표시</button>${isPdf(c)?'':`<button id="modeRev" class="${textRevMode?'on':''}">수정본 그대로</button>`}<button id="modeList" class="${pdfListMode?'on':''}">메모 목록만</button></div>
-     ${isPdf(c)?`<span class="pager" title="쪽 이동: Alt+W 이전 · Alt+S 다음 · Alt+G 번호 입력"><button id="pgPrev" aria-label="이전 쪽" title="Alt+W">‹</button><input id="pgIn" inputmode="numeric" value="${currentPage()||1}" aria-label="쪽 번호"><span class="sl">/</span><b id="pgTot">${c.pages||'?'}</b><button id="pgNext" aria-label="다음 쪽" title="Alt+S">›</button></span>`:`<button class="btn small" id="copyRev" title="표시를 반영한 수정본을 글자만 복사(슬랙·메모장용)">수정본 복사</button>${hasHtml(c)?`<button class="btn small" id="copyRich" title="표시를 반영한 수정본을 서식째 복사 — 구글 문서·Word·Gmail·네이버 편집기에 붙여 넣으면 굵게·색·표가 따라갑니다">서식 복사</button><button class="btn small" id="copyHtml" title="표시를 반영한 수정본의 HTML 코드를 복사 — 홈페이지·블로그 HTML 편집기용">HTML 복사</button><button class="btn small" id="dlHtml" title="표시를 반영한 수정본을 혼자 열리는 .html 파일로 내려받기">HTML 내려받기</button>`:''}`}
+     ${isPdf(c)?`<span class="pager" title="쪽 이동: Alt+W 이전 · Alt+S 다음 · Alt+G 번호 입력"><button id="pgPrev" aria-label="이전 쪽" title="Alt+W">‹</button><input id="pgIn" inputmode="numeric" value="${currentPage()||1}" aria-label="쪽 번호"><span class="sl">/</span><b id="pgTot">${c.pages||'?'}</b><button id="pgNext" aria-label="다음 쪽" title="Alt+S">›</button></span>`:`<button class="btn small" id="copyRev" title="표시를 반영한 수정본을 글자만 복사(슬랙·메모장용)">수정본 복사</button>${hasHtml(c)?`<button class="btn small" id="copyRich" title="표시를 반영한 수정본을 서식째 복사 — 구글 문서·Word·Gmail·네이버 편집기에 붙여 넣으면 굵게·색·표가 따라갑니다">서식까지 복사</button><button class="btn small" id="copyHtml" title="표시를 반영한 수정본의 HTML 코드를 복사 — 홈페이지·블로그 HTML 편집기용">HTML 복사</button><button class="btn small" id="dlHtml" title="표시를 반영한 수정본을 혼자 열리는 .html 파일로 내려받기">HTML 내려받기</button>`:''}`}
      <button class="btn small" id="toggleMarks" ${(pdfListMode||textRevMode)?'disabled':''}>${hidden?'메모 보이기':'메모 감추기'}</button>
      ${canEdit ? `<button class="btn small danger" id="clearBtn" ${c.marks.length?'':'disabled'}>메모 모두 지우기</button>
      <button class="btn small ico" id="undoBtn" aria-label="되돌리기" title="되돌리기 (Ctrl+Z)${hist.undo.length?' · '+fmtN(hist.undo.length)+'개 · '+esc(hist.undo[hist.undo.length-1].l):''}" ${hist.undo.length?'':'disabled'}>↶${hist.undo.length?`<sup>${fmtN(hist.undo.length)}</sup>`:''}</button>
