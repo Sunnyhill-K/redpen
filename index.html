@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T21:44:53+09:00">
+<meta name="build" content="2026-09-19T22:01:34+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -251,7 +251,8 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .txtdoc .tpage.hdoc{padding:0;font-family:var(--sans);font-size:16px;line-height:1.5;overflow:hidden} .hbody{position:relative;min-height:200px;overflow-wrap:anywhere} .hbody img{max-width:100%;height:auto} .hbody *{max-width:100%;box-sizing:border-box} .hbody [style*="position:absolute"]{max-width:none}
 .help{max-width:1000px;margin:0 auto;padding:20px 0 60px} .help section{margin:26px 0} .help h3{font-family:var(--serif);font-size:calc(17px * var(--ui,1));margin:0 0 10px;padding-bottom:6px;border-bottom:1px solid var(--rule)} .help ul{margin:0;padding-left:1.3em;line-height:1.75} .help li{margin:4px 0} .help .ht{border-collapse:collapse;width:100%;font-size:calc(13.5px * var(--ui,1));line-height:1.55} .help .ht th,.help .ht td{border:1px solid var(--rule);padding:6px 9px;vertical-align:top;text-align:left} .help .ht th{background:var(--paper-2)} .help .cl{margin:0;padding:0;list-style:none} .help .cl li{padding-left:.9em;text-indent:-.9em} .help .cl li::before{content:'- ';color:var(--ink-3)} .help .hsub{font-family:var(--sans);font-size:calc(14px * var(--ui,1));margin:14px 0 6px;color:var(--ink-2)}
 .hsrc{width:100%;min-height:260px;max-height:50vh;font-family:var(--mono);font-size:calc(12.5px * var(--ui,1));line-height:1.5;border:1px solid var(--rule);border-radius:4px;padding:10px 12px;background:var(--paper-2);resize:vertical;white-space:pre;overflow:auto}
-.hprev{margin-top:10px;border:1px solid var(--rule);border-radius:4px;overflow:hidden;background:#fff;max-height:60vh;overflow-y:auto} .hprev .tpage{box-shadow:none}
+.hprev{border:1px solid var(--rule);border-radius:4px;overflow:hidden;background:#fff;max-height:72vh;overflow-y:auto} .hprev .tpage{box-shadow:none}
+.htabs{display:flex;align-items:center;gap:0;margin-bottom:8px} .htabs .hint{margin-left:12px;font-size:calc(12px * var(--ui,1));color:var(--ink-3)}
 .txtdoc .tpage .pre{color:inherit}
 .sheet.pdf.zoomed .pages{overflow:visible;max-width:none}
 .sheet.pdf .notes-title{position:static;margin-bottom:8px}
@@ -1877,9 +1878,10 @@ function renderEdit(main){
       <div class="wedhint"><span>여기서 <b>바로 쓰거나</b> 구글 문서·Word 화면에서 복사해 붙여 넣으세요. 표·그림·굵게·글자색이 살아 있습니다.</span><span>단축키는 워드와 같습니다 — 도구줄 맨 끝 <b>⌨ 단축키</b>. 저장 <span class="kbd">Ctrl+S</span></span></div>
       <label class="zone" id="wzone">또는 .docx 파일을 끌어다 놓거나 눌러서 고르세요<input type="file" id="fWord" accept=".docx"><div class="f" id="wordName">${esc(wordName)}</div></label>
       ${hasMarks ? `<div class="msg">메모 ${fmtN(c.marks.length)}곳이 있는 문서입니다. 저장하면 메모를 새 글의 같은 구절로 다시 맞춥니다. 구절이 사라진 메모는 목록에 「자리 잃음」으로 남습니다.</div>` : ''}</div>
-    <div class="pdfpick" id="htmlPart"><label class="l">HTML 코드</label>
-      <textarea class="hsrc" id="fHtml" spellcheck="false" placeholder="&lt;!doctype html&gt; 부터 끝까지 통째로 붙여 넣으세요. 챗GPT·클로드가 만든 페이지 코드 그대로 됩니다.">${esc(c.htmlSrc||'')}</textarea>
-      <div class="drop"><span>.html 파일을 이 칸에 끌어다 놓거나 고르세요</span><label class="btn small">파일 선택<input type="file" id="fHtmlFile" accept=".html,.htm"></label><span id="fMsgHtml"></span><span class="spacer"></span><button class="btn small" type="button" id="hPrev">미리 보기</button></div>
+    <div class="pdfpick" id="htmlPart"><label class="l">HTML</label>
+      <div class="htabs"><span class="seg"><button type="button" class="on" id="hTabCode">코드</button><button type="button" id="hTabPrev">미리 보기</button></span><span class="hint" id="hTabHint">코드를 붙여 넣은 뒤 「미리 보기」로 저장 전에 확인하세요</span></div>
+      <div id="hCodePane"><textarea class="hsrc" id="fHtml" spellcheck="false" placeholder="&lt;!doctype html&gt; 부터 끝까지 통째로 붙여 넣으세요. 챗GPT·클로드가 만든 페이지 코드 그대로 됩니다.">${esc(c.htmlSrc||'')}</textarea>
+      <div class="drop"><span>.html 파일을 이 칸에 끌어다 놓거나 고르세요</span><label class="btn small">파일 선택<input type="file" id="fHtmlFile" accept=".html,.htm"></label><span id="fMsgHtml"></span></div></div>
       <div class="hprev" id="hPrevBox" hidden></div>
       ${hasMarks ? `<div class="msg">메모 ${fmtN(c.marks.length)}곳이 있는 문서입니다. 저장하면 메모를 새 글의 같은 구절로 다시 맞춥니다.</div>` : ''}</div>
     <div class="pdfpick" id="pdfPart"><label class="l">PDF 파일</label>
@@ -1949,9 +1951,11 @@ function renderEdit(main){
   const takeHtmlFile=async f=>{ if (!/\.html?$/i.test(f.name)){ hMsg.textContent='.html 파일만 넣을 수 있습니다.'; return; } fh.value=await f.text(); hMsg.textContent=`${f.name} · ${fmtN(Math.round(f.size/1024))}KB`; view.dirty=true; if (!$('#fTitle').value.trim()){ const t=fh.value.match(/<title[^>]*>([^<]*)<\/title>/i); $('#fTitle').value=(t?t[1].trim():f.name.replace(/\.html?$/i,'')); } };
   $('#fHtmlFile').addEventListener('change', ()=>{ const f=$('#fHtmlFile').files[0]; if (f) takeHtmlFile(f); $('#fHtmlFile').value=''; });
   fh.addEventListener('dragover', e=>{ e.preventDefault(); }); fh.addEventListener('drop', e=>{ const f=e.dataTransfer.files[0]; if (f){ e.preventDefault(); takeHtmlFile(f); } });
-  fh.addEventListener('input', ()=>{ view.dirty=true; const pb=$('#hPrevBox'); if (!pb.hidden){ clearTimeout(fh._t); fh._t=setTimeout(showPrev, 400); } });
-  const showPrev=()=>{ const pb=$('#hPrevBox'); pb.hidden=false; pb.innerHTML=`<div class="doc txtdoc html" style="max-width:none;padding:0;border:0"><div class="tpage hdoc">${sanitizeHtmlDoc(fh.value)}</div></div>`; };
-  $('#hPrev').addEventListener('click', ()=>{ const pb=$('#hPrevBox'); if (pb.hidden) showPrev(); else { pb.hidden=true; pb.innerHTML=''; } });
+  fh.addEventListener('input', ()=>{ view.dirty=true; });
+  // 코드 / 미리 보기 탭 — 저장 전에 어떻게 보일지 확인
+  const hTab=(which)=>{ const code=which==='code'; $('#hTabCode').classList.toggle('on', code); $('#hTabPrev').classList.toggle('on', !code); $('#hCodePane').hidden=!code; const pb=$('#hPrevBox'); pb.hidden=code;
+    if (!code){ pb.innerHTML = fh.value.trim() ? `<div class="doc txtdoc html" style="max-width:none;padding:0;border:0"><div class="tpage hdoc">${sanitizeHtmlDoc(fh.value)}</div></div>` : '<div class="msg" style="padding:24px">아직 코드가 없습니다. 「코드」 탭에 붙여 넣어 주세요.</div>'; pb.scrollTop=0; } };
+  $('#hTabCode').addEventListener('click', ()=>hTab('code')); $('#hTabPrev').addEventListener('click', ()=>hTab('prev'));
   $('#cancelEdit').addEventListener('click', ()=>{ killWordEditor(); view = {mode: isNew?'list':'case', id:c.id, draft:null, dirty:false, show:'side'}; render(); });
   $('#doCompare').addEventListener('click', async ()=>{
     const base = {title:$('#fTitle').value.trim()||'(제목 없음)', client:$('#fClient').value.trim()};
