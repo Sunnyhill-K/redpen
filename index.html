@@ -1750,14 +1750,15 @@ function cleanPasteHtml(html){
 const _imgInl=new Map();
 async function inlineExternalImages(ed){
   const imgs=[...ed.getBody().querySelectorAll('img')].filter(i=>/^https?:\/\//i.test(i.getAttribute('src')||'') && !i.dataset.inl);
-  if (!imgs.length) return;
+  if (!imgs.length) return; const fails=[];
   for (const im of imgs){ im.dataset.inl='1'; const url=im.getAttribute('src');
     try {
       let data=_imgInl.get(url);
       if (!data){ const r=await fetch(url, {mode:'cors', referrerPolicy:'no-referrer'}); if (!r.ok) throw new Error(r.status); const b=await r.blob(); if (!/^image\//.test(b.type)) throw new Error('not image'); data=await shrinkImage(b); _imgInl.set(url, data); }
       if (im.isConnected){ ed.dom.setAttribs(im, {src:data, 'data-mce-src':data}); ed.undoManager.ignore(()=>{}); if (!im.getAttribute('width') && !im.style.width){ /* 크기는 그림대로 */ } }
-    } catch(e){ /* 못 받으면 주소 그대로 */ }
+    } catch(e){ fails.push((e&&e.message)||String(e)); console.warn('그림 받기 실패', url, e); }
   }
+  if (fails.length) toast(`붙여 넣은 그림 ${fmtN(fails.length)}개를 받아오지 못했습니다 (${fails[0]}). 주소 그대로 두었습니다`);
   ed.setDirty(true);
 }
 async function initWordEditor(sel, opt){
