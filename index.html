@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T21:17:23+09:00">
+<meta name="build" content="2026-09-19T21:17:42+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -1446,7 +1446,7 @@ function refreshPdfHead(c){
   $('#modeList').addEventListener('click', ()=>{ collectMarks(c); pdfListMode=true; textRevMode=false; refreshPdfHead(c); });
   const mr=$('#modeRev'); if (mr) mr.addEventListener('click', ()=>{ collectMarks(c); pdfListMode=false; textRevMode=true; refreshPdfHead(c); });
   const cr=$('#copyRev'); if (cr) cr.addEventListener('click', ()=>{ collectMarks(c); copyText(revisedText(c), '수정본을 복사했습니다'); });
-  const crh=$('#copyRich'); if (crh) crh.addEventListener('click', async ()=>{ collectMarks(c); const frag=revisedFragment(c); try { await navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([frag],{type:'text/html'}), 'text/plain': new Blob([revisedText(c)],{type:'text/plain'})})]); toast('서식째 복사했습니다 · 구글 문서·Word·메일에 붙여 넣으세요'); } catch(e){ copyText(revisedText(c), '이 브라우저는 서식 복사를 막아 글자만 복사했습니다'); } });
+  const crh=$('#copyRich'); if (crh) crh.addEventListener('click', async ()=>{ collectMarks(c); const frag=revisedFragment(c); try { await navigator.clipboard.write([new ClipboardItem({'text/html': new Blob([frag],{type:'text/html'}), 'text/plain': new Blob([revisedText(c)],{type:'text/plain'})})]); toast('서식째 복사했습니다 · 구글 문서·Word·메일에 붙여 넣으세요'); } catch(e){ copyText(revisedText(c), '이 브라우저는 서식까지 복사를 막아 글자만 복사했습니다'); } });
   const ch=$('#copyHtml'); if (ch) ch.addEventListener('click', ()=>{ collectMarks(c); copyText(standaloneHtml(c, true), 'HTML 코드를 복사했습니다'); });
   const dh=$('#dlHtml'); if (dh) dh.addEventListener('click', ()=>{ collectMarks(c); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([standaloneHtml(c, true)],{type:'text/html'})); a.download=((c.title||'문서').replace(/[\\/:*?"<>|]/g,'_'))+' 수정본.html'; document.body.appendChild(a); a.click(); a.remove(); toast('수정본 HTML 을 내려받았습니다'); });
   $('#copyList').addEventListener('click', ()=>{ collectMarks(c); copyText(listText(c, listItems(c)), '메모 목록을 복사했습니다'); });
