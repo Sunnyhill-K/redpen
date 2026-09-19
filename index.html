@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T21:18:33+09:00">
+<meta name="build" content="2026-09-19T21:19:01+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -632,7 +632,8 @@ function renderHelp(main){
   <tr><td>「링크 복사」</td><td>계정이 있는 팀원</td><td><ul class="cl"><li>같은 화면을 열어 이어서 메모할 수 있습니다</li><li>계정 없는 사람은 못 엽니다</li></ul></td></tr></table>
   <p class="msg">「수정본」은 삭제·바꾸기 표시를 반영한 결과이고, 메모 글은 들어가지 않습니다. 메모까지 전하려면 「내보내기」나 「주석 PDF」를 쓰세요.</p></section>
   <section><h3>3. 퇴고 표시와 메모</h3>
-  <ul><li>글자를 드래그하면 삭제(Alt+1)·바꾸기(Alt+2)·메모(Alt+3). PDF 의 그림 부분은 네모로 끌면 영역 메모, Alt+A 로 글자 위에서도 네모.</li>
+  <ul><li>글자를 드래그하면 삭제(Alt+1)·바꾸기(Alt+2)·메모(Alt+3).</li>
+  <li>Alt+A 를 켜면 글자가 아닌 부분(그림 등)에서도 영역을 드래그하여 선택할 수 있습니다. PDF 의 그림 부분은 켜지 않아도 네모로 끌면 영역 메모가 됩니다.</li>
   <li>메모에 슬랙식 서식(*굵게* _기울임_ ~취소~ __밑줄__)과 http·www. 주소 자동 링크. 우클릭으로 링크 만들기·해제.</li>
   <li>남의 메모에 덧붙이면 그 사람 색 띠가 붙습니다. 저장은 Ctrl+S, 되돌리기 Ctrl+Z, 메모 이동 Alt+↑/↓, 쪽 이동 Alt+W/S.</li>
   <li>메모가 있는 문서의 본문을 고쳐 저장하면 메모를 새 글의 같은 구절로 다시 맞춥니다. 구절이 사라진 메모는 「자리 잃음」으로 남습니다.</li>
@@ -1438,7 +1439,7 @@ function refreshPdfHead(c){
      <button class="btn small ico" id="undoBtn" aria-label="되돌리기" title="되돌리기 (Ctrl+Z)${hist.undo.length?' · '+fmtN(hist.undo.length)+'개 · '+esc(hist.undo[hist.undo.length-1].l):''}" ${hist.undo.length?'':'disabled'}>↶${hist.undo.length?`<sup>${fmtN(hist.undo.length)}</sup>`:''}</button>
      <button class="btn small ico" id="redoBtn" aria-label="다시 실행" title="다시 실행 (Ctrl+Shift+Z)${hist.redo.length?' · '+fmtN(hist.redo.length)+'개 · '+esc(hist.redo[hist.redo.length-1].l):''}" ${hist.redo.length?'':'disabled'}>↷${hist.redo.length?`<sup>${fmtN(hist.redo.length)}</sup>`:''}</button>
      <button class="btn small" id="histBtn" title="되돌리기 이력을 보고 골라서 되돌아가기" ${(hist.undo.length||hist.redo.length)?'':'disabled'}>실행 기록</button>` : ''}
-     ${(isPdf(c)&&canEdit)?`<button class="btn small ${areaMode?'on':''}" id="areaBtn" title="글자 위에서도 네모로 영역을 잡고 싶을 때 켭니다. 그림 부분은 켜지 않아도 그냥 끌면 됩니다 · Alt+A">${areaMode?'영역 선택 끝':'영역 선택'}</button>`:''}
+     ${(isPdf(c)&&canEdit)?`<button class="btn small ${areaMode?'on':''}" id="areaBtn" title="켜면 글자가 아닌 부분에서도 영역을 드래그하여 선택할 수 있습니다. 그림 부분은 켜지 않아도 그냥 끌면 됩니다 · Alt+A">${areaMode?'영역 선택 끝':'영역 선택'}</button>`:''}
      <button class="btn small" id="copyList">메모 복사</button><button class="btn small" id="exportBtn" title="문서와 표시·메모를 한 HTML 파일로 내보냅니다. 새 탭에서 「PDF로 저장」도 됩니다">내보내기</button><button class="btn small" id="exportPdfBtn" title="${isPdf(c)?'원본 PDF 에 표시를 주석(형광·취소선·네모)으로 박고 메모를 팝업으로 넣어 내려받습니다':'문서를 A4 쪽으로 찍어 PDF 로 만들고 표시를 주석(형광·취소선)으로, 메모를 팝업으로 넣어 내려받습니다(글자는 그림이라 선택은 안 됩니다)'}. Acrobat·Edge 에서 마우스를 올리면 메모가 뜹니다">주석 PDF</button>${(isPdf(c)&&canEdit)?`<button class="btn small" id="ocrBtn" title="캡처본 PDF 처럼 글자층이 없는 문서의 글자를 인식해 드래그할 수 있게 합니다">${c.ocr?'글자 다시 인식':'글자 인식(OCR)'}</button>`:''}`)
     + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모, 그림 부분은 네모로 끌면 영역 메모 (Alt+1/2/3)':''} · Ctrl+휠 확대·축소 · 메모 이동 Alt+↑/↓ (Alt+Q/X 도 됨)${isPdf(c)?' · 쪽 이동 Alt+W/S, 번호 Alt+G':''} · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
