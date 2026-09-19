@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T21:25:32+09:00">
+<meta name="build" content="2026-09-19T21:28:12+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -117,7 +117,7 @@ a{color:var(--ins)}
 .cases li.on{border-left-color:var(--del);background:var(--paper)}
 .cases .t{font-weight:500;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cases .m{color:var(--ink-3);font-size:calc(12px * var(--ui,1));display:flex;gap:6px;margin-top:2px;font-variant-numeric:tabular-nums;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;align-items:center}
-.chip{display:inline-block;font-size:calc(11px * var(--ui,1));padding:1px 6px;border-radius:3px;background:var(--paper-3);color:var(--ink-2);line-height:1.5}
+.chip{display:inline-block;white-space:nowrap;font-size:calc(11px * var(--ui,1));padding:1px 6px;border-radius:3px;background:var(--paper-3);color:var(--ink-2);line-height:1.5}
 .chip.pdf{background:var(--del-bg);color:var(--del)}
 .chip.last{background:var(--ins-bg);color:var(--ins)}
 .chip.lostc{background:var(--del-bg);color:var(--del)}
@@ -290,7 +290,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
 .pdfmsg{padding:40px;text-align:center;color:var(--ink-3);border:1px dashed var(--rule)}
 
 /* 메모 목록만 보기 */
-.mlist{max-width:1120px;margin:0 auto;overflow-x:auto}
+.mlist{max-width:none;margin:0;overflow-x:auto} .mlist td.kd,.mlist td.n{white-space:nowrap}
 .mlist table{width:100%;border-collapse:collapse;font-size:calc(14px * var(--ui,1));min-width:640px}
 .mlist th{text-align:left;font-size:calc(11px * var(--ui,1));letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:8px;border-bottom:1px solid var(--rule);font-weight:600;white-space:nowrap}
 .mlist td{padding:9px 8px;border-bottom:1px solid var(--rule);vertical-align:top;line-height:1.55}
@@ -703,7 +703,7 @@ function listItems(c){
 function listHtml(items, withWhere){
   if (!items.length) return `<div class="mlist"><div class="none">표시가 없습니다.</div></div>`;
   return `<div class="mlist"><table><thead><tr><th>#</th>${withWhere?'<th>위치</th>':''}<th>종류</th><th>작성</th><th>원문</th><th>바꿀 문장</th><th>이유</th></tr></thead><tbody>${items.map(it=>`
-    <tr><td class="n"><button class="jump" data-n="${it.n}" title="문서의 이 자리로 이동">${it.n}</button></td>${withWhere?`<td class="w">${esc(it.where)}</td>`:''}<td><span class="chip kd ${esc(it.k||'')}">${esc(it.kind)}</span>${it.n===items.length?' <span class="chip last">마지막</span>':''}</td><td class="w who" style="${userColor(it.who, it.whoId)?`color:${userColor(it.who, it.whoId)}`:''}">${esc(userLabel(it.who, it.whoId)||it.who)}</td><td class="before">${esc(it.before)}</td><td class="after">${esc(it.after)}</td><td class="reason">${md(it.reason)}</td></tr>`).join('')}</tbody></table></div>`;
+    <tr><td class="n"><button class="jump" data-n="${it.n}" title="문서의 이 자리로 이동">${it.n}</button></td>${withWhere?`<td class="w">${esc(it.where)}</td>`:''}<td class="kd"><span class="chip kd ${esc(it.k||'')}">${esc(it.kind)}</span>${it.n===items.length?' <span class="chip last">마지막</span>':''}</td><td class="w who" style="${userColor(it.who, it.whoId)?`color:${userColor(it.who, it.whoId)}`:''}">${esc(userLabel(it.who, it.whoId)||it.who)}</td><td class="before">${esc(it.before)}</td><td class="after">${esc(it.after)}</td><td class="reason">${md(it.reason)}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function listText(c, items){
   const head = `${c.title||''} · 퇴고 메모 ${fmtN(items.length)}곳 (${c.date||''})`;
@@ -1475,6 +1475,7 @@ function refreshPdfHead(c){
   // 목록만 보기 ↔ 문서 보기
   const sheet=$('#pdfSheet'), list=$('#mlist');
   if (sheet && list){ sheet.hidden = pdfListMode; list.hidden = !pdfListMode; if (pdfListMode){ list.innerHTML = listHtml(listItems(c), isPdf(c)); bindJumps(list, ()=>{ pdfListMode=false; textRevMode=false; refreshPdfHead(c); }); } }
+  requestAnimationFrame(fitOverall);
   if (!isPdf(c) && !pdfListMode){ if (textRevMode) renderTextRevised(c); else renderTextDoc(c); const nt=$('#notes'); if (nt) nt.hidden = textRevMode; requestAnimationFrame(fitOverall); }
   renderPdfNotes(c);
 }
@@ -1754,6 +1755,8 @@ function fitOverall(){
   const doc=document.querySelector('.pages') || document.querySelector('.sheet .doc'); const sheet=document.querySelector('.sheet');
   if (!doc || !sheet){ box.style.width=''; return; }
   let w;
+  const list=document.getElementById('mlist');
+  if (sheet.hidden || (list && !list.hidden) || doc.getBoundingClientRect().width<120){ const lw=list ? list.getBoundingClientRect().width : 0; box.style.maxWidth='none'; box.style.width=(lw>200 ? Math.round(lw)+'px' : ''); return; }
   w=doc.getBoundingClientRect().width;
   box.style.maxWidth='none'; box.style.width=Math.round(w)+'px';
 }
