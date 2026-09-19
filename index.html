@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T21:28:12+09:00">
+<meta name="build" content="2026-09-19T21:29:13+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -181,6 +181,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .note .n .k{color:var(--ink-3);font-family:var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .note .n .x{border:0;background:transparent;color:var(--ink-3);cursor:pointer;padding:0 2px;font-size:calc(13px * var(--ui,1));line-height:1}
 .note .n .x:hover{color:var(--del)}
+.note .n .nn{cursor:pointer;border:1px solid transparent;border-radius:8px;padding:0 5px;margin-left:-5px} .note .n .nn:hover{border-color:currentColor}
 .note .n .nv{display:inline-flex;gap:3px;margin-left:4px} .note .nvb{border:1px solid var(--ink-3);background:var(--paper);color:var(--ink);cursor:pointer;padding:1px 8px;font-size:calc(13px * var(--ui,1));font-weight:700;line-height:1.3;border-radius:4px;font-family:var(--sans)} .note .nvb:hover{border-color:var(--ink);background:var(--paper-2)}
 .note textarea{width:100%;border:0;border-bottom:1px dashed var(--rule);background:transparent;resize:none;padding:2px 0;line-height:1.5;min-height:22px;font-size:calc(14.5px * var(--ui,1));overflow:hidden}
 .note textarea:focus{border-bottom-color:var(--focus);outline:none}
@@ -238,6 +239,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 /* 문서(특히 HTML 유형)의 자체 CSS 가 딱지를 덮어쓰지 못하게 — 글 흐름 안에서 제 자리를 차지해 글자를 가리지 않는다 */
 .txtdoc .hunk+.mk,.txtdoc .mk{display:inline-block!important;position:static!important;float:none!important;width:auto!important;height:auto!important;min-width:0!important;max-width:none!important;margin:0 3px 0 2px!important;padding:2px 4px!important;line-height:1!important;font-size:calc(10.5px * var(--ui,1))!important;vertical-align:super!important;letter-spacing:0!important;word-spacing:0!important;white-space:nowrap!important;transform:none!important;box-sizing:content-box!important;text-indent:0!important;z-index:1;position:relative!important}
 .hide-marks .txtdoc .mk{display:none!important}
+.mk.ghost{opacity:.06!important;transition:opacity .25s} .mk{transition:opacity .25s}
 .txtdoc .pop{position:absolute}
 
 /* ── PDF 문서형: 쪽을 원본 그대로 그리고 그 위에 표시 ── */
@@ -1506,9 +1508,10 @@ function renderPdfNotes(c){
   const notes=$('#notes'); if (!notes) return;
   const canEdit = !!artifactNs;
   notes.innerHTML = `<div class="notes-title">교정 메모 ${fmtN(c.marks.length)}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
-    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span>${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}${m.lost?'<span class="chip lostc" title="본문을 고치면서 이 구절이 사라져 표시할 자리가 없습니다. 글은 남아 있습니다.">자리 잃음</span>':''}<span class="k">${esc(m.text)}</span><span class="nv"><button class="nvb" data-d="-1" title="바로 위 메모 (Alt+↑)" tabindex="-1">↑</button><button class="nvb" data-d="1" title="바로 아래 메모 (Alt+↓)" tabindex="-1">↓</button></span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
+    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span class="nn" title="원문의 이 자리로">${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}${m.lost?'<span class="chip lostc" title="본문을 고치면서 이 구절이 사라져 표시할 자리가 없습니다. 글은 남아 있습니다.">자리 잃음</span>':''}<span class="k">${esc(m.text)}</span><span class="nv"><button class="nvb" data-d="-1" title="바로 위 메모 (Alt+↑)" tabindex="-1">↑</button><button class="nvb" data-d="1" title="바로 아래 메모 (Alt+↓)" tabindex="-1">↓</button></span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
     ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', 'txt', m.segs) : `<div class="txt">${md(m.reason||'', m.segs)}</div>`}</div>`; }).join('');
+  notes.querySelectorAll('.nn').forEach(b=>b.addEventListener('click', ()=>{ const n=b.closest('.note'); if (n){ jumpCur=n.dataset.h; if (pdfListMode){ pdfListMode=false; textRevMode=false; refreshPdfHead(c); setTimeout(()=>jumpToHunk(+n.dataset.h), 60); } else jumpToHunk(+n.dataset.h); } }));
   notes.querySelectorAll('.nvb').forEach(b=>b.addEventListener('click', e=>{ e.preventDefault(); const n=b.closest('.note'); if (n) jumpCur=n.dataset.h; jumpMemo(+b.dataset.d); }));
   notes.querySelectorAll('.x').forEach(b=>b.addEventListener('click', ()=>{
     pushHist(c, `표시 ${+b.dataset.i+1} 지움`); c.marks.splice(+b.dataset.i,1); view.dirty=true; drawAllMarks(c); refreshPdfHead(c); layoutNotes();
@@ -1774,6 +1777,11 @@ function bindJumps(root, before){
   (root||document).querySelectorAll('.mlist .jump').forEach(b=>b.addEventListener('click', ()=>{ const h=+b.dataset.n; before(); setTimeout(()=>jumpToHunk(h), 60); }));
 }
 
+// 원문 위 번호 딱지에 마우스를 2초 머무르면 딱지를 투명하게 해 밑의 글자를 보여 준다. 벗어나면 되돌아온다
+(function(){ let t=null, cur=null;
+  document.addEventListener('mouseover', e=>{ const k=e.target.closest && e.target.closest('#doc .mk, .page .mk'); if (!k || k===cur) return; if (cur){ cur.classList.remove('ghost'); } cur=k; clearTimeout(t); t=setTimeout(()=>{ if (cur===k) k.classList.add('ghost'); }, 2000); });
+  document.addEventListener('mouseout', e=>{ const k=e.target.closest && e.target.closest('#doc .mk, .page .mk'); if (!k || k!==cur) return; const to=e.relatedTarget; if (to && k.contains(to)) return; clearTimeout(t); k.classList.remove('ghost'); cur=null; });
+})();
 // ── 메모 이동: 화면 위쪽 선을 기준으로 위/아래에서 가장 가까운 표시로 ──
 let jumpCur=null;   // 마지막으로 다녀간 메모 번호(Alt+Q/X 한 칸씩 이동의 기준)
 function jumpMemo(dir){
