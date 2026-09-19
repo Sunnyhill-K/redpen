@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T20:52:52+09:00">
+<meta name="build" content="2026-09-19T20:56:20+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -16,6 +16,7 @@
   --del:#C4342D; --del-bg:#FBE9E7; --del-line:#E39A95;
   --ins:#2D5BB9; --ins-bg:#E7EEFB; --ins-line:#9DB6EA;
   --memo:#2E7D4F; --memo-bg:#E4F1E8;
+  --rep:#B8860B; --rep-bg:#FBF1CF; --rep-line:#E1C468;
   --btn:#1F2430; --btn-ink:#FAFAF7;
   --focus:#2D5BB9;
   --serif:"Noto Serif KR",AppleMyungjo,"Nanum Myeongjo",Batang,serif;
@@ -30,6 +31,7 @@
     --del:#F0776E; --del-bg:#3A2321; --del-line:#8C3F3A;
     --ins:#86ACF2; --ins-bg:#1D2A45; --ins-line:#3E5A96;
     --memo:#7FC49A; --memo-bg:#1E3327;
+    --rep:#E3C15C; --rep-bg:#3A3118; --rep-line:#8C7A2E;
     --btn:#E7E5DE; --btn-ink:#15181D;
     --focus:#86ACF2;
   }
@@ -141,7 +143,7 @@ body.zoomed-body .head::before{content:'';position:absolute;left:-20px;top:0;bot
 .head h2 .hbtns{display:inline-flex;gap:6px;font-family:var(--sans);font-weight:400}
 .stats{display:flex;gap:18px;font-family:var(--mono);font-size:calc(12px * var(--ui,1));color:var(--ink-2);flex-wrap:wrap;font-variant-numeric:tabular-nums}
 .stats b{font-weight:500;color:var(--ink)}
-.stats .d b{color:var(--del)} .stats .i b{color:var(--ins)} .stats .m b{color:var(--memo)}
+.stats .d b{color:var(--del)} .stats .i b{color:var(--rep)} .stats .m b{color:var(--memo)}
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
 .seg{display:inline-flex;border:1px solid var(--ink-2);border-radius:4px;overflow:hidden}
 .seg button{border:0;background:transparent;padding:5px 11px;cursor:pointer;border-right:1px solid var(--ink-2)}
@@ -173,9 +175,9 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 
 .notes{position:relative;font-size:calc(14.5px * var(--ui,1))}
 .note{position:absolute;left:0;right:0;border-left:2px solid var(--del-line);padding:2px 0 2px 10px;transition:top .15s}
-.note.memo{border-left-color:var(--memo)}
+.note.memo{border-left-color:var(--memo)} .note.rep{border-left-color:var(--rep-line)}
 .note .n{font-family:var(--mono);font-size:calc(12px * var(--ui,1));color:var(--del);display:flex;gap:6px;align-items:center;margin-bottom:.7em}
-.note.memo .n{color:var(--memo)}
+.note.memo .n{color:var(--memo)} .note.rep .n{color:var(--rep)} .note.rep.hot{border-left-color:var(--rep)}
 .note .n .k{color:var(--ink-3);font-family:var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .note .n .x{border:0;background:transparent;color:var(--ink-3);cursor:pointer;padding:0 2px;font-size:calc(13px * var(--ui,1));line-height:1}
 .note .n .x:hover{color:var(--del)}
@@ -203,7 +205,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .sheet.three{max-width:1480px;grid-template-columns:minmax(0,1fr) minmax(0,1fr) calc(240px * var(--ui,1));gap:18px}
 .sheet.three .doc{max-width:none;font-size:calc(15px * var(--z,1));line-height:1.85;padding:18px 18px 18px 22px}
 .sheet .lab{font-family:var(--sans);font-size:calc(11px * var(--ui,1));letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px;font-weight:600;display:flex;gap:10px}
-.sheet .lab .d{color:var(--del)} .sheet .lab .i{color:var(--ins)}
+.sheet .lab .d{color:var(--del)} .sheet .lab .i{color:var(--rep)}
 .sheet.three .notes{font-size:calc(14px * var(--ui,1));padding-top:0}
 .sheet.three .notes-title{position:static;margin-top:0}
 @media (max-width:1240px){
@@ -228,6 +230,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .sclist{columns:2;column-gap:28px;font-size:14px;line-height:1.9} .sclist div{break-inside:avoid;display:flex;justify-content:space-between;gap:10px;border-bottom:1px dotted #ddd} .sclist h4{column-span:all;margin:10px 0 4px;font-size:13px;color:#666;letter-spacing:.08em}
 .txtdoc .hunk{border-radius:2px;padding:0 1px}
 .txtdoc .t-del,.txtdoc .t-rep{color:var(--del);text-decoration:line-through;text-decoration-thickness:1.5px;background:var(--del-bg)}
+.txtdoc .t-rep{color:var(--rep);background:var(--rep-bg)}
 .txtdoc .t-memo{background:var(--memo-bg);text-decoration:underline;text-decoration-color:var(--memo);text-decoration-thickness:1.5px;text-underline-offset:3px}
 .txtdoc .hunk.hot{outline:2px solid var(--del-line)}
 .txtdoc ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;background:var(--ins-bg);border-radius:2px;padding:0 1px}
@@ -265,17 +268,21 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .mbox.hot{outline:2px solid rgba(196,52,45,.5)}
 .mbox.area{background:rgba(196,52,45,.08)!important;border:2px dashed #C4342D;border-radius:3px;box-sizing:border-box}
 .mbox.area.memo{background:rgba(46,125,79,.08)!important;border-color:#2E7D4F}
-.mbox.area.rep{border-style:solid}
+.mbox.rep{background:linear-gradient(to bottom,rgba(184,134,11,.13) 0,rgba(184,134,11,.13) calc(50% - 1px*var(--pz,1)),#B8860B calc(50% - 1px*var(--pz,1)),#B8860B calc(50% + 1px*var(--pz,1)),rgba(184,134,11,.13) calc(50% + 1px*var(--pz,1)))}
+.mbox.area.rep{border-style:solid;background:rgba(184,134,11,.10)!important;border-color:#B8860B}
+.mbox.hot.rep{outline-color:rgba(184,134,11,.55)}
 body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLayer{pointer-events:none} body.area-mode .page canvas{-webkit-user-drag:none;user-drag:none}
 .arearubber{position:absolute;border:2px dashed #C4342D;background:rgba(196,52,45,.08);pointer-events:none;z-index:5}
 .marks .mk{position:absolute;pointer-events:auto;transform:translate(2px,-55%);background:#fff;z-index:4;font-size:calc(10.5px*var(--pz,1));padding:calc(2px*var(--pz,1)) calc(4px*var(--pz,1));border-radius:calc(8px*var(--pz,1));border-width:calc(1px*var(--pz,1))}
 .marks .mk.memo{color:#2E7D4F;border-color:#7FC49A}
+.marks .mk.rep{color:#B8860B;border-color:#E1C468} .marks .mk.rep:hover,.marks .mk.rep.hot{background:#B8860B;color:#fff}
+.mk.rep{color:var(--rep);border-color:var(--rep-line)} .mk.rep:hover,.mk.rep.hot{background:var(--rep);color:#fff}
 .marks .mk.memo:hover,.marks .mk.memo.hot{background:#2E7D4F;color:#fff}
 .hide-marks .marks{display:none}
 .pop{position:absolute;z-index:6;display:flex;gap:4px;background:var(--btn);padding:4px;border-radius:5px;box-shadow:0 3px 10px rgba(0,0,0,.25);transform:translate(-50%,8px)}
 .pop button{border:0;background:transparent;color:var(--btn-ink);padding:4px 9px;border-radius:3px;cursor:pointer;font-size:calc(12.5px * var(--ui,1))}
 .pop button:hover{background:rgba(127,127,127,.3)}
-.pop button.d{color:#F0776E} .pop button.r{color:#86ACF2} .pop button.m{color:#7FC49A}
+.pop button.d{color:#F0776E} .pop button.r{color:#F0D060} .pop button.m{color:#7FC49A}
 .pop kbd{font-family:var(--mono);font-size:calc(10px * var(--ui,1));opacity:.7;margin-left:2px}
 .pdfmsg{padding:40px;text-align:center;color:var(--ink-3);border:1px dashed var(--rule)}
 
@@ -589,14 +596,14 @@ function render(){
 function renderHome(main){
   main.innerHTML = `<div class="head"><div class="eyebrow">퇴고 기록 ${fmtN(cases.length)}건 · 열린 시각 ${new Date().toTimeString().slice(0,8)}</div>
     <h2>왼쪽 목록에서 문서를 고르거나, 새 퇴고를 시작하세요.</h2>
-    <p class="msg" style="font-size:14.5px;line-height:1.7">유형은 넷입니다. <b>텍스트</b>는 붙여 넣은 글, <b>Word · 구글 문서</b>는 편집기에서 바로 쓰거나 복사해 붙여 넣는 서식 있는 글(제목·굵게·표·그림 유지), <b>HTML</b>은 AI 로 디자인까지 만든 페이지 코드 그대로, <b>PDF 문서</b>는 쪽을 원본 그대로 그립니다. 자세한 쓰임새·복사 방향·한계는 위의 <b>안내</b>에 있습니다. 어느 유형이든 글자를 드래그해 <span style="color:var(--del)">삭제</span>·<span style="color:var(--ins)">바꾸기</span>·<span style="color:var(--memo)">메모</span>를 얹고, 수정본은 그 표시를 반영해 자동으로 만들어집니다.<br>내용은 암호화되어 깃헙에 저장되고, 뷰어 비밀번호를 아는 사람은 읽기만, 편집자 비밀번호를 아는 사람은 저장까지 할 수 있습니다.</p></div>`;
+    <p class="msg" style="font-size:14.5px;line-height:1.7">유형은 넷입니다. <b>텍스트</b>는 붙여 넣은 글, <b>Word · 구글 문서</b>는 편집기에서 바로 쓰거나 복사해 붙여 넣는 서식 있는 글(제목·굵게·표·그림 유지), <b>HTML</b>은 AI 로 디자인까지 만든 페이지 코드 그대로, <b>PDF 문서</b>는 쪽을 원본 그대로 그립니다. 자세한 쓰임새·복사 방향·한계는 위의 <b>안내</b>에 있습니다. 어느 유형이든 글자를 드래그해 <span style="color:var(--del)">삭제</span>·<span style="color:var(--rep)">바꾸기</span>·<span style="color:var(--memo)">메모</span>를 얹고, 수정본은 그 표시를 반영해 자동으로 만들어집니다.<br>내용은 암호화되어 깃헙에 저장되고, 뷰어 비밀번호를 아는 사람은 읽기만, 편집자 비밀번호를 아는 사람은 저장까지 할 수 있습니다.</p></div>`;
 }
 
 // ══════════════ 안내 페이지: 용도 · 유형 · 어디서 어디로 · 한계 ══════════════
 function renderHelp(main){
   main.innerHTML = `<div class="help">
   <div class="head"><div class="eyebrow">안내</div><h2>SN Docs 는 「글을 받아 퇴고하고, 어디를 왜 고쳤는지 남겨 돌려주는」 도구입니다.</h2>
-  <p class="msg" style="font-size:14.5px;line-height:1.7">글을 쓰는 곳은 구글 문서·Word·챗GPT 등 익숙한 도구를 그대로 쓰시고, 여기에는 <b>퇴고를 받을 원고</b>를 넣으세요. 글자를 드래그해 <span style="color:var(--del)">삭제</span>·<span style="color:var(--ins)">바꾸기</span>·<span style="color:var(--memo)">메모</span>를 얹고, 저장하면 팀원이 같은 화면을 보고 이어서 메모할 수 있습니다.</p></div>
+  <p class="msg" style="font-size:14.5px;line-height:1.7">글을 쓰는 곳은 구글 문서·Word·챗GPT 등 익숙한 도구를 그대로 쓰시고, 여기에는 <b>퇴고를 받을 원고</b>를 넣으세요. 글자를 드래그해 <span style="color:var(--del)">삭제</span>·<span style="color:var(--rep)">바꾸기</span>·<span style="color:var(--memo)">메모</span>를 얹고, 저장하면 팀원이 같은 화면을 보고 이어서 메모할 수 있습니다.</p></div>
   <section><h3>1. 문서 유형 넷 — 무엇을 넣을 때 어떤 유형인가</h3>
   <table class="ht"><tr><th>유형</th><th>넣는 것</th><th>살아남는 것</th><th>한계</th></tr>
   <tr><td><b>텍스트</b></td><td>슬랙·카톡·블로그 글을 복사해 붙여 넣기, .txt</td><td>글자와 줄바꿈</td><td>서식 없음(굵게·색 없음)</td></tr>
@@ -710,7 +717,7 @@ async function exportPdfAnnots(c){
   return await pdfDoc.save({useObjectStreams:false});
 }
 // 표시 하나 → 주석 하나(+팝업). boxes = PDF 좌표 사각형들 [x1,y1,x2,y2] (y 는 아래가 0)
-const ANNOT_COL={del:[0.77,0.2,0.18], rep:[0.18,0.36,0.73], memo:[0.18,0.49,0.31]};
+const ANNOT_COL={del:[0.77,0.2,0.18], rep:[0.72,0.53,0.04], memo:[0.18,0.49,0.31]};
 function pdfDateNow(){ const d=new Date(); const z=n=>String(n).padStart(2,'0'); return `D:${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}`; }
 function plainMd(t){ return String(t||'').replace(/\u200B/g,'').replace(/(^|[^\w가-힣])\*([^*\n]+)\*(?=$|[^\w가-힣])/g,'$1$2').replace(/__([^_\n]+)__/g,'$1').replace(/~([^~\n]+)~/g,'$1'); }
 function pushAnnot(pdfDoc, page, ref){ const {PDFName, PDFArray}=window.PDFLib; let arr=page.node.lookup(PDFName.of('Annots')); if (!(arr instanceof PDFArray)){ arr=pdfDoc.context.obj([]); page.node.set(PDFName.of('Annots'), arr); } arr.push(ref); }
@@ -783,7 +790,7 @@ function exportCss(){
   return out;
 }
 function exportCssBase(){
-  return `:root{--ui:1;--z:1;--pz:1;--paper:#FAFAF7;--paper-2:#F1F2ED;--paper-3:#E6E8E1;--ink:#1F2430;--ink-2:#5B6270;--ink-3:#8A909B;--rule:#C3D6CA;--rule-strong:#5E8F72;--del:#C4342D;--del-bg:#FBE9E7;--del-line:#E39A95;--ins:#2D5BB9;--ins-bg:#E7EEFB;--ins-line:#9DB6EA;--memo:#2E7D4F;--memo-bg:#E4F1E8;--serif:"Noto Serif KR",AppleMyungjo,"Nanum Myeongjo",Batang,serif;--sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;--mono:"IBM Plex Mono",Consolas,monospace}
+  return `:root{--ui:1;--z:1;--pz:1;--rep:#B8860B;--rep-bg:#FBF1CF;--rep-line:#E1C468;--paper:#FAFAF7;--paper-2:#F1F2ED;--paper-3:#E6E8E1;--ink:#1F2430;--ink-2:#5B6270;--ink-3:#8A909B;--rule:#C3D6CA;--rule-strong:#5E8F72;--del:#C4342D;--del-bg:#FBE9E7;--del-line:#E39A95;--ins:#2D5BB9;--ins-bg:#E7EEFB;--ins-line:#9DB6EA;--memo:#2E7D4F;--memo-bg:#E4F1E8;--serif:"Noto Serif KR",AppleMyungjo,"Nanum Myeongjo",Batang,serif;--sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;--mono:"IBM Plex Mono",Consolas,monospace}
 body{margin:0;background:#EEF0EA;color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
 .xbar{position:sticky;top:0;display:flex;gap:10px;align-items:center;padding:8px 16px;background:#1F2430;color:#FAFAF7;z-index:10;font-size:14px}.xbar .sp{flex:1}.xbar button{font:inherit;padding:5px 12px;border:1px solid #FAFAF7;background:transparent;color:#FAFAF7;border-radius:4px;cursor:pointer}.xbar button:hover{background:#FAFAF7;color:#1F2430}
 .xhead{max-width:960px;margin:22px auto 12px;padding:0 20px}.xhead h1{font-size:22px;margin:0 0 4px}.xmeta{color:var(--ink-2);font-size:13px}
@@ -791,14 +798,14 @@ body{margin:0;background:#EEF0EA;color:var(--ink);font-family:var(--sans);font-s
 .page{margin:0 0 12px;break-inside:avoid}.page img{display:block;width:100%;height:auto}
 a.mk{text-decoration:none}
 .xnotes{display:grid;gap:8px;margin:0 0 8px}
-.xn{border-left:3px solid var(--del-line);padding:5px 10px;background:#fff;border-radius:0 4px 4px 0;break-inside:avoid}.xn.memo{border-left-color:var(--memo)}
-.xh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--del);margin-bottom:3px}.xn.memo .xh{color:var(--memo)}
-.xno{font-weight:700;display:inline-block;min-width:1.5em;height:1.5em;line-height:1.4em;text-align:center;border:1px solid currentColor;border-radius:50%;padding:0 .25em;text-decoration:none;color:inherit}a.xno:hover{background:var(--del);color:#fff;border-color:var(--del)}.xn.memo a.xno:hover{background:var(--memo);border-color:var(--memo)}.xwho{font-family:var(--sans);color:var(--nc,var(--ink-2));border:1px solid var(--nc,var(--ink-3));border-radius:3px;padding:0 5px;font-size:11px}.xpg{color:var(--ink-3);font-family:var(--sans)}
-.xsrc{color:var(--ink-2);font-family:var(--serif);font-size:14px}.xn.del .xsrc,.xn.rep .xsrc{text-decoration:line-through;text-decoration-color:var(--del)}.xn.memo .xsrc{text-decoration:underline;text-decoration-color:var(--memo);text-underline-offset:3px}
+.xn{border-left:3px solid var(--del-line);padding:5px 10px;background:#fff;border-radius:0 4px 4px 0;break-inside:avoid}.xn.memo{border-left-color:var(--memo)}.xn.rep{border-left-color:var(--rep-line)}
+.xh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--del);margin-bottom:3px}.xn.memo .xh{color:var(--memo)}.xn.rep .xh{color:var(--rep)}
+.xn.rep a.xno:hover{background:var(--rep);border-color:var(--rep)}.xno{font-weight:700;display:inline-block;min-width:1.5em;height:1.5em;line-height:1.4em;text-align:center;border:1px solid currentColor;border-radius:50%;padding:0 .25em;text-decoration:none;color:inherit}a.xno:hover{background:var(--del);color:#fff;border-color:var(--del)}.xn.memo a.xno:hover{background:var(--memo);border-color:var(--memo)}.xwho{font-family:var(--sans);color:var(--nc,var(--ink-2));border:1px solid var(--nc,var(--ink-3));border-radius:3px;padding:0 5px;font-size:11px}.xpg{color:var(--ink-3);font-family:var(--sans)}
+.xsrc{color:var(--ink-2);font-family:var(--serif);font-size:14px}.xn.del .xsrc,.xn.rep .xsrc{text-decoration:line-through;text-decoration-color:var(--del)}.xn.rep .xsrc{text-decoration-color:var(--rep)}.xn.memo .xsrc{text-decoration:underline;text-decoration-color:var(--memo);text-underline-offset:3px}
 .xafter{color:var(--ins);font-family:var(--serif)}.xtxt{white-space:pre-wrap;line-height:1.55}
 .xback{margin-left:auto;font-family:var(--sans);font-size:11px;color:var(--ink-2);text-decoration:none;border:1px solid var(--rule);border-radius:3px;padding:0 6px}.xback:hover{color:var(--ink);border-color:var(--ink-3)}
 .xtip{position:absolute;z-index:30;max-width:380px;min-width:180px;background:#fff;border:1px solid #cfd4cc;border-radius:5px;box-shadow:0 6px 18px rgba(0,0,0,.14);padding:8px 11px;font-size:13.5px;line-height:1.5;pointer-events:auto}.xtip .xn{border:0;padding:0;background:transparent}.xtip .xback{display:none}.xtip .xh{margin-bottom:2px}
-a.mk{cursor:pointer}.mk.tipon{background:var(--del);color:#fff}.mk.memo.tipon{background:var(--memo)}
+a.mk{cursor:pointer}.mk.tipon{background:var(--del);color:#fff}.mk.memo.tipon{background:var(--memo)}.mk.rep.tipon{background:var(--rep)}
 :target.xn{outline:2px solid var(--ins-line);outline-offset:2px}
 .xoverall{max-width:960px;margin:0 auto 40px;padding:0 20px}.xoverall h3{margin:0 0 6px;font-size:13px;letter-spacing:.12em;color:var(--ink-3)}.xoverall .xtxt{background:#fff;padding:10px 14px;border-radius:4px}
 .doc.txtdoc{max-width:none;padding:0;background:transparent;border:0;box-shadow:none}.tpage{min-height:0}
@@ -1186,7 +1193,7 @@ function wrapRange(root, start, end, cls, h, withBadge){
   for (let i=i0;i<=i1;i++){ const n=all[i]; if (!n.data.length) continue;
     const sp=document.createElement('span'); sp.className='hunk t-'+cls; sp.dataset.h=h; sp.dataset.k=cls; if (!firstDone){ sp.dataset.first='1'; firstDone=true; }
     n.parentNode.insertBefore(sp, n); sp.appendChild(n);
-    if (i===i1 && withBadge){ const mk=document.createElement('span'); mk.className='mk'; mk.dataset.h=h; mk.textContent=h; mk.title='메모 '+h; mk.addEventListener('click', ()=>focusHunk(h)); sp.after(mk); }
+    if (i===i1 && withBadge){ const mk=document.createElement('span'); mk.className='mk '+cls; mk.dataset.h=h; mk.textContent=h; mk.title='메모 '+h; mk.addEventListener('click', ()=>focusHunk(h)); sp.after(mk); }
   }
 }
 function baseHtml(c){ return hasHtml(c) ? (c.html||'') : `<div class="pre">${esc(c.src||'')}</div>`; }
