@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T21:43:18+09:00">
+<meta name="build" content="2026-09-19T21:44:53+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -2480,7 +2480,7 @@ function lockScreen(){
     });
   });
 }
-async function lockNow(){ try { await Promise.race([flushPref(), new Promise(r=>setTimeout(r, 4000))]); } catch(e){} try { sessionStorage.removeItem('redpen.sess'); localStorage.removeItem('redpen.sess'); } catch(e){} location.hash=''; location.reload(); }
+async function lockNow(){ if (prefDirty){ const b=$('#btnLock'); if (b){ b.disabled=true; b.textContent='설정 저장 중…'; } try { await Promise.race([flushPref(), new Promise(r=>setTimeout(r, 4000))]); } catch(e){} } try { sessionStorage.removeItem('redpen.sess'); localStorage.removeItem('redpen.sess'); } catch(e){} location.hash=''; location.reload(); }
 async function changePasswords(){
   const isAdmin = me && me.role==='admin';
   const ov=document.createElement('div'); ov.className='ask';
@@ -2669,7 +2669,7 @@ document.documentElement.style.setProperty('--ui', uiScale); $('#uiReset').textC
 // ── 개인 설정(화면 배율·밝기): ID 별로 설정 파일에 저장(편집자), 이 브라우저에도 사본. 뷰어는 브라우저 사본만 ──
 const ICON_SUN='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-3px"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>';
 const ICON_MOON='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>';
-let prefSaveT=null;
+let prefSaveT=null, prefDirty=false;   // 아직 설정 파일에 안 쓴 변경이 있는가
 function prefKey(){ return 'redpen.pref.'+(me?me.id:'_'); }
 function applyTheme(t){
   if (t==='dark'||t==='light') document.documentElement.setAttribute('data-theme', t); else document.documentElement.removeAttribute('data-theme');
@@ -2680,14 +2680,14 @@ function savePref(patch){
   let cur={}; try { cur=JSON.parse(localStorage.getItem(prefKey())||'{}'); } catch(e){}
   Object.assign(cur, patch, {at:Date.now()}); try { localStorage.setItem(prefKey(), JSON.stringify(cur)); } catch(e){}
   if (!token || !me) return;
-  clearTimeout(prefSaveT); prefSaveT=setTimeout(flushPref, 800);
+  prefDirty=true; clearTimeout(prefSaveT); prefSaveT=setTimeout(flushPref, 800);
 }
 // 설정 파일에 내 pref 만 바꿔 쓴다(최신본을 다시 읽어 남의 변경을 덮지 않게). 로그아웃 전에도 한 번 불러 미처 안 쓴 것을 마저 쓴다
 async function flushPref(){
-  clearTimeout(prefSaveT); prefSaveT=null; if (!token || !me) return;
-  let cur=null; try { cur=JSON.parse(localStorage.getItem(prefKey())||'null'); } catch(e){} if (!cur) return;
-  try { const c2=await readConfigFresh(); const u=(c2.users||[]).find(x=>x.id===me.id); if (!u) return; if (u.pref && (u.pref.at||0)>=(cur.at||0)) return;
-    u.pref=Object.assign({}, u.pref||{}, cur); await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'pref: '+me.id); cfg=c2; }
+  clearTimeout(prefSaveT); prefSaveT=null; if (!token || !me || !prefDirty) return;
+  let cur=null; try { cur=JSON.parse(localStorage.getItem(prefKey())||'null'); } catch(e){} if (!cur){ prefDirty=false; return; }
+  try { const c2=await readConfigFresh(); const u=(c2.users||[]).find(x=>x.id===me.id); if (!u) return; if (!(u.pref && (u.pref.at||0)>=(cur.at||0))){
+    u.pref=Object.assign({}, u.pref||{}, cur); await ghWrite('config.json', te.encode(JSON.stringify(c2)), 'pref: '+me.id); cfg=c2; } prefDirty=false; }
   catch(e){ console.warn('pref 저장 실패', e); }
 }
 function loadPref(){
