@@ -633,6 +633,45 @@ function listText(c, items){
   const plain = t => t||'';
   return head + '\n' + items.map(it=>`${it.n}. ${it.who?'['+it.who+'] ':''}${it.where?'['+it.where+'] ':''}${it.kind}${it.before?' · '+it.before:''}${it.after?'\n   → '+it.after:''}${it.reason?'\n   이유: '+plain(it.reason):''}`).join('\n');
 }
+// ══════════════ 주석 PDF: 원본 PDF 에 표시를 PDF 주석으로 박는다(pdf-lib 저수준 객체) ══════════════
+// 좌표: 우리 표시는 pdf.js 뷰포트 기준 0-1 비율(왼쪽 위 원점) → viewport.convertToPdfPoint 로 PDF 좌표(회전·크롭 반영)
+async function exportPdfAnnots(c){
+  const st=pdfState; if (!st || !st.doc) throw new Error('PDF 가 아직 열리지 않았습니다');
+  if (!c.pdf) throw new Error('원본 PDF 가 없습니다');
+  if (!window.PDFLib) await loadScript('vendor/pdf-lib.min.js');
+  const {PDFDocument, PDFName, PDFArray, PDFHexString, PDFString}=window.PDFLib;
+  const pdfDoc=await PDFDocument.load(b64ToBytes(c.pdf), {ignoreEncryption:true}); const ctx=pdfDoc.context; const pages=pdfDoc.getPages();
+  const COL={del:[0.77,0.2,0.18], rep:[0.18,0.36,0.73], memo:[0.18,0.49,0.31]};
+  const now=new Date(); const z=n=>String(n).padStart(2,'0'); const M=`D:${now.getFullYear()}${z(now.getMonth()+1)}${z(now.getDate())}${z(now.getHours())}${z(now.getMinutes())}${z(now.getSeconds())}`;
+  const plain=t=>String(t||'').replace(/\u200B/g,'').replace(/(^|[^\w가-힣])\*([^*\n]+)\*(?=$|[^\w가-힣])/g,'$1$2').replace(/__([^_\n]+)__/g,'$1').replace(/~([^~\n]+)~/g,'$1');
+  let n=0;
+  for (let i=0;i<c.marks.length;i++){ const m=c.marks[i]; if (!m.page || !m.rects || !m.rects.length) continue; const page=pages[m.page-1]; if (!page) continue;
+    const pg=await st.doc.getPage(m.page); const vp=pg.getViewport({scale:1});
+    const quads=[]; let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+    for (const r of m.rects){ const pts=[[r[0],r[1]],[r[0]+r[2],r[1]],[r[0],r[1]+r[3]],[r[0]+r[2],r[1]+r[3]]].map(([x,y])=>vp.convertToPdfPoint(x*vp.width, y*vp.height));
+      // QuadPoints 는 왼쪽 위·오른쪽 위·왼쪽 아래·오른쪽 아래 순. 회전된 쪽이면 순서가 돌아가지만 사각형 자체는 같다
+      pts.forEach(([x,y])=>{ minX=Math.min(minX,x); maxX=Math.max(maxX,x); minY=Math.min(minY,y); maxY=Math.max(maxY,y); });
+      const xs=pts.map(p=>p[0]), ys=pts.map(p=>p[1]); const x1=Math.min(...xs), x2=Math.max(...xs), y1=Math.min(...ys), y2=Math.max(...ys);
+      quads.push(x1,y2, x2,y2, x1,y1, x2,y1); }
+    const h=i+1; const who=userLabel(m.by, m.byId)||m.by||''; const kind=KIND[m.kind]||m.kind;
+    const body=[`[${h}] ${kind}`+(m.text?` · ${m.text}`:''), m.kind==='rep'&&m.after ? `→ ${m.after}` : '', plain(m.reason)].filter(Boolean).join('\n');
+    const sub = m.area ? 'Square' : (m.kind==='del' ? 'StrikeOut' : 'Highlight');
+    const col=COL[m.kind]||COL.memo;
+    const dict={Type:'Annot', Subtype:sub, Rect:[minX,minY,maxX,maxY], C:col, CA: sub==='Highlight'?0.45:1, F:4, Contents:PDFHexString.fromText(body), T:PDFHexString.fromText(who), NM:PDFString.of('redpen-'+h), M:PDFString.of(M), CreationDate:PDFString.of(M), Subj:PDFHexString.fromText(kind)};
+    if (sub==='Square'){ dict.BS=ctx.obj({W:1.5, S:'D', D:[4,3]}); } else { dict.QuadPoints=quads; }
+    const ref=ctx.register(ctx.obj(dict));
+    const pw=220, ph=110; const popup=ctx.obj({Type:'Annot', Subtype:'Popup', Rect:[Math.min(maxX+6, vp.width-pw), Math.max(minY-ph, 0), Math.min(maxX+6, vp.width-pw)+pw, Math.max(minY-ph, 0)+ph], Parent:ref, Open:false, F:28});
+    const pref=ctx.register(popup); ctx.lookup(ref).set(PDFName.of('Popup'), pref);
+    let arr=page.node.lookup(PDFName.of('Annots')); if (!(arr instanceof PDFArray)){ arr=ctx.obj([]); page.node.set(PDFName.of('Annots'), arr); }
+    arr.push(ref); arr.push(pref); n++;
+  }
+  if ((c.note||'').trim() && pages[0]){ // 총평은 1쪽 왼쪽 위 쪽지 주석으로
+    const pg=await st.doc.getPage(1); const vp=pg.getViewport({scale:1}); const [x,y]=vp.convertToPdfPoint(12, 12);
+    const ref=ctx.register(ctx.obj({Type:'Annot', Subtype:'Text', Rect:[x,y-20,x+20,y], Name:'Comment', C:[0.18,0.36,0.73], F:4, Contents:PDFHexString.fromText('[총평]\n'+plain(c.note)), T:PDFHexString.fromText(userLabel(me&&me.name, me&&me.id)||''), NM:PDFString.of('redpen-overall'), M:PDFString.of(M)}));
+    let arr=pages[0].node.lookup(PDFName.of('Annots')); if (!(arr instanceof PDFArray)){ arr=ctx.obj([]); pages[0].node.set(PDFName.of('Annots'), arr); } arr.push(ref); }
+  if (!n && !(c.note||'').trim()) throw new Error('넣을 표시가 없습니다');
+  return await pdfDoc.save({useObjectStreams:false});
+}
 // ══════════════ 내보내기: 문서 + 빨간펜 표시 + 메모를 한 HTML 로 (새 탭 → 브라우저 인쇄로 PDF) ══════════════
 // 앱 CSS 에서 문서·표시에 쓰는 규칙만 골라 담는다(화면 배치 규칙은 뺀다)
 function exportCss(){
@@ -654,9 +693,13 @@ a.mk{text-decoration:none}
 .xno{font-weight:700}.xwho{font-family:var(--sans);color:var(--nc,var(--ink-2));border:1px solid var(--nc,var(--ink-3));border-radius:3px;padding:0 5px;font-size:11px}.xpg{color:var(--ink-3);font-family:var(--sans)}
 .xsrc{color:var(--ink-2);font-family:var(--serif);font-size:14px}.xn.del .xsrc,.xn.rep .xsrc{text-decoration:line-through;text-decoration-color:var(--del)}.xn.memo .xsrc{text-decoration:underline;text-decoration-color:var(--memo);text-underline-offset:3px}
 .xafter{color:var(--ins);font-family:var(--serif)}.xtxt{white-space:pre-wrap;line-height:1.55}
+.xback{margin-left:auto;font-family:var(--sans);font-size:11px;color:var(--ink-2);text-decoration:none;border:1px solid var(--rule);border-radius:3px;padding:0 6px}.xback:hover{color:var(--ink);border-color:var(--ink-3)}
+.xtip{position:absolute;z-index:30;max-width:380px;min-width:180px;background:#fff;border:1px solid #cfd4cc;border-radius:5px;box-shadow:0 6px 18px rgba(0,0,0,.14);padding:8px 11px;font-size:13.5px;line-height:1.5;pointer-events:auto}.xtip .xn{border:0;padding:0;background:transparent}.xtip .xback{display:none}.xtip .xh{margin-bottom:2px}
+a.mk{cursor:pointer}.mk.tipon{background:var(--del);color:#fff}.mk.memo.tipon{background:var(--memo)}
+:target.xn{outline:2px solid var(--ins-line);outline-offset:2px}
 .xoverall{max-width:960px;margin:0 auto 40px;padding:0 20px}.xoverall h3{margin:0 0 6px;font-size:13px;letter-spacing:.12em;color:var(--ink-3)}.xoverall .xtxt{background:#fff;padding:10px 14px;border-radius:4px}
 .doc.txtdoc{max-width:none;padding:0;background:transparent;border:0;box-shadow:none}.tpage{min-height:0}
-@media print{.no-print{display:none}body{background:#fff}.xpage,.xhead,.xoverall{padding:0}.page{box-shadow:none;border:1px solid #ddd}.xn{border:1px solid #e3e3e3;border-left-width:3px}}
+@media print{.no-print{display:none}.xtip{display:none}body{background:#fff}.xpage,.xhead,.xoverall{padding:0}.page{box-shadow:none;border:1px solid #ddd}.xn{border:1px solid #e3e3e3;border-left-width:3px}}
 @page{margin:12mm}
 `;
 }
@@ -677,11 +720,11 @@ async function exportPdfPages(){
 function exportMarks(c, p){
   return c.marks.map((m,i)=>{ if (m.page!==p) return ''; const h=i+1;
     return (m.rects||[]).map((r,ri)=>`<div class="mbox ${m.kind} hunk${m.area?' area':''}" style="left:${r[0]*100}%;top:${r[1]*100}%;width:${r[2]*100}%;height:${r[3]*100}%"></div>`
-      + (ri===0?`<a class="mk ${m.kind}" href="#xn${h}" style="left:${(r[0]+r[2])*100}%;top:${r[1]*100}%" title="메모 ${h}">${h}</a>`:'')).join(''); }).join('');
+      + (ri===0?`<a class="mk ${m.kind}" id="xm${h}" href="#xn${h}" style="left:${(r[0]+r[2])*100}%;top:${r[1]*100}%" data-h="${h}">${h}</a>`:'')).join(''); }).join('');
 }
 function exportNote(c, m, i){
   const h=i+1; const col=userColor(m.by, m.byId);
-  return `<div class="xn ${m.kind}" id="xn${h}"><div class="xh"><span class="xno">${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="xwho" ${col?`style="--nc:${col}"`:''}>${esc(userLabel(m.by, m.byId))}</span>`:''}${(isPdf(c)&&m.page)?`<span class="xpg">${m.page}쪽</span>`:''}</div>`
+  return `<div class="xn ${m.kind}" id="xn${h}"><div class="xh"><span class="xno">${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="xwho" ${col?`style="--nc:${col}"`:''}>${esc(userLabel(m.by, m.byId))}</span>`:''}${(isPdf(c)&&m.page)?`<span class="xpg">${m.page}쪽</span>`:''}${(m.lost||(m.start<0 && !m.rects))?'':`<a class="xback" href="#xm${h}" title="본문의 표시 자리로 돌아가기">↩ 본문</a>`}</div>`
     + (m.text?`<div class="xsrc">${esc(m.text)}</div>`:'') + (m.kind==='rep'?`<div class="xafter">→ ${esc(m.after||'')}</div>`:'')
     + ((m.reason||'').trim()?`<div class="xtxt">${md(m.reason||'', m.segs)}</div>`:'') + `</div>`;
 }
@@ -699,7 +742,7 @@ async function exportDoc(c){
       const tmp=document.createElement('div'); tmp.className='doc txtdoc'+(c.type==='word'?' word':''); tmp.style.cssText='position:absolute;left:-99999px;top:0;width:860px'; tmp.innerHTML=`<div class="tpage">${baseHtml(c)}</div>`; document.body.appendChild(tmp);
       try {
         c.marks.map((m,i)=>({m,h:i+1})).sort((x,y)=>y.m.start-x.m.start).forEach(({m,h})=>wrapRange(tmp, m.start, m.end, m.kind, h, true));
-        tmp.querySelectorAll('.mk').forEach(k=>{ const a=document.createElement('a'); a.className='mk'; a.href='#xn'+k.dataset.h; a.textContent=k.textContent; a.title='메모 '+k.dataset.h; k.replaceWith(a); });
+        tmp.querySelectorAll('.mk').forEach(k=>{ const a=document.createElement('a'); a.className='mk'; a.id='xm'+k.dataset.h; a.href='#xn'+k.dataset.h; a.textContent=k.textContent; a.dataset.h=k.dataset.h; k.replaceWith(a); });
         body=`<section class="xpage"><div class="doc txtdoc${c.type==='word'?' word':''}">${tmp.innerHTML}</div></section>`;
       } finally { tmp.remove(); }
       if (c.marks.length) body+=`<section class="xpage"><div class="xnotes">${c.marks.map((m,i)=>exportNote(c,m,i)).join('')}</div></section>`;
@@ -712,7 +755,22 @@ async function exportDoc(c){
 <div class="xbar no-print"><b>${esc(c.title||'')}</b><span>메모 ${fmtN(c.marks.length)}곳</span><span class="sp"></span><button onclick="window.print()">PDF로 저장(인쇄)</button><button id="dl" data-fn="${esc(fname)}">HTML 파일로 내려받기</button></div>
 <header class="xhead"><h1>${esc(c.title||'')}</h1><div class="xmeta">${c.client?esc(c.client)+' · ':''}${typeName} · 저장 ${esc(fmtWhen(c))} · 메모 ${fmtN(c.marks.length)}곳 (삭제 ${fmtN(n('del'))} · 바꾸기 ${fmtN(n('rep'))} · 메모만 ${fmtN(n('memo'))}) · 쑤닐의 퇴고장에서 내보냄</div></header>
 ${body}
-<script>document.getElementById('dl').addEventListener('click',function(){var b=new Blob(['<!doctype html>'+document.documentElement.outerHTML],{type:'text/html'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=this.dataset.fn;document.body.appendChild(a);a.click();a.remove();});<\/script>
+<script>document.getElementById('dl').addEventListener('click',function(){var t=document.querySelector('.xtip');if(t)t.remove();var b=new Blob(['<!doctype html>'+document.documentElement.outerHTML],{type:'text/html'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=this.dataset.fn;document.body.appendChild(a);a.click();a.remove();});
+// 번호 딱지에 마우스를 올리면 그 메모가 팝업으로 뜬다(나무위키 각주처럼). 딱지를 누르면 아래 메모로, 메모의 ↩ 본문을 누르면 되돌아온다
+(function(){ var tip=null, cur=null, hideT=null;
+  function hide(){ if (tip){ tip.remove(); tip=null; } if (cur){ cur.classList.remove('tipon'); cur=null; } }
+  function show(a){ var h=a.getAttribute('data-h'); var n=document.getElementById('xn'+h); if (!n) return; hide();
+    tip=document.createElement('div'); tip.className='xtip'; tip.innerHTML=n.outerHTML; document.body.appendChild(tip); cur=a; a.classList.add('tipon');
+    var r=a.getBoundingClientRect(); var W=tip.offsetWidth, H=tip.offsetHeight; var x=r.right+window.scrollX+8, y=r.top+window.scrollY-6;
+    if (x+W>window.scrollX+document.documentElement.clientWidth-12) x=Math.max(8, r.left+window.scrollX-W-8);
+    if (r.top+H>window.innerHeight-10) y=Math.max(window.scrollY+8, r.bottom+window.scrollY-H);
+    tip.style.left=x+'px'; tip.style.top=y+'px';
+    tip.addEventListener('mouseenter', function(){ clearTimeout(hideT); }); tip.addEventListener('mouseleave', function(){ hideT=setTimeout(hide, 150); }); }
+  document.addEventListener('mouseover', function(e){ var a=e.target.closest && e.target.closest('a.mk'); if (a){ clearTimeout(hideT); if (cur!==a) show(a); } });
+  document.addEventListener('mouseout', function(e){ var a=e.target.closest && e.target.closest('a.mk'); if (a){ hideT=setTimeout(hide, 150); } });
+  document.addEventListener('click', function(e){ if (e.target.closest && (e.target.closest('a.mk')||e.target.closest('a.xback'))) hide(); });
+  window.addEventListener('scroll', function(){ if (tip) hide(); }, {passive:true});
+})();<\/script>
 <\/body><\/html>`;
     const blob=new Blob([html],{type:'text/html'}); const url=URL.createObjectURL(blob);
     const w=window.open(url,'_blank');
@@ -1204,7 +1262,7 @@ function refreshPdfHead(c){
      <button class="btn small" id="redoBtn" title="Ctrl+Shift+Z${hist.redo.length?' · '+esc(hist.redo[hist.redo.length-1].l):''}" ${hist.redo.length?'':'disabled'}>↷ 다시 실행${hist.redo.length?' '+fmtN(hist.redo.length):''}</button>
      <button class="btn small" id="histBtn" title="되돌리기 이력을 보고 골라서 되돌아가기" ${(hist.undo.length||hist.redo.length)?'':'disabled'}>실행 기록</button>` : ''}
      ${(isPdf(c)&&canEdit)?`<button class="btn small ${areaMode?'on':''}" id="areaBtn" title="글자 위에서도 네모로 영역을 잡고 싶을 때 켭니다. 그림 부분은 켜지 않아도 그냥 끌면 됩니다 · Alt+A">${areaMode?'영역 선택 끝':'영역 선택'}</button>`:''}
-     <button class="btn small" id="copyList">메모 복사</button><button class="btn small" id="exportBtn" title="문서와 표시·메모를 한 HTML 파일로 내보냅니다. 새 탭에서 「PDF로 저장」도 됩니다">내보내기</button>${(isPdf(c)&&canEdit)?`<button class="btn small" id="ocrBtn" title="캡처본 PDF 처럼 글자층이 없는 문서의 글자를 인식해 드래그할 수 있게 합니다">${c.ocr?'글자 다시 인식':'글자 인식(OCR)'}</button>`:''}`)
+     <button class="btn small" id="copyList">메모 복사</button><button class="btn small" id="exportBtn" title="문서와 표시·메모를 한 HTML 파일로 내보냅니다. 새 탭에서 「PDF로 저장」도 됩니다">내보내기</button>${isPdf(c)?`<button class="btn small" id="exportPdfBtn" title="원본 PDF 에 표시를 주석(형광·취소선·네모)으로 박고 메모를 팝업으로 넣어 내려받습니다. Acrobat·Edge 에서 마우스를 올리면 메모가 뜹니다">주석 PDF</button>`:''}${(isPdf(c)&&canEdit)?`<button class="btn small" id="ocrBtn" title="캡처본 PDF 처럼 글자층이 없는 문서의 글자를 인식해 드래그할 수 있게 합니다">${c.ocr?'글자 다시 인식':'글자 인식(OCR)'}</button>`:''}`)
     + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모, 그림 부분은 네모로 끌면 영역 메모 (Alt+1/2/3)':''} · Ctrl+휠 확대·축소 · 메모 이동 Alt+Q(위)/Alt+X(아래)${isPdf(c)?' · 쪽 이동 Alt+W/S, 번호 Alt+G':''} · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
   $('#modeDoc').addEventListener('click', ()=>{ pdfListMode=false; textRevMode=false; refreshPdfHead(c); });
@@ -1213,6 +1271,9 @@ function refreshPdfHead(c){
   const cr=$('#copyRev'); if (cr) cr.addEventListener('click', ()=>{ collectMarks(c); copyText(revisedText(c), '수정본을 복사했습니다'); });
   $('#copyList').addEventListener('click', ()=>{ collectMarks(c); copyText(listText(c, listItems(c)), '메모 목록을 복사했습니다'); });
   const xb=$('#exportBtn'); if (xb) xb.addEventListener('click', ()=>exportDoc(c));
+  const xp=$('#exportPdfBtn'); if (xp) xp.addEventListener('click', async ()=>{ xp.disabled=true; xp.textContent='만드는 중…';
+    try { collectMarks(c); const bytes=await exportPdfAnnots(c); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})); a.download=((c.title||'문서').replace(/[\\/:*?"<>|]/g,'_'))+' 주석.pdf'; document.body.appendChild(a); a.click(); a.remove(); toast(`주석 ${fmtN(c.marks.length)}개를 넣은 PDF 를 내려받았습니다`); }
+    catch(e){ toast('주석 PDF 실패: '+((e&&e.message)||e)); } finally { xp.disabled=false; xp.textContent='주석 PDF'; } });
   const ub=$('#undoBtn'), rb=$('#redoBtn'), cb=$('#clearBtn');
   if (ub) ub.addEventListener('click', ()=>undoMarks(c));
   if (rb) rb.addEventListener('click', ()=>redoMarks(c));
