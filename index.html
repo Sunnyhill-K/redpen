@@ -1587,6 +1587,7 @@ function renderEdit(main){
   let type = c.type || 'text'; let pdfB64 = c.pdf || ''; let pdfName = c.pdf ? '(저장된 PDF 유지)' : ''; let pdfDirty = !!c.pdfDirty;
   let wordHtml = c.html || ''; let wordName = c.html ? '(저장된 Word 내용 유지)' : '';
   const hasMarks = (c.marks||[]).length>0 && !isNew;
+  const edId='wordEd'+(++wordEdSeq); wordEdId=edId;
   main.innerHTML = `<div class="edit"><h2>${isNew?'새 퇴고':'정보 수정'}</h2>
     <div class="types" ${isNew?'':'hidden'}>
       <label class="${type==='text'?'on':''}"><input type="radio" name="ty" value="text" ${type==='text'?'checked':''}><div><b>텍스트</b><span>슬랙·블로그·붙여넣기. 원문 위에 바로 표시합니다.</span></div></label>
@@ -1608,7 +1609,7 @@ function renderEdit(main){
       <textarea id="fOrig" ${hasMarks?'readonly':''} placeholder="받은 글을 그대로 붙여 넣으세요.">${esc(c.src||'')}</textarea>
       <div class="drop">${hasMarks ? '<span>메모가 있는 문서의 원문은 바꿀 수 없습니다. 메모를 모두 지우면 바꿀 수 있습니다.</span>' : '<span>텍스트(.txt)·Word(.docx) 파일을 이 칸에 끌어다 놓으면 글자만 뽑아 넣습니다</span><label class="btn small">파일 선택<input type="file" data-for="fOrig" accept=".docx,.txt"></label>'}<span id="fMsgOrig"></span></div></div>
     <div class="pdfpick" id="wordPart"><label class="l">Word · 구글 문서</label>
-      <div class="wedit ${hasMarks?'ro':''}" id="wedBox"><textarea id="wordEd">${esc(wordHtml)}</textarea></div>
+      <div class="wedit ${hasMarks?'ro':''}" id="wedBox"><textarea id="${edId}">${esc(wordHtml)}</textarea></div>
       <div class="wedhint"><span>여기서 <b>바로 쓰거나</b> 구글 문서·Word 화면에서 복사해 붙여 넣으세요. 표·그림·굵게·글자색이 살아 있습니다.</span><span>단축키는 워드와 같습니다 — 도구줄 맨 끝 <b>⌨ 단축키</b>. 저장 <span class="kbd">Ctrl+S</span></span></div>
       <label class="zone" id="wzone">또는 .docx 파일을 끌어다 놓거나 눌러서 고르세요<input type="file" id="fWord" accept=".docx"><div class="f" id="wordName">${esc(wordName)}</div></label>
       ${hasMarks ? '<div class="msg">메모가 있는 문서의 본문은 바꿀 수 없습니다. 메모를 모두 지우면 바꿀 수 있습니다.</div>' : ''}</div>
@@ -1648,7 +1649,7 @@ function renderEdit(main){
   // 편집기는 Word 유형을 고른 순간 한 번만 띄운다(1.3MB 라 미리 안 부른다)
   let edStarted=false;
   const startEditor=async ()=>{ if (edStarted) return; edStarted=true;
-    try { await initWordEditor('#wordEd', {readonly:hasMarks, onDirty:()=>{ view.dirty=true; }, onSave:()=>{ const b=$('#doCompare'); if (b && !b.disabled) b.click(); }}); }
+    try { await initWordEditor('#'+edId, {readonly:hasMarks, onDirty:()=>{ view.dirty=true; }, onSave:()=>{ const b=$('#doCompare'); if (b && !b.disabled) b.click(); }}); }
     catch(e){ edStarted=false; $('#wordName').textContent='편집기를 못 불러왔습니다: '+((e&&e.message)||e); }
   };
   const pullWord=()=>{ const ed=wordEditor(); if (ed && !hasMarks){ wordHtml=sanitizeHtml(ed.getContent()); } return wordHtml; };
@@ -1698,8 +1699,9 @@ function renderEdit(main){
   });
 }
 // ══════════════ Word 편집기 (TinyMCE 6.8.6 · MIT · vendor/tinymce) — 워드식 단축키 ══════════════
-function wordEditor(){ return (window.tinymce && window.tinymce.get('wordEd')) || null; }
-function killWordEditor(){ const ed=wordEditor(); if (ed){ try { ed.remove(); } catch(e){} } }
+let wordEdSeq=0, wordEdId='';
+function wordEditor(){ return (window.tinymce && wordEdId && window.tinymce.get(wordEdId)) || null; }
+function killWordEditor(keepId){ if (!window.tinymce) return; [...window.tinymce.get()].forEach(ed=>{ if (/^wordEd/.test(ed.id) && ed.id!==keepId){ try { ed.remove(); } catch(e){} } }); }
 // 그림은 넣을 때 1600px·JPEG 로 줄여 문서 크기를 지킨다(문서 한 건이 깃헙 파일 하나라 커지면 저장이 느리다)
 function shrinkImage(blob){
   return new Promise((res)=>{ const url=URL.createObjectURL(blob); const im=new Image();
@@ -1717,7 +1719,7 @@ const WORD_KEYS=[
 async function initWordEditor(sel, opt){
   opt=opt||{};
   if (!window.tinymce) await loadScript('vendor/tinymce/tinymce.min.js');
-  killWordEditor();   // 다른 화면으로 갔다 돌아온 경우 옛 편집기 잔재 제거
+  killWordEditor(sel.replace(/^#/,''));   // 다른 화면으로 갔다 돌아온 경우 옛 편집기 잔재 제거(이번 대상만 남김)
   const base=new URL('vendor/tinymce/', location.href).href.replace(/\/$/,'');
   const fontPt=(ed)=>{ const el=ed.selection.getNode(); const px=parseFloat(ed.dom.getStyle(el,'font-size',true))||14.67; return Math.round(px*0.75*2)/2; };
   const setPt=(ed, pt)=>{ pt=Math.max(6, Math.min(72, pt)); ed.execCommand('FontSize', false, pt+'pt'); };
@@ -1769,7 +1771,8 @@ async function initWordEditor(sel, opt){
       sc('ctrl+s', ()=>{ if (opt.onSave) opt.onSave(); });
     }
   });
-  return eds && eds[0];
+  if (!eds || !eds.length) throw new Error('편집기를 붙이지 못했습니다. 화면을 다시 열어 주세요.');
+  return eds[0];
 }
 async function loadTextFile(file, target, msgEl){
   msgEl.textContent = '읽는 중…';
