@@ -211,6 +211,12 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .txtdoc.word p{margin:0 0 .7em} .txtdoc.word ul,.txtdoc.word ol{padding-left:1.6em;margin:0 0 .7em}
 .txtdoc.word table{border-collapse:collapse;margin:.6em 0;font-size:.92em;line-height:1.5}
 .txtdoc.word td,.txtdoc.word th{border:1px solid var(--rule);padding:4px 8px;vertical-align:top}
+.txtdoc.word table{max-width:100%} .txtdoc.word th{background:var(--paper-2);font-weight:600} .txtdoc.word hr{border:0;border-top:1px solid var(--rule);margin:1em 0} .txtdoc.word blockquote{margin:.6em 0;padding:.2em 1em;border-left:3px solid var(--rule);color:var(--ink-2)} .txtdoc.word pre{font-family:var(--mono);font-size:.9em;white-space:pre-wrap;background:var(--paper-2);padding:8px 10px;border-radius:4px} .txtdoc.word a{color:var(--ins);text-decoration:underline} .txtdoc.word figure{margin:.6em 0} .txtdoc.word img{height:auto}
+/* 편집기 */
+.wedit{border:1px solid var(--rule);border-radius:4px;overflow:hidden;background:#fff} .wedit .tox-tinymce{border:0!important} .wedit.ro{opacity:.85}
+.wedhint{font-size:calc(12px * var(--ui,1));color:var(--ink-2);margin:6px 0 0;display:flex;gap:12px;flex-wrap:wrap;align-items:center} .wedhint b{color:var(--ink)}
+.kbd{display:inline-block;font-family:var(--mono);font-size:.85em;border:1px solid var(--rule);border-bottom-width:2px;border-radius:3px;padding:0 5px;background:var(--paper-2);color:var(--ink)}
+.sclist{columns:2;column-gap:28px;font-size:14px;line-height:1.9} .sclist div{break-inside:avoid;display:flex;justify-content:space-between;gap:10px;border-bottom:1px dotted #ddd} .sclist h4{column-span:all;margin:10px 0 4px;font-size:13px;color:#666;letter-spacing:.08em}
 .txtdoc .hunk{border-radius:2px;padding:0 1px}
 .txtdoc .t-del,.txtdoc .t-rep{color:var(--del);text-decoration:line-through;text-decoration-thickness:1.5px;background:var(--del-bg)}
 .txtdoc .t-memo{background:var(--memo-bg);text-decoration:underline;text-decoration-color:var(--memo);text-decoration-thickness:1.5px;text-underline-offset:3px}
@@ -932,22 +938,28 @@ function autosize(t){ t.style.height='auto'; t.style.height = t.scrollHeight+'px
 
 // ══════════════ 텍스트·Word: 원문 위에 표시 (글자 위치 = 본문 텍스트 오프셋) ══════════════
 const stripTags = h => { const d=document.createElement('div'); d.innerHTML=h; return d.textContent||''; };
-const ALLOW = new Set(['p','h1','h2','h3','h4','h5','h6','ul','ol','li','table','thead','tbody','tr','td','th','strong','b','em','i','u','s','br','sup','sub','blockquote','span','div','img','hr']);
+const ALLOW = new Set(['p','h1','h2','h3','h4','h5','h6','ul','ol','li','table','thead','tbody','tfoot','tr','td','th','colgroup','col','strong','b','em','i','u','s','strike','br','sup','sub','blockquote','pre','span','div','img','hr','a','figure','figcaption']);
 function sanitizeHtml(html){
   const doc=new DOMParser().parseFromString(html,'text/html');
   const walk=el=>{ [...el.children].forEach(ch=>{ const t=ch.tagName.toLowerCase();
     if (!ALLOW.has(t)){ if (t==='script'||t==='style'||t==='meta'||t==='link'){ ch.remove(); return; } const frag=document.createDocumentFragment(); while (ch.firstChild) frag.appendChild(ch.firstChild); ch.replaceWith(frag); return; }
-    if (t==='img'){ const src=ch.getAttribute('src')||''; if (!/^(data:image\/|https:\/\/)/i.test(src) || src.length>1500000){ ch.remove(); return; } [...ch.attributes].forEach(a=>{ if (a.name!=='src') ch.removeAttribute(a.name); }); return; }
+    if (t==='img'){ const src=ch.getAttribute('src')||''; if (!/^(data:image\/|https:\/\/)/i.test(src) || src.length>4000000){ ch.remove(); return; }
+      // 그림은 주소와 크기만 남긴다(편집기에서 끌어 줄인 크기 유지)
+      const w=ch.getAttribute('width'), h=ch.getAttribute('height'); const ist=(ch.getAttribute('style')||'').toLowerCase(); const keepI=[];
+      ist.split(';').forEach(d=>{ const m=d.match(/^\s*(width|height|float|margin(?:-left|-right)?|display|vertical-align)\s*:\s*([^;]+)$/); if (m && !/url\(|expression|javascript/i.test(m[2])) keepI.push(m[1]+':'+m[2].trim()); });
+      [...ch.attributes].forEach(a=>ch.removeAttribute(a.name)); ch.setAttribute('src', src); if (w && /^\d+$/.test(w)) ch.setAttribute('width', w); if (h && /^\d+$/.test(h)) ch.setAttribute('height', h); if (keepI.length) ch.setAttribute('style', keepI.join(';')); return; }
+    if (t==='a'){ const href=ch.getAttribute('href')||''; [...ch.attributes].forEach(a=>ch.removeAttribute(a.name)); if (/^https?:\/\//i.test(href)){ ch.setAttribute('href', href); ch.setAttribute('target','_blank'); ch.setAttribute('rel','noopener noreferrer'); } walk(ch); return; }
     // 굵게·기울임·밑줄·취소선을 style 로만 표현한 경우(구글 문서)는 태그로 바꿔 남긴다
     const st=(ch.getAttribute('style')||'').toLowerCase(); let wrapTags=[];
     if (/font-weight:\s*(bold|[6-9]00)/.test(st)) wrapTags.push('b'); if (/font-style:\s*italic/.test(st)) wrapTags.push('i');
     if (/text-decoration[^;]*underline/.test(st)) wrapTags.push('u'); if (/text-decoration[^;]*line-through/.test(st)) wrapTags.push('s');
     const keep=[]; st.split(';').forEach(d=>{ const m=d.match(/^\s*([a-z-]+)\s*:\s*([^;]+)$/); if (!m) return; const k=m[1], v=m[2].trim();
-      if (!/^(color|background-color|font-size|font-family|font-weight|font-style|text-decoration|text-decoration-line|text-align|vertical-align|line-height)$/.test(k) || /url\(|expression|javascript/i.test(v)) return;
+      if (!/^(color|background-color|font-size|font-family|font-weight|font-style|text-decoration|text-decoration-line|text-decoration-style|text-decoration-color|text-align|vertical-align|line-height|letter-spacing|text-indent|padding-left|margin-left|width|height|min-width|border|border-color|border-width|border-style|border-collapse|list-style-type)$/.test(k) || /url\(|expression|javascript/i.test(v)) return;
+      if (/^(width|height|min-width)$/.test(k) && !/^(table|td|th|col|colgroup|figure)$/.test(t)) return;   // 크기는 표·칸에만(글자 상자에 폭이 붙으면 배치가 깨진다)
       // 글자 크기는 절대값(pt/px)을 본문 기준 배수(em)로 바꿔 문서 배율을 따라가게 한다 (구글 문서 기본 11pt)
       if (k==='font-size'){ const mm=v.match(/^(\d+(?:\.\d+)?)(pt|px)$/); if (mm){ const em=(+mm[1])/(mm[2]==='pt'?11:14.67); keep.push('font-size:'+em.toFixed(2)+'em'); } return; }
       keep.push(k+':'+v); });
-    [...ch.attributes].forEach(a=>{ if (!/^(colspan|rowspan)$/i.test(a.name)) ch.removeAttribute(a.name); });
+    [...ch.attributes].forEach(a=>{ if (!/^(colspan|rowspan|span)$/i.test(a.name)) ch.removeAttribute(a.name); });
     if (keep.length) ch.setAttribute('style', keep.join(';'));
     if (wrapTags.length && t==='span'){ let inner=ch; wrapTags.forEach(w=>{ const el=doc.createElement(w); while (inner.firstChild) el.appendChild(inner.firstChild); inner.appendChild(el); }); }
     walk(ch); }); };
@@ -1596,7 +1608,8 @@ function renderEdit(main){
       <textarea id="fOrig" ${hasMarks?'readonly':''} placeholder="받은 글을 그대로 붙여 넣으세요.">${esc(c.src||'')}</textarea>
       <div class="drop">${hasMarks ? '<span>메모가 있는 문서의 원문은 바꿀 수 없습니다. 메모를 모두 지우면 바꿀 수 있습니다.</span>' : '<span>텍스트(.txt)·Word(.docx) 파일을 이 칸에 끌어다 놓으면 글자만 뽑아 넣습니다</span><label class="btn small">파일 선택<input type="file" data-for="fOrig" accept=".docx,.txt"></label>'}<span id="fMsgOrig"></span></div></div>
     <div class="pdfpick" id="wordPart"><label class="l">Word · 구글 문서</label>
-      <div class="pastebox" id="pasteBox" contenteditable="${hasMarks?'false':'true'}" data-ph="구글 문서나 Word 에서 전체 선택(Ctrl+A) → 복사(Ctrl+C) 한 뒤 여기에 붙여 넣으세요(Ctrl+V). 표·굵게·그림이 그대로 들어옵니다.">${wordHtml}</div>
+      <div class="wedit ${hasMarks?'ro':''}" id="wedBox"><textarea id="wordEd">${esc(wordHtml)}</textarea></div>
+      <div class="wedhint"><span>여기서 <b>바로 쓰거나</b> 구글 문서·Word 화면에서 복사해 붙여 넣으세요. 표·그림·굵게·글자색이 살아 있습니다.</span><span>단축키는 워드와 같습니다 — 도구줄 맨 끝 <b>⌨ 단축키</b>. 저장 <span class="kbd">Ctrl+S</span></span></div>
       <label class="zone" id="wzone">또는 .docx 파일을 끌어다 놓거나 눌러서 고르세요<input type="file" id="fWord" accept=".docx"><div class="f" id="wordName">${esc(wordName)}</div></label>
       ${hasMarks ? '<div class="msg">메모가 있는 문서의 본문은 바꿀 수 없습니다. 메모를 모두 지우면 바꿀 수 있습니다.</div>' : ''}</div>
     <div class="pdfpick" id="pdfPart"><label class="l">PDF 파일</label>
@@ -1611,8 +1624,8 @@ function renderEdit(main){
   const readVis=()=>{ const all=visBoxes(); const on=all.filter(b=>b.checked).map(b=>b.dataset.id); return (on.length===all.length) ? null : on; };
   const syncType = ()=>{ $('#textPart').hidden = type!=='text'; $('#wordPart').hidden = type!=='word'; $('#pdfPart').hidden = type!=='pdf';
     main.querySelectorAll('.types label').forEach(l=>l.classList.toggle('on', l.querySelector('input').value===type)); };
-  syncType();
-  main.querySelectorAll('input[name=ty]').forEach(r=>r.addEventListener('change', ()=>{ type=r.value; syncType(); }));
+  syncType(); if (type==='word') startEditor();
+  main.querySelectorAll('input[name=ty]').forEach(r=>r.addEventListener('change', ()=>{ type=r.value; syncType(); if (type==='word') startEditor(); }));
   const count = ()=>{ $('#cOrig').textContent = fmtN($('#fOrig').value.replace(/\s/g,'').length)+'자'; };
   count();
   const t=$('#fOrig'); t.addEventListener('input', ()=>{ count(); view.dirty=true; });
@@ -1627,19 +1640,18 @@ function renderEdit(main){
     if (!/\.docx$/i.test(f.name)){ $('#wordName').textContent='.docx 파일만 넣을 수 있습니다. (.doc 는 Word 에서 .docx 로 저장)'; return; }
     $('#wordName').textContent='읽는 중…';
     try { if (!window.mammoth) await loadScript('vendor/mammoth.browser.min.js');
-      const r=await window.mammoth.convertToHtml({arrayBuffer: await f.arrayBuffer()}); wordHtml=sanitizeHtml(r.value); wordName=f.name; $('#pasteBox').innerHTML=wordHtml;
+      const r=await window.mammoth.convertToHtml({arrayBuffer: await f.arrayBuffer()}); wordHtml=sanitizeHtml(r.value); wordName=f.name; const ed=wordEditor(); if (ed) ed.setContent(wordHtml);
       $('#wordName').textContent=`${f.name} · ${fmtN(stripTags(wordHtml).replace(/\s/g,'').length)}자`; view.dirty=true;
       if (!$('#fTitle').value.trim()) $('#fTitle').value=f.name.replace(/\.docx$/i,'');
     } catch(e){ $('#wordName').textContent='실패: '+(e.message||e); }
   };
-  const pb=$('#pasteBox');
-  pb.addEventListener('paste', e=>{
-    if (hasMarks) return; e.preventDefault();
-    const html=(e.clipboardData||window.clipboardData).getData('text/html'); const txt=(e.clipboardData||window.clipboardData).getData('text/plain');
-    const clean = html ? sanitizeHtml(html) : `<p>${esc(txt).replace(/\n/g,'<br>')}</p>`;
-    pb.innerHTML = clean; wordHtml = clean; wordName='(붙여넣기)'; view.dirty=true; $('#wordName').textContent=`붙여 넣은 내용 · ${fmtN(stripTags(clean).replace(/\s/g,'').length)}자`;
-  });
-  pb.addEventListener('input', ()=>{ if (!hasMarks){ wordHtml = sanitizeHtml(pb.innerHTML); view.dirty=true; } });
+  // 편집기는 Word 유형을 고른 순간 한 번만 띄운다(1.3MB 라 미리 안 부른다)
+  let edStarted=false;
+  const startEditor=async ()=>{ if (edStarted) return; edStarted=true;
+    try { await initWordEditor('#wordEd', {readonly:hasMarks, onDirty:()=>{ view.dirty=true; }, onSave:()=>{ const b=$('#doCompare'); if (b && !b.disabled) b.click(); }}); }
+    catch(e){ edStarted=false; $('#wordName').textContent='편집기를 못 불러왔습니다: '+((e&&e.message)||e); }
+  };
+  const pullWord=()=>{ const ed=wordEditor(); if (ed && !hasMarks){ wordHtml=sanitizeHtml(ed.getContent()); } return wordHtml; };
   const wz=$('#wzone');
   wz.addEventListener('dragover', e=>{ e.preventDefault(); wz.classList.add('over'); }); wz.addEventListener('dragleave', ()=>wz.classList.remove('over'));
   wz.addEventListener('drop', e=>{ e.preventDefault(); wz.classList.remove('over'); const f=e.dataTransfer.files[0]; if (f) takeWord(f); });
@@ -1663,7 +1675,7 @@ function renderEdit(main){
   zone.addEventListener('dragleave', ()=>zone.classList.remove('over'));
   zone.addEventListener('drop', e=>{ e.preventDefault(); zone.classList.remove('over'); const f=e.dataTransfer.files[0]; if (f) takePdf(f); });
   $('#fPdf').addEventListener('change', ()=>{ const f=$('#fPdf').files[0]; if (f) takePdf(f); });
-  $('#cancelEdit').addEventListener('click', ()=>{ view = {mode: isNew?'list':'case', id:c.id, draft:null, dirty:false, show:'side'}; render(); });
+  $('#cancelEdit').addEventListener('click', ()=>{ killWordEditor(); view = {mode: isNew?'list':'case', id:c.id, draft:null, dirty:false, show:'side'}; render(); });
   $('#doCompare').addEventListener('click', async ()=>{
     const base = {title:$('#fTitle').value.trim()||'(제목 없음)', client:$('#fClient').value.trim()};
     const lockPw=$('#fLock').value; const unlockReq = !!($('#fUnlock') && $('#fUnlock').checked);
@@ -1674,7 +1686,7 @@ function renderEdit(main){
       if (!pdfB64) return err('PDF 파일을 넣어 주세요.');
       d = Object.assign({}, c, base, {type:'pdf', id, pdf: pdfB64, pdfDirty, marks: c.marks||[], lockPw, unlockReq, vis:readVis()}); delete d.src; delete d.html;
     } else if (type==='word'){
-      if (!wordHtml) return err('Word 파일을 넣어 주세요.');
+      pullWord(); if (!stripTags(wordHtml).trim() && !/<img|<table/i.test(wordHtml)) return err('본문을 쓰거나 붙여 넣어 주세요.');
       d = Object.assign({}, c, base, {type:'word', id, html: wordHtml, marks: (hasMarks?c.marks:[]), lockPw, unlockReq, vis:readVis()}); delete d.pdf; delete d.pages; delete d.src;
     } else {
       const src=$('#fOrig').value; if (!src.trim()) return err('원문을 넣어 주세요.');
@@ -1682,8 +1694,82 @@ function renderEdit(main){
     }
     view = {mode:'case', id:d.id, draft:d, dirty:true, show:'side'};
     const btn=$('#doCompare'); const msgEl=$('#editMsg'); msgEl.className='msg'; msgEl.id='saveMsg';
-    await saveDoc(d, btn);
+    await saveDoc(d, btn); killWordEditor();
   });
+}
+// ══════════════ Word 편집기 (TinyMCE 6.8.6 · MIT · vendor/tinymce) — 워드식 단축키 ══════════════
+function wordEditor(){ return (window.tinymce && window.tinymce.get('wordEd')) || null; }
+function killWordEditor(){ const ed=wordEditor(); if (ed){ try { ed.remove(); } catch(e){} } }
+// 그림은 넣을 때 1600px·JPEG 로 줄여 문서 크기를 지킨다(문서 한 건이 깃헙 파일 하나라 커지면 저장이 느리다)
+function shrinkImage(blob){
+  return new Promise((res)=>{ const url=URL.createObjectURL(blob); const im=new Image();
+    im.onload=()=>{ URL.revokeObjectURL(url); const MAX=1600; let w=im.naturalWidth, h=im.naturalHeight; const png=/png|gif|svg/i.test(blob.type) && blob.size<400000;
+      if (w<=MAX && h<=MAX && blob.size<600000){ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(blob); return; }
+      const k=Math.min(1, MAX/Math.max(w,h)); const cv=document.createElement('canvas'); cv.width=Math.round(w*k); cv.height=Math.round(h*k); const ctx=cv.getContext('2d');
+      if (!png){ ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height); } ctx.drawImage(im,0,0,cv.width,cv.height); res(png ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg',0.86)); };
+    im.onerror=()=>{ URL.revokeObjectURL(url); const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(blob); }; im.src=url; });
+}
+const WORD_KEYS=[
+  ['글자', [['굵게','Ctrl+B'],['기울임','Ctrl+I'],['밑줄','Ctrl+U'],['취소선','Ctrl+Shift+X'],['아래 첨자','Ctrl+='],['위 첨자','Ctrl+Shift+='],['글자 키우기','Ctrl+] · Ctrl+Shift+>'],['글자 줄이기','Ctrl+[ · Ctrl+Shift+<'],['자간 넓게 / 좁게','Ctrl+Alt+] / Ctrl+Alt+[']]],
+  ['문단', [['왼쪽 맞춤','Ctrl+L'],['가운데','Ctrl+E'],['오른쪽 맞춤','Ctrl+R'],['양쪽 맞춤','Ctrl+J'],['줄 간격 1 / 1.5 / 2','Ctrl+1 / Ctrl+5 / Ctrl+2'],['글머리 기호','Ctrl+Shift+L · Ctrl+Shift+8'],['번호 매기기','Ctrl+Shift+7'],['들여쓰기 / 내어쓰기','Ctrl+M / Ctrl+Shift+M'],['제목 1·2·3','Ctrl+Alt+1·2·3'],['본문(표준)','Ctrl+Shift+N']]],
+  ['넣기·기타', [['표 넣기','Ctrl+Alt+T'],['그림 넣기','Ctrl+Alt+I'],['링크','Ctrl+K'],['찾기·바꾸기','Ctrl+F · Ctrl+H'],['되돌리기 / 다시 실행','Ctrl+Z / Ctrl+Y'],['저장','Ctrl+S']]],
+];
+async function initWordEditor(sel, opt){
+  opt=opt||{};
+  if (!window.tinymce) await loadScript('vendor/tinymce/tinymce.min.js');
+  killWordEditor();   // 다른 화면으로 갔다 돌아온 경우 옛 편집기 잔재 제거
+  const base=new URL('vendor/tinymce/', location.href).href.replace(/\/$/,'');
+  const fontPt=(ed)=>{ const el=ed.selection.getNode(); const px=parseFloat(ed.dom.getStyle(el,'font-size',true))||14.67; return Math.round(px*0.75*2)/2; };
+  const setPt=(ed, pt)=>{ pt=Math.max(6, Math.min(72, pt)); ed.execCommand('FontSize', false, pt+'pt'); };
+  const spacing=(ed, d)=>{ const el=ed.selection.getNode(); const cur=parseFloat(ed.dom.getStyle(el,'letter-spacing',true))||0; const px=parseFloat(ed.dom.getStyle(el,'font-size',true))||14.67; let em=Math.round((cur/px+d)*100)/100; if (Math.abs(em)<0.005) ed.formatter.remove('letterspacing'); else ed.formatter.apply('letterspacing',{value:em+'em'}); ed.nodeChanged(); };
+  const eds=await window.tinymce.init({
+    selector: sel, base_url: base, suffix:'.min', language:'ko_KR', language_url: base+'/langs/ko_KR.js',
+    skin_url: base+'/skins/ui/oxide', content_css: base+'/skins/content/default/content.min.css',
+    height: Math.max(420, Math.round(window.innerHeight*0.62)), resize:true, branding:false, promotion:false, statusbar:true, elementpath:false,
+    readonly: !!opt.readonly, browser_spellcheck:true, convert_urls:false, entity_encoding:'raw',
+    plugins:'table image lists advlist link autolink searchreplace charmap wordcount',
+    menubar:'edit insert format table', contextmenu:'link image table',
+    toolbar:'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough forecolor backcolor removeformat | alignleft aligncenter alignright alignjustify | lineheight letterspacing | bullist numlist outdent indent | table image link charmap | searchreplace | wordkeys',
+    toolbar_mode:'wrap',
+    block_formats:'본문=p; 제목 1=h1; 제목 2=h2; 제목 3=h3; 인용=blockquote; 고정폭=pre',
+    font_family_formats:'기본=inherit; 명조=Noto Serif KR,Nanum Myeongjo,Batang,serif; 고딕=IBM Plex Sans KR,Apple SD Gothic Neo,Malgun Gothic,sans-serif; 고정폭=IBM Plex Mono,Consolas,monospace',
+    font_size_formats:'8pt 9pt 10pt 10.5pt 11pt 12pt 13pt 14pt 16pt 18pt 20pt 24pt 28pt 36pt',
+    line_height_formats:'1 1.15 1.3 1.5 1.7 1.9 2 2.5 3',
+    paste_data_images:true, automatic_uploads:true, images_reuse_filename:true, image_dimensions:true, image_title:false, image_description:false, object_resizing:true,
+    images_upload_handler: (info)=>shrinkImage(info.blob()),
+    file_picker_types:'image',
+    file_picker_callback: (cb)=>{ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.onchange=async ()=>{ const f=inp.files[0]; if (!f) return; cb(await shrinkImage(f), {alt:''}); }; inp.click(); },
+    table_default_attributes:{}, table_default_styles:{'border-collapse':'collapse', width:'100%'}, table_advtab:false, table_cell_advtab:false, table_row_advtab:false, table_use_colgroups:false,
+    content_style:'body{font-family:"Noto Serif KR",AppleMyungjo,"Nanum Myeongjo",Batang,serif;font-size:11pt;line-height:1.9;color:#1F2430;padding:26px 34px;max-width:none} p{margin:0 0 .7em} h1,h2,h3{font-family:"IBM Plex Sans KR","Malgun Gothic",sans-serif;line-height:1.35;margin:1.2em 0 .5em} h1{font-size:1.45em} h2{font-size:1.25em} h3{font-size:1.1em} table{border-collapse:collapse;margin:.6em 0;font-size:.92em;line-height:1.5;max-width:100%} td,th{border:1px solid #C3D6CA;padding:4px 8px;vertical-align:top} th{background:#F1F2ED;font-weight:600} img{max-width:100%;height:auto} blockquote{margin:.6em 0;padding:.2em 1em;border-left:3px solid #C3D6CA;color:#5B6270} pre{font-family:Consolas,monospace;font-size:.9em;white-space:pre-wrap;background:#F1F2ED;padding:8px 10px;border-radius:4px} hr{border:0;border-top:1px solid #C3D6CA}',
+    setup: (ed)=>{
+      ed.on('init', ()=>{ ed.formatter.register('letterspacing', {inline:'span', styles:{letterSpacing:'%value'}, remove_similar:true}); });
+      ed.on('input change undo redo SetContent', ()=>{ if (opt.onDirty) opt.onDirty(); });
+      // 자간 메뉴
+      ed.ui.registry.addMenuButton('letterspacing', {text:'자간', tooltip:'글자 사이 간격 (Ctrl+Alt+] / [)', fetch:(cb)=>cb([
+        {type:'menuitem', text:'좁게 (-0.05)', onAction:()=>ed.formatter.apply('letterspacing',{value:'-0.05em'})},
+        {type:'menuitem', text:'조금 좁게 (-0.02)', onAction:()=>ed.formatter.apply('letterspacing',{value:'-0.02em'})},
+        {type:'menuitem', text:'보통', onAction:()=>ed.formatter.remove('letterspacing')},
+        {type:'menuitem', text:'조금 넓게 (+0.05)', onAction:()=>ed.formatter.apply('letterspacing',{value:'0.05em'})},
+        {type:'menuitem', text:'넓게 (+0.1)', onAction:()=>ed.formatter.apply('letterspacing',{value:'0.1em'})},
+        {type:'menuitem', text:'아주 넓게 (+0.2)', onAction:()=>ed.formatter.apply('letterspacing',{value:'0.2em'})}])});
+      ed.ui.registry.addButton('wordkeys', {text:'⌨ 단축키', tooltip:'워드식 단축키 목록', onAction:()=>{
+        const html='<div class="sclist">'+WORD_KEYS.map(([g,rows])=>`<h4>${g}</h4>`+rows.map(([n,k])=>`<div><span>${n}</span><b>${k}</b></div>`).join('')).join('')+'</div>';
+        ed.windowManager.open({title:'단축키 (워드와 같게)', size:'medium', body:{type:'panel', items:[{type:'htmlpanel', html}]}, buttons:[{type:'cancel', text:'닫기'}]}); }});
+      // 워드식 단축키 (키 번호: ] 221 · [ 219 · = 187 · > 190 · < 188 · 7 55 · 8 56)
+      const sc=(k,f)=>ed.addShortcut(k, '', f);
+      sc('ctrl+l', ()=>ed.execCommand('JustifyLeft')); sc('ctrl+e', ()=>ed.execCommand('JustifyCenter')); sc('ctrl+r', ()=>ed.execCommand('JustifyRight')); sc('ctrl+j', ()=>ed.execCommand('JustifyFull'));
+      sc('ctrl+1', ()=>ed.execCommand('LineHeight', false, '1')); sc('ctrl+5', ()=>ed.execCommand('LineHeight', false, '1.5')); sc('ctrl+2', ()=>ed.execCommand('LineHeight', false, '2'));
+      sc('ctrl+221', ()=>setPt(ed, fontPt(ed)+1)); sc('ctrl+219', ()=>setPt(ed, fontPt(ed)-1)); sc('ctrl+shift+190', ()=>setPt(ed, fontPt(ed)+2)); sc('ctrl+shift+188', ()=>setPt(ed, fontPt(ed)-2));
+      sc('ctrl+alt+221', ()=>spacing(ed, 0.02)); sc('ctrl+alt+219', ()=>spacing(ed, -0.02));
+      sc('ctrl+alt+1', ()=>ed.execCommand('FormatBlock', false, 'h1')); sc('ctrl+alt+2', ()=>ed.execCommand('FormatBlock', false, 'h2')); sc('ctrl+alt+3', ()=>ed.execCommand('FormatBlock', false, 'h3')); sc('ctrl+shift+n', ()=>ed.execCommand('FormatBlock', false, 'p'));
+      sc('ctrl+shift+l', ()=>ed.execCommand('InsertUnorderedList')); sc('ctrl+shift+56', ()=>ed.execCommand('InsertUnorderedList')); sc('ctrl+shift+55', ()=>ed.execCommand('InsertOrderedList'));
+      sc('ctrl+m', ()=>ed.execCommand('Indent')); sc('ctrl+shift+m', ()=>ed.execCommand('Outdent'));
+      sc('ctrl+shift+x', ()=>ed.execCommand('Strikethrough')); sc('ctrl+187', ()=>ed.execCommand('Subscript')); sc('ctrl+shift+187', ()=>ed.execCommand('Superscript'));
+      sc('ctrl+alt+t', ()=>ed.execCommand('mceInsertTableDialog')); sc('ctrl+alt+i', ()=>ed.execCommand('mceImage')); sc('ctrl+h', ()=>ed.execCommand('SearchReplace'));
+      sc('ctrl+s', ()=>{ if (opt.onSave) opt.onSave(); });
+    }
+  });
+  return eds && eds[0];
 }
 async function loadTextFile(file, target, msgEl){
   msgEl.textContent = '읽는 중…';
