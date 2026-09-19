@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T21:21:51+09:00">
+<meta name="build" content="2026-09-19T21:25:00+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -110,7 +110,7 @@ a{color:var(--ins)}
 .shell.nrail .railbtns{align-items:center}
 .selbar{padding:0 12px 8px;display:flex;gap:6px}
 .imenu{position:fixed;z-index:30;background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:0 6px 18px rgba(0,0,0,.18);display:flex;flex-direction:column;min-width:140px;padding:4px}
-.imenu button{border:0;background:transparent;text-align:left;padding:7px 10px;border-radius:3px;cursor:pointer}
+.imenu button{border:0;background:transparent;text-align:left;padding:7px 10px;border-radius:3px;cursor:pointer;white-space:normal;line-height:1.4} .imenu{max-width:min(520px,92vw)}
 .imenu button:hover{background:var(--paper-2)}
 .imenu button.d{color:var(--del)}
 .cases li:hover{background:var(--paper-3)}
@@ -627,8 +627,8 @@ function renderHelp(main){
   <tr><td>「서식까지 복사」 (수정본, Word·HTML 유형)</td><td><ul class="cl"><li>구글 문서</li><li>Word</li><li>Gmail</li><li>네이버 편집기</li></ul></td><td><ul class="cl"><li>굵게·색·표가 따라갑니다</li><li><b>단 붙여 넣는 쪽이 자기 규칙으로 일부를 걷어냅니다</b>(네이버는 글꼴·자간·표 폭, Gmail 은 표 테두리 등)</li><li>붙여 넣은 뒤 한 번 훑어 주세요</li></ul></td></tr>
   <tr><td>「수정본 복사」 (글자만)</td><td><ul class="cl"><li>슬랙</li><li>메모장</li><li>카톡</li></ul></td><td>삭제·바꾸기를 반영한 본문이 글자로만 들어갑니다</td></tr>
   <tr><td><ul class="cl"><li>「HTML 복사」</li><li>「HTML 내려받기」</li></ul></td><td><ul class="cl"><li>홈페이지 HTML 편집기</li><li>블로그 HTML 편집기</li></ul></td><td><ul class="cl"><li>HTML 복사: 수정본을 HTML 코드로</li><li>HTML 내려받기: 혼자 열리는 .html 파일로</li></ul></td></tr>
-  <tr><td>「내보내기」</td><td>메모까지 봐야 하는 사람(파일로)</td><td><ul class="cl"><li>HTML 한 파일</li><li>번호 딱지에 마우스를 올리면 메모 팝업</li><li>인쇄로 PDF 저장도 됩니다</li></ul></td></tr>
-  <tr><td>「주석 PDF」</td><td>PDF 로 받아 보는 사람</td><td><ul class="cl"><li>표시가 PDF 주석으로, 메모가 팝업으로 들어갑니다(Acrobat·Edge)</li><li>텍스트·Word·HTML 유형은 쪽이 그림이라 PDF 안 글자 선택은 안 됩니다</li></ul></td></tr>
+  <tr><td>「내보내기 ▾ → HTML 로」</td><td>메모까지 봐야 하는 사람(파일로)</td><td><ul class="cl"><li>HTML 한 파일</li><li>번호 딱지에 마우스를 올리면 메모 팝업</li><li>인쇄로 PDF 저장도 됩니다</li></ul></td></tr>
+  <tr><td>「내보내기 ▾ → 주석 PDF 로」</td><td>PDF 로 받아 보는 사람</td><td><ul class="cl"><li>표시가 PDF 주석으로, 메모가 팝업으로 들어갑니다(Acrobat·Edge)</li><li>텍스트·Word·HTML 유형은 쪽이 그림이라 PDF 안 글자 선택은 안 됩니다</li></ul></td></tr>
   <tr><td>「링크 복사」</td><td>계정이 있는 팀원</td><td><ul class="cl"><li>같은 화면을 열어 이어서 메모할 수 있습니다</li><li>계정 없는 사람은 못 엽니다</li></ul></td></tr></table>
   <p class="msg">「수정본」은 삭제·바꾸기 표시를 반영한 결과이고, 메모 글은 들어가지 않습니다. 메모까지 전하려면 「내보내기」나 「주석 PDF」를 쓰세요.</p></section>
   <section><h3>3. 퇴고 표시와 메모</h3>
@@ -1440,7 +1440,7 @@ function refreshPdfHead(c){
      <button class="btn small ico" id="redoBtn" aria-label="다시 실행" title="다시 실행 (Ctrl+Shift+Z)${hist.redo.length?' · '+fmtN(hist.redo.length)+'개 · '+esc(hist.redo[hist.redo.length-1].l):''}" ${hist.redo.length?'':'disabled'}>↷${hist.redo.length?`<sup>${fmtN(hist.redo.length)}</sup>`:''}</button>
      <button class="btn small" id="histBtn" title="되돌리기 이력을 보고 골라서 되돌아가기" ${(hist.undo.length||hist.redo.length)?'':'disabled'}>실행 기록</button>` : ''}
      ${(isPdf(c)&&canEdit)?`<button class="btn small ${areaMode?'on':''}" id="areaBtn" title="켜면 글자가 아닌 부분에서도 영역을 드래그하여 선택할 수 있습니다. 그림 부분은 켜지 않아도 그냥 끌면 됩니다 · Alt+A">${areaMode?'영역 선택 끝':'영역 선택'}</button>`:''}
-     <button class="btn small" id="copyList">메모 복사</button><button class="btn small" id="exportBtn" title="문서와 표시·메모를 한 HTML 파일로 내보냅니다. 새 탭에서 「PDF로 저장」도 됩니다">내보내기</button><button class="btn small" id="exportPdfBtn" title="${isPdf(c)?'원본 PDF 에 표시를 주석(형광·취소선·네모)으로 박고 메모를 팝업으로 넣어 내려받습니다':'문서를 A4 쪽으로 찍어 PDF 로 만들고 표시를 주석(형광·취소선)으로, 메모를 팝업으로 넣어 내려받습니다(글자는 그림이라 선택은 안 됩니다)'}. Acrobat·Edge 에서 마우스를 올리면 메모가 뜹니다">주석 PDF</button>${(isPdf(c)&&canEdit)?`<button class="btn small" id="ocrBtn" title="캡처본 PDF 처럼 글자층이 없는 문서의 글자를 인식해 드래그할 수 있게 합니다">${c.ocr?'글자 다시 인식':'글자 인식(OCR)'}</button>`:''}`)
+     <button class="btn small" id="copyList">메모 복사</button><button class="btn small" id="exportBtn" title="문서와 표시·메모를 파일로 — HTML(메모 팝업, 인쇄로 PDF) 또는 주석 PDF">내보내기 ▾</button><button id="exportPdfBtn" hidden></button>${(isPdf(c)&&canEdit)?`<button class="btn small" id="ocrBtn" title="캡처본 PDF 처럼 글자층이 없는 문서의 글자를 인식해 드래그할 수 있게 합니다">${c.ocr?'글자 다시 인식':'글자 인식(OCR)'}</button>`:''}`)
     + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모, 그림 부분은 네모로 끌면 영역 메모 (Alt+1/2/3)':''} · Ctrl+휠 확대·축소 · 메모 이동 Alt+↑/↓ (Alt+Q/X 도 됨)${isPdf(c)?' · 쪽 이동 Alt+W/S, 번호 Alt+G':''} · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
   $('#modeDoc').addEventListener('click', ()=>{ pdfListMode=false; textRevMode=false; refreshPdfHead(c); });
@@ -1451,10 +1451,12 @@ function refreshPdfHead(c){
   const ch=$('#copyHtml'); if (ch) ch.addEventListener('click', ()=>{ collectMarks(c); copyText(standaloneHtml(c, true), 'HTML 코드를 복사했습니다'); });
   const dh=$('#dlHtml'); if (dh) dh.addEventListener('click', ()=>{ collectMarks(c); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([standaloneHtml(c, true)],{type:'text/html'})); a.download=((c.title||'문서').replace(/[\\/:*?"<>|]/g,'_'))+' 수정본.html'; document.body.appendChild(a); a.click(); a.remove(); toast('수정본 HTML 을 내려받았습니다'); });
   $('#copyList').addEventListener('click', ()=>{ collectMarks(c); copyText(listText(c, listItems(c)), '메모 목록을 복사했습니다'); });
-  const xb=$('#exportBtn'); if (xb) xb.addEventListener('click', ()=>exportDoc(c));
-  const xp=$('#exportPdfBtn'); if (xp) xp.addEventListener('click', async ()=>{ xp.disabled=true; xp.textContent='만드는 중…';
+  const xb=$('#exportBtn'); if (xb) xb.addEventListener('click', ()=>{ const r=xb.getBoundingClientRect(); showLinkMenu(r.left, r.bottom+4, [
+    {l:'HTML 로 내보내기 — 딱지에 마우스 올리면 메모 팝업 · 인쇄로 PDF 저장', f:()=>exportDoc(c)},
+    {l: isPdf(c) ? '주석 PDF 로 내보내기 — 원본 PDF 에 표시·메모를 주석으로 (Acrobat·Edge 팝업)' : '주석 PDF 로 내보내기 — 쪽을 그림으로 찍어 표시·메모를 주석으로 (글자 선택 불가)', f:()=>{ const b=$('#exportPdfBtn'); if (b) b.click(); }}]); });
+  const xp=$('#exportPdfBtn'); if (xp) xp.addEventListener('click', async ()=>{ const xb2=$('#exportBtn'); if (xb2){ xb2.disabled=true; xb2.textContent='만드는 중…'; }
     try { collectMarks(c); const bytes=await (isPdf(c) ? exportPdfAnnots(c) : exportDomPdfAnnots(c)); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})); a.download=((c.title||'문서').replace(/[\\/:*?"<>|]/g,'_'))+' 주석.pdf'; document.body.appendChild(a); a.click(); a.remove(); toast(`주석 ${fmtN(c.marks.length)}개를 넣은 PDF 를 내려받았습니다`); }
-    catch(e){ toast('주석 PDF 실패: '+((e&&e.message)||e)); } finally { xp.disabled=false; xp.textContent='주석 PDF'; } });
+    catch(e){ toast('주석 PDF 실패: '+((e&&e.message)||e)); } finally { if (xb2){ xb2.disabled=false; xb2.textContent='내보내기 ▾'; } } });
   const ub=$('#undoBtn'), rb=$('#redoBtn'), cb=$('#clearBtn');
   if (ub) ub.addEventListener('click', ()=>undoMarks(c));
   if (rb) rb.addEventListener('click', ()=>redoMarks(c));
