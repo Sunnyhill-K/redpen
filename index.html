@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-19T21:02:45+09:00">
+<meta name="build" content="2026-09-19T21:06:52+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -236,7 +236,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .txtdoc ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px;background:var(--ins-bg);border-radius:2px;padding:0 1px}
 .hide-marks .txtdoc .hunk{color:inherit;text-decoration:none;background:transparent}
 /* 문서(특히 HTML 유형)의 자체 CSS 가 딱지를 덮어쓰지 못하게 — 글 흐름 안에서 제 자리를 차지해 글자를 가리지 않는다 */
-.txtdoc .hunk+.mk,.txtdoc .mk{display:inline-block!important;position:static!important;float:none!important;width:auto!important;height:auto!important;min-width:0!important;max-width:none!important;margin:0 3px 0 2px!important;padding:2px 4px!important;line-height:1!important;font-size:calc(10.5px * var(--ui,1))!important;vertical-align:super!important;letter-spacing:0!important;word-spacing:0!important;white-space:nowrap!important;transform:none!important;box-sizing:content-box!important;text-indent:0!important;background:var(--paper)!important;z-index:1;position:relative!important}
+.txtdoc .hunk+.mk,.txtdoc .mk{display:inline-block!important;position:static!important;float:none!important;width:auto!important;height:auto!important;min-width:0!important;max-width:none!important;margin:0 3px 0 2px!important;padding:2px 4px!important;line-height:1!important;font-size:calc(10.5px * var(--ui,1))!important;vertical-align:super!important;letter-spacing:0!important;word-spacing:0!important;white-space:nowrap!important;transform:none!important;box-sizing:content-box!important;text-indent:0!important;z-index:1;position:relative!important}
 .hide-marks .txtdoc .mk{display:none!important}
 .txtdoc .pop{position:absolute}
 
@@ -279,6 +279,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
 .marks .mk.memo{color:#2E7D4F;border-color:#7FC49A}
 .marks .mk.rep{color:#B8860B;border-color:#E1C468} .marks .mk.rep:hover,.marks .mk.rep.hot{background:#B8860B;color:#fff}
 .mk.rep{color:var(--rep);border-color:var(--rep-line)} .mk.rep:hover,.mk.rep.hot{background:var(--rep);color:#fff}
+.mk.memo{color:var(--memo);border-color:#7FC49A} .mk.memo:hover,.mk.memo.hot{background:var(--memo);color:#fff}
 .marks .mk.memo:hover,.marks .mk.memo.hot{background:#2E7D4F;color:#fff}
 .hide-marks .marks{display:none}
 .pop{position:absolute;z-index:6;display:flex;gap:4px;background:var(--btn);padding:4px;border-radius:5px;box-shadow:0 3px 10px rgba(0,0,0,.25);transform:translate(-50%,8px)}
