@@ -1746,6 +1746,20 @@ function cleanPasteHtml(html){
   doc.querySelectorAll('meta, style, script, link').forEach(e=>e.remove());
   return doc.body.innerHTML;
 }
+// 편집기 본문의 https 그림을 받아 data: 로 바꿔 넣는다(실패하면 주소 그대로 둔다). 같은 주소는 한 번만 받는다
+const _imgInl=new Map();
+async function inlineExternalImages(ed){
+  const imgs=[...ed.getBody().querySelectorAll('img')].filter(i=>/^https?:\/\//i.test(i.getAttribute('src')||'') && !i.dataset.inl);
+  if (!imgs.length) return;
+  for (const im of imgs){ im.dataset.inl='1'; const url=im.getAttribute('src');
+    try {
+      let data=_imgInl.get(url);
+      if (!data){ const r=await fetch(url, {mode:'cors', referrerPolicy:'no-referrer'}); if (!r.ok) throw new Error(r.status); const b=await r.blob(); if (!/^image\//.test(b.type)) throw new Error('not image'); data=await shrinkImage(b); _imgInl.set(url, data); }
+      if (im.isConnected){ ed.dom.setAttribs(im, {src:data, 'data-mce-src':data}); ed.undoManager.ignore(()=>{}); if (!im.getAttribute('width') && !im.style.width){ /* 크기는 그림대로 */ } }
+    } catch(e){ /* 못 받으면 주소 그대로 */ }
+  }
+  ed.setDirty(true);
+}
 async function initWordEditor(sel, opt){
   opt=opt||{};
   if (!window.tinymce) await loadScript('vendor/tinymce/tinymce.min.js');
@@ -1776,7 +1790,12 @@ async function initWordEditor(sel, opt){
     table_default_attributes:{}, table_default_styles:{'border-collapse':'collapse', width:'100%'}, table_advtab:false, table_cell_advtab:false, table_row_advtab:false, table_use_colgroups:false,
     content_style:'body{font-family:"Noto Serif KR",AppleMyungjo,"Nanum Myeongjo",Batang,serif;font-size:11pt;line-height:1.9;color:#1F2430;padding:26px 34px;max-width:none} p{margin:0 0 .7em} h1,h2,h3{font-family:"IBM Plex Sans KR","Malgun Gothic",sans-serif;line-height:1.35;margin:1.2em 0 .5em} h1{font-size:1.45em} h2{font-size:1.25em} h3{font-size:1.1em} table{border-collapse:collapse;margin:.6em 0;font-size:.92em;line-height:1.5;max-width:100%} td,th{border:1px solid #C3D6CA;padding:4px 8px;vertical-align:top} th{background:#F1F2ED;font-weight:600} img{max-width:100%;height:auto} blockquote{margin:.6em 0;padding:.2em 1em;border-left:3px solid #C3D6CA;color:#5B6270} pre{font-family:Consolas,monospace;font-size:.9em;white-space:pre-wrap;background:#F1F2ED;padding:8px 10px;border-radius:4px} hr{border:0;border-top:1px solid #C3D6CA}',
     setup: (ed)=>{
-      ed.on('init', ()=>{ ed.formatter.register('letterspacing', {inline:'span', styles:{letterSpacing:'%value'}, remove_similar:true}); });
+      ed.on('init', ()=>{ ed.formatter.register('letterspacing', {inline:'span', styles:{letterSpacing:'%value'}, remove_similar:true});
+        // 편집기 틀 안에서 바깥 그림을 불러올 때 참조 주소를 보내지 않는다(구글 문서 그림처럼 참조 주소를 따지는 서버 대비)
+        try { const d=ed.getDoc(); const m=d.createElement('meta'); m.name='referrer'; m.content='no-referrer'; d.head.appendChild(m); } catch(e){}
+        inlineExternalImages(ed); });
+      // 붙여 넣은 바깥 그림(https://…)은 곧바로 문서 안에 담는다 — 구글 문서 그림 주소는 나중에 만료되고, 편집 중에도 바로 보인다
+      ed.on('PastePostProcess SetContent', ()=>{ setTimeout(()=>inlineExternalImages(ed), 80); });
       ed.on('input change undo redo SetContent', ()=>{ if (opt.onDirty) opt.onDirty(); });
       // 자간 메뉴
       ed.ui.registry.addMenuButton('letterspacing', {text:'자간', tooltip:'글자 사이 간격 (Ctrl+Alt+] / [)', fetch:(cb)=>cb([
