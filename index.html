@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T19:54:21+09:00">
+<meta name="build" content="2026-09-20T20:03:31+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -2046,6 +2046,19 @@ function fillGaps(tl, pageH){
     if (!(gap>0) || gap>pageH*0.4) continue;                     // 너무 벌어진 곳(쪽 바뀜 등)은 건너뛴다
     rows[i].list.forEach(sp=>{ sp.style.paddingBottom=Math.round(gap)+'px'; });
   }
+  const pr=tl.getBoundingClientRect();                           // 줄마다 좌우 끝까지
+  if (pr.width>1) rows.forEach(row=>{
+    const ls=row.list.map(sp=>({sp, r:sp.getBoundingClientRect()})).sort((a,b)=>a.r.left-b.r.left);
+    const padL=Math.round(ls[0].r.left-pr.left);
+    if (padL>1 && padL<pr.width){ ls[0].sp.style.paddingLeft=padL+'px'; ls[0].sp.style.marginLeft=(-padL)+'px'; }
+    const lastSp=ls[ls.length-1]; const padR=Math.round(pr.right-lastSp.r.right);
+    if (padR>1 && padR<pr.width) lastSp.sp.style.paddingRight=padR+'px';
+  });
+  const up=Math.round(rows[0].t/100*pageH);                      // 쪽 맨 위 ~ 첫 줄
+  if (up>0) rows[0].list.forEach(sp=>{ sp.style.paddingTop=up+'px'; sp.style.marginTop=(-up)+'px'; });
+  const last=rows[rows.length-1];                                // 마지막 줄 ~ 쪽 맨 아래
+  const down=Math.round(pageH - last.t/100*pageH);
+  if (down>0) last.list.forEach(sp=>{ sp.style.paddingBottom=down+'px'; });
 }
 function addEoc(tl){ if (BARE || !tl) return; let e=tl.querySelector(':scope > .endOfContent'); if (!e){ e=document.createElement('div'); e.className='endOfContent'; } tl.appendChild(e); }
 function drawMarks(c, p){
