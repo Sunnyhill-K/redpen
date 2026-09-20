@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T11:46:20+09:00">
+<meta name="build" content="2026-09-20T11:59:21+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -1824,11 +1824,13 @@ async function drawPages(){
   cont.innerHTML=''; cont.classList.remove('pdfmsg');
   // 기준 폭 = 100%일 때의 문서 열 폭. 확대하면 틀(.pages)을 그 배수로 키운다
   const sheet = cont.closest('.sheet'); const stacked = window.innerWidth <= 760;
-  const mainW = $('#main').clientWidth - 40 - 28;
+  if (stacked) cont.style.width='';
+  const mainW = stacked ? (()=>{ const cs=getComputedStyle(cont); return Math.floor(cont.clientWidth - parseFloat(cs.paddingLeft||0) - parseFloat(cs.paddingRight||0)); })() : $('#main').clientWidth - 40 - 28;   // 폰: 쪽 틀의 안쪽 폭 그대로
   const notesW = Math.round(280*uiScale);
   const baseW = stacked ? mainW : DOC_BASE_W;
   const width = Math.round(baseW * zoom.pdf); const dpr = Math.min(window.devicePixelRatio||1, 2);
   if (st.io){ try { st.io.disconnect(); } catch(e){} st.io=null; }
+  if (st.vvOff){ st.vvOff(); st.vvOff=null; }
   if (sheet){ sheet.classList.toggle('zoomed', !stacked); }              // 100% 에서도 확대 때와 같은 배치
   // 창 가로 스크롤은 실제로 틀+메모가 창을 넘칠 때만, 넘치는 만큼만. (fit-content 로 재면 안내 줄 같은 긴 글이 한 줄로 펴져 폭을 부풀린다)
   requestAnimationFrame(fixBodyWidth);
@@ -1848,17 +1850,15 @@ async function drawPages(){
   }
   layoutNotes(); tmark('쪽 틀 '+pages.length+'개'); fixBodyWidth(); requestAnimationFrame(fixBodyWidth);
   // 2단계: 화면 근처의 쪽만 캔버스+글자층을 그린다(한 번 그리면 유지)
+  const clampD=(pg, d)=>{ const MAXD=16000, MAXA=1.2e8; if (pg.vp.width*d>MAXD || pg.vp.height*d>MAXD) d=Math.min(MAXD/pg.vp.width, MAXD/pg.vp.height); if (pg.vp.width*pg.vp.height*d*d>MAXA) d=Math.sqrt(MAXA/(pg.vp.width*pg.vp.height)); return d; };
+  const mkCanvas=(pg, d)=>{ const cv=document.createElement('canvas'); cv.width=Math.floor(pg.vp.width*d); cv.height=Math.floor(pg.vp.height*d); cv.style.width=pg.vp.width+'px'; cv.style.height=pg.vp.height+'px'; return cv; };
   const renderOne = async (pg)=>{
     if (pg.done || st.token!==token) return; pg.done=true;
     if (SW.nocanvas){ const tl0=document.createElement('div'); tl0.className='textLayer'; tl0.style.setProperty('--scale-factor', String(pg.scale)); pg.el.prepend(tl0); try { const tc=await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl0, viewport: pg.vp, textDivs: []}).promise; } catch(e){} tmark('쪽 '+pg.p+' 글자층만'); return; }
-    let d=dprEff; const MAXD=16000, MAXA=1.2e8;
-    if (pg.vp.width*d>MAXD || pg.vp.height*d>MAXD) d=Math.min(MAXD/pg.vp.width, MAXD/pg.vp.height);
-    if (pg.vp.width*pg.vp.height*d*d>MAXA) d=Math.sqrt(MAXA/(pg.vp.width*pg.vp.height));
-    const canvas=document.createElement('canvas'); canvas.width=Math.floor(pg.vp.width*d); canvas.height=Math.floor(pg.vp.height*d);
-    canvas.style.width=pg.vp.width+'px'; canvas.style.height=pg.vp.height+'px';
+    const d=clampD(pg, dprEff); const canvas=mkCanvas(pg, d);
     const tl=document.createElement('div'); tl.className='textLayer'; tl.style.setProperty('--scale-factor', String(pg.scale));
-    pg.el.prepend(canvas, tl);
-    await pg.page.render({canvasContext: canvas.getContext('2d'), viewport: pg.vp, transform: d!==1 ? [d,0,0,d,0,0] : null}).promise;
+    pg.el.prepend(canvas, tl); pg.cv=canvas; pg.d=d; pg.busy=true;
+    try { await pg.page.render({canvasContext: canvas.getContext('2d'), viewport: pg.vp, transform: d!==1 ? [d,0,0,d,0,0] : null}).promise; } finally { pg.busy=false; }
     if (st.token!==token) return;
     if (st.c.ocr && st.c.ocr[pg.p]) buildOcrLayer(tl, st.c.ocr[pg.p], pg.vp);
     else { try { const tc = await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl, viewport: pg.vp, textDivs: []}).promise; } catch(e){} }
@@ -1867,6 +1867,33 @@ async function drawPages(){
   const io = new IntersectionObserver(entries=>{ entries.forEach(en=>{ if (en.isIntersecting){ const pg=pages.find(x=>x.el===en.target); if (pg){ renderOne(pg); io.unobserve(en.target); } } }); }, {rootMargin:'1200px 0px'});
   if (SW.nolazy){ for (const pg of pages) await renderOne(pg); }
   else { pages.slice(0,2).forEach(pg=>renderOne(pg)); pages.slice(2).forEach(pg=>io.observe(pg.el)); }
+  // ── 핀치 줌: 손가락으로 벌린 배율만큼 화면에 보이는 쪽만 다시 그린다(비트맵 확대가 아니라 글자로) · 벗어난 쪽은 원래 해상도로 돌려 메모리를 지킨다 ──
+  const rerenderAt = async (pg, d)=>{
+    if (!pg.done || pg.busy || !pg.cv || st.token!==token) return false; pg.busy=true;
+    try { d=clampD(pg, d); const cv=mkCanvas(pg, d);
+      await pg.page.render({canvasContext: cv.getContext('2d'), viewport: pg.vp, transform: d!==1 ? [d,0,0,d,0,0] : null}).promise;
+      if (st.token!==token || !pg.cv.isConnected) return false;
+      pg.cv.replaceWith(cv); pg.cv=cv; pg.d=d; return true;
+    } catch(e){ return false; } finally { pg.busy=false; }
+  };
+  st.rerenderAt=rerenderAt; st.pages=pages;
+  if (window.visualViewport){
+    const vv=window.visualViewport; let vvT=null;
+    const tick=()=>{ clearTimeout(vvT); vvT=setTimeout(async ()=>{
+      if (st.token!==token) return;
+      const s=vv.scale||1; const dprReal=window.devicePixelRatio||1;
+      if (s<1.05 && !pages.some(pg=>pg.d && pg.d>dprEff+0.25)) return;   // 안 벌렸고 올려 그린 쪽도 없으면 볼 일 없음
+      const top=vv.offsetTop, bot=top+vv.height; let again=false;
+      for (const pg of pages){ if (!pg.done || !pg.cv) continue; const r=pg.el.getBoundingClientRect(); const seen = r.bottom > top-120 && r.top < bot+120;
+        // 벌린 만큼(장치 픽셀 기준) 올리되 캔버스 가로 2400px 까지 — 폰(dpr 3)에서 3.5배면 장치 픽셀당 0.7, 한 쪽 33MB
+        const want=Math.max(dprEff, Math.min(dprReal*s, 2400/pg.vp.width));
+        const goal = seen ? want : dprEff; if (Math.abs((pg.d||dprEff)-goal) < 0.25) continue;
+        if (pg.busy){ again=true; continue; } await rerenderAt(pg, goal); if (st.token!==token) return; }
+      if (again) tick();
+    }, 250); };
+    vv.addEventListener('resize', tick); vv.addEventListener('scroll', tick); window.addEventListener('scroll', tick, {passive:true});
+    st.vvOff=()=>{ vv.removeEventListener('resize', tick); vv.removeEventListener('scroll', tick); window.removeEventListener('scroll', tick); clearTimeout(vvT); };
+  }
   // 글자층이 없는 PDF(캡처본)는 처음 열 때 한 번 자동으로 글자 인식 → 저장
   if (!st.c.ocr && !st.c._autoOcr && editable() && !ocrBusy){ st.c._autoOcr=true;
     (async()=>{ try { let chars=0; for (let p=1;p<=Math.min(2, pages.length);p++){ const tc=await pages[p-1].page.getTextContent(); chars+=tc.items.map(i=>i.str).join('').replace(/\s/g,'').length; }
@@ -2175,7 +2202,8 @@ function jumpMemo(dir){
 }
 
 // ── 쪽 이동: 고정된 머리 아래 선을 기준으로 지금 보이는 쪽을 센다 ──
-function headLine(){ const h=$('.head'); return (h ? h.getBoundingClientRect().bottom : 0) + 6; }
+// 화면 위에 붙어 있는 것(상단 바 · 문서 머리)의 아래끝. 폰에서는 문서 머리가 sticky 가 아니라 위로 스크롤돼 사라지므로 붙어 있을 때만 센다
+function headLine(){ const h=$('.head'), t=$('.top'); const tb=t ? t.getBoundingClientRect().bottom : 0; const hb=(h && getComputedStyle(h).position==='sticky') ? h.getBoundingClientRect().bottom : 0; return Math.max(tb, hb) + 6; }
 function currentPage(){
   const line=headLine(); let cur=0;
   for (const el of document.querySelectorAll('.page')){ const r=el.getBoundingClientRect(); cur=+el.dataset.p; if (r.bottom > line) break; }
