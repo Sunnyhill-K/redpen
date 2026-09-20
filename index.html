@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T09:50:22+09:00">
+<meta name="build" content="2026-09-20T09:58:47+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -121,6 +121,12 @@ a{color:var(--ins)}
 .chip.pdf{background:var(--del-bg);color:var(--del)}
 .chip.last{background:var(--ins-bg);color:var(--ins)}
 .chip.lostc{background:var(--del-bg);color:var(--del)}
+.txtdoc .t-ghost{background:repeating-linear-gradient(to right,transparent 0 3px,rgba(127,127,127,.28) 3px 6px) bottom/100% 2px no-repeat;color:inherit;text-decoration:none} .txtdoc .t-ghost.hot{outline:2px solid var(--ink-3)}
+.mk.ghost,.marks .mk.ghost{color:var(--ink-3)!important;border-color:var(--ink-3)!important;border-style:dashed!important;background:var(--paper)!important;opacity:.85} .mk.ghost.static{position:static;transform:none;display:inline-block;font-family:var(--mono);font-size:11px;border:1px dashed var(--ink-3);border-radius:8px;padding:2px 5px;color:var(--ink-3)}
+.mbox.ghost{background:transparent!important;border:1.5px dashed rgba(120,120,120,.7);border-radius:2px;box-sizing:border-box}
+.hide-marks .txtdoc .t-ghost{background:none} .hide-marks .mk.ghost{display:none!important}
+.ghostbox{max-width:1120px;margin:22px auto 0;border-top:1px dashed var(--rule);padding-top:12px;opacity:.82} .ghostbox:hover{opacity:1} .ghostbox .ghead{display:flex;align-items:center;gap:8px;flex-wrap:wrap} .ghostbox h3{font-family:var(--serif);font-size:calc(15px * var(--ui,1));margin:0;color:var(--ink-2)} .ghostbox>.msg{margin:4px 0 10px}
+.glist{display:grid;gap:8px} .gitem{border-left:2px dashed var(--ink-3);padding:4px 10px;background:var(--paper-2);border-radius:0 4px 4px 0;font-size:calc(13.5px * var(--ui,1))} .gitem.hot{outline:2px solid var(--ins-line)} .gitem .gh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:3px} .gitem .who{font-size:calc(11px * var(--ui,1));color:var(--nc);border:1px solid var(--nc);border-radius:3px;padding:0 5px} .gitem .gt{color:var(--ink-2);font-family:var(--serif)} .gitem.del .gt,.gitem.rep .gt{text-decoration:line-through} .gitem .gt .after{text-decoration:none;color:var(--ins)} .gitem .gr{white-space:pre-wrap;line-height:1.5;margin-top:2px} .chip.hint{background:var(--rep-bg);color:var(--rep)} .chip.hint.ok{background:var(--memo-bg);color:var(--memo)}
 .chip.ver{background:var(--ins-bg);color:var(--ins);font-family:var(--mono)} .chip.ver.ro{background:var(--rep-bg);color:var(--rep)} .verSel{font:inherit;font-size:calc(12px * var(--ui,1));border:1px solid var(--rule);border-radius:4px;background:var(--paper);color:var(--ink);padding:2px 4px;max-width:200px}
 .btn.ico{padding-left:8px;padding-right:8px;font-size:calc(15px * var(--ui,1));line-height:1}.btn.ico sup{font-size:.55em;margin-left:2px;vertical-align:.6em;font-family:var(--mono)}
 .beta{font-size:.55em;font-weight:500;color:var(--ink-3);letter-spacing:.02em;margin-left:.15em;vertical-align:.15em}#buildAt{font-family:var(--sans);font-size:1em;color:var(--ink-3);letter-spacing:0;font-weight:400}
@@ -668,7 +674,7 @@ function renderHelp(main){
 function headHtml(c, statsHtml, toolsHtml){
   const isDraft = !!view.draft;
   return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':(c.type==='word'?'Word':(isHtmlDoc(c)?'HTML':'텍스트'))}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}${Array.isArray(c.vis)?`<span class="chip" title="지정된 뷰어만 봄">👁 ${c.vis.length}명 지정</span>`:''}<span>${esc(c.client||'')}</span><span>${esc(fmtWhen(c))}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
-    <h2>${esc(c.title||'(제목 없음)')}<span class="hbtns">${verChip(c)}${editable() ? `<button class="btn small" id="editCase">정보 수정</button><button class="btn small" id="newVer" title="고친 글을 새 버전으로 올립니다. 이전 버전은 그대로 남고, 메모는 새 버전의 같은 구절로 옮겨집니다">이 문서 새 버전 올리기</button>` : ''}${roVer ? `<button class="btn small primary" id="verBack">현재 버전으로</button>` : ''}${isPdf(c) ? `<button class="btn small" id="dlPdf" title="저장된 원본 PDF 를 그대로 내려받습니다">원본 PDF 내려받기</button>` : ''}</span></h2>
+    <h2>${esc(c.title||'(제목 없음)')}<span class="hbtns">${verChip(c)}${editable() ? `<button class="btn small" id="editCase">정보 수정</button><button class="btn small" id="newVer" title="고친 글을 새 버전으로 올립니다. 이전 버전은 그대로 남고, 메모는 새 버전의 같은 구절로 옮겨집니다">이 문서 새 버전 올리기</button>` : ''}${roVer ? `<button class="btn small primary" id="verBack">현재 버전으로</button>` : ((editable() && (c.versions||[]).length) ? `<button class="btn small danger" id="verDrop" title="지금 버전을 지우고 직전 버전으로 되돌립니다">현재 버전 삭제</button>` : '')}${isPdf(c) ? `<button class="btn small" id="dlPdf" title="저장된 원본 PDF 를 그대로 내려받습니다">원본 PDF 내려받기</button>` : ''}</span></h2>
     <div class="stats">${statsHtml}</div>
     <div class="tools">${toolsHtml}
       <button class="btn small" id="copyLink">링크 복사</button>
@@ -698,6 +704,17 @@ function bindHead(c, collect){
   const isDraft = !!view.draft;
   const vs=$('#verSel'); if (vs) vs.addEventListener('change', async ()=>{ const n=+vs.value; if (!(await leaveOk())) { vs.value=roVer||0; return; } view.ver = n||null; view.draft=null; view.dirty=false; render(); });
   const vb=$('#verBack'); if (vb) vb.addEventListener('click', ()=>{ view.ver=null; render(); });
+  const vd=$('#verDrop'); if (vd) vd.addEventListener('click', async ()=>{ const vs=c.versions||[]; const last=vs[vs.length-1]; if (!last) return;
+    if (!(await ask(`${vs.length+1}버전(현재)을 지우고 ${last.n}버전으로 되돌립니다. 이 버전에 쓴 메모 ${fmtN((c.marks||[]).length)}곳도 함께 지워집니다.`, '현재 버전 삭제'))) return;
+    vd.disabled=true; vd.textContent='되돌리는 중…';
+    try {
+      if (isPdf(c)){ const key=docKeys[c.id]||K; const pe=await ghRead(last.pdfFile); if (!pe) throw new Error('이전 버전 PDF 파일이 없습니다'); c.pdf=b64(await decB(key, pe)); c.pdfDirty=true; c._dropPdfFile=last.pdfFile; }
+      Object.assign(c, JSON.parse(JSON.stringify({src:last.src||'', html:last.html||'', htmlSrc:last.htmlSrc||'', marks:last.marks||[], note:last.note||'', noteSegs:last.noteSegs||[], ocr:last.ocr||null, pages:last.pages||0})));
+      c.versions=vs.slice(0,-1); c.carried=[]; c._ghosts=null; c._verCache={}; view.dirty=true;
+      const ok=await saveDoc(c, null); if (ok && c._dropPdfFile){ try { await ghDelete(c._dropPdfFile, 'drop version pdf'); } catch(e){} delete c._dropPdfFile; }
+      if (ok) toast(`${last.n}버전으로 되돌렸습니다`);
+    } catch(e){ toast('되돌리기 실패: '+((e&&e.message)||e)); vd.disabled=false; vd.textContent='현재 버전 삭제'; }
+  });
   const nv=$('#newVer'); if (nv) nv.addEventListener('click', async ()=>{ if (view.dirty && !(await leaveOk())) return; collect(c); view.mode='edit'; view.draft=c; view.newVer=true; render(); });
   $('#copyLink').addEventListener('click', ()=> copyText(location.href.split('#')[0] + '#case=' + c.id, '링크를 복사했습니다'));
   $('#zoomOut').addEventListener('click', ()=>setZoom(c, -0.1));
@@ -1257,6 +1274,7 @@ function renderTextDoc(c){
   cont.innerHTML = `<div class="${tpageCls(c)}">${baseHtml(c)}</div>`;
   // 뒤에서부터 감싸야 앞쪽 오프셋이 흔들리지 않는다
   c.marks.map((m,i)=>({m,h:i+1})).sort((x,y)=>y.m.start-x.m.start).forEach(({m,h})=>wrapRange(cont, m.start, m.end, m.kind, h, true));
+  if (!c._ghosts) computeGhosts(c); drawGhostsText(c, cont);
   requestAnimationFrame(()=>layoutNotes());
 }
 // 표시를 반영한 수정본: 삭제는 빼고, 바꾸기는 새 문장으로, 메모는 그대로
@@ -1382,7 +1400,7 @@ async function ocrDoc(c, btn){
     c.ocr=out; c.ocrAt=new Date().toISOString(); view.dirty=true;
     // 이미 그려진 쪽의 글자층을 OCR 층으로 바꿔 끼운다
     document.querySelectorAll('.page').forEach(el=>{ const p=+el.dataset.p; const tl=el.querySelector('.textLayer'); if (tl && out[p]){ const vw=el.getBoundingClientRect().width; tl.innerHTML=''; buildOcrLayer(tl, out[p], {width:vw, height:el.getBoundingClientRect().height}); } });
-    toast(`글자 인식 끝. 쪽별 줄 수 ${counts.join(', ')} · 저장(Ctrl+S)하면 다른 사람도 드래그할 수 있습니다`);
+    toast(`글자 인식 끝. 쪽별 줄 수 ${counts.join(', ')} · 저장(Ctrl+S)하면 다른 사람도 드래그할 수 있습니다`); computeGhosts(c); drawAllMarks(c); renderGhostBox(c);
     say('글자 다시 인식');
   } catch(e){ toast('글자 인식 실패: '+((e&&e.message)||e)); say('글자 인식(OCR)'); }
   finally { ocrBusy=false; if (btn) btn.disabled=false; }
@@ -1448,7 +1466,9 @@ function renderDocCase(main, c){ if (renderDocCase._last!==c.id){ jumpCur=null; 
     : `<div><div class="doc txtdoc ${c.type==='word'?'word':''} ${isHtmlDoc(c)?'html':''}" id="doc"></div></div><div class="notes" id="notes"></div>`;
   main.appendChild(sheet);
   const list=document.createElement('div'); list.id='mlist'; list.hidden=true; main.appendChild(list);
+  const gb=document.createElement('div'); gb.className='ghostbox'; gb.id='ghostBox'; gb.hidden=true; main.appendChild(gb);
   const ov=document.createElement('div'); ov.className='overall'; ov.innerHTML = overallHtml(c); main.appendChild(ov);
+  computeGhosts(c); renderGhostBox(c);
   refreshPdfHead(c);
   if (isPdf(c)) loadPdf(c).catch(e=>{ $('#doc').innerHTML = `<div class="pdfmsg">PDF를 열지 못했습니다: ${esc(e.message||e)}</div>`; });
   else { pdfState=null; if (editable()) bindTextSelection($('#doc'), c); }
@@ -1534,7 +1554,7 @@ function renderPdfNotes(c){
   const notes=$('#notes'); if (!notes) return;
   const canEdit = editable();
   notes.innerHTML = `<div class="notes-title">교정 메모 ${fmtN(c.marks.length)}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
-    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span class="nn" title="원문의 이 자리로">${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}${m.lost?'<span class="chip lostc" title="본문을 고치면서 이 구절이 사라져 표시할 자리가 없습니다. 글은 남아 있습니다.">자리 잃음</span>':''}<span class="k">${esc(m.text)}</span><span class="nv"><button class="nvb" data-d="-1" title="바로 위 메모 (Alt+↑)" tabindex="-1">↑</button><button class="nvb" data-d="1" title="바로 아래 메모 (Alt+↓)" tabindex="-1">↓</button></span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
+    <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span class="nn" title="원문의 이 자리로">${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}${m.lost?'<span class="chip lostc" title="본문을 고치면서 이 구절이 사라져 표시할 자리가 없습니다. 글은 남아 있습니다.">자리 잃음</span>':''}${m.from?`<span class="chip ver" title="${m.from}버전의 ${m.fromNo||''}번 메모를 이월">${m.from}버전에서</span>`:''}<span class="k">${esc(m.text)}</span><span class="nv"><button class="nvb" data-d="-1" title="바로 위 메모 (Alt+↑)" tabindex="-1">↑</button><button class="nvb" data-d="1" title="바로 아래 메모 (Alt+↓)" tabindex="-1">↓</button></span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
     ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', 'txt', m.segs) : `<div class="txt">${md(m.reason||'', m.segs)}</div>`}</div>`; }).join('');
   notes.querySelectorAll('.nn').forEach(b=>b.addEventListener('click', ()=>{ const n=b.closest('.note'); if (n){ jumpCur=n.dataset.h; if (pdfListMode){ pdfListMode=false; textRevMode=false; refreshPdfHead(c); setTimeout(()=>jumpToHunk(+n.dataset.h), 60); } else jumpToHunk(+n.dataset.h); } }));
@@ -1641,7 +1661,7 @@ async function drawPages(){
     const el=document.createElement('div'); el.className='page'; el.dataset.p=p; el.style.height = vp.height+'px'; el.style.width = vp.width+'px';
     const ml=document.createElement('div'); ml.className='marks';
     const pn=document.createElement('div'); pn.className='pno'; pn.textContent=p+' / '+st.doc.numPages;
-    el.append(ml, pn); cont.appendChild(el); drawMarks(st.c, p);
+    el.append(ml, pn); cont.appendChild(el); drawMarks(st.c, p); if (!st.c._ghosts) computeGhosts(st.c); drawGhostsPdf(st.c, p);
     pages.push({p, page, vp, scale, el});
   }
   layoutNotes(); tmark('쪽 틀 '+pages.length+'개'); fixBodyWidth(); requestAnimationFrame(fixBodyWidth);
@@ -1683,7 +1703,75 @@ function drawMarks(c, p){
     });
   });
 }
-function drawAllMarks(c){ if (!isPdf(c)){ if (!textRevMode && !pdfListMode) renderTextDoc(c); return; } document.querySelectorAll('.page').forEach(el=>drawMarks(c, +el.dataset.p)); }
+// ══════════════ 직전 버전 메모: 흐리게 겹쳐 보이고, 「이월」로만 현재 버전에 들어온다 ══════════════
+const normT = t => String(t||'').replace(/\s+/g,'');
+function prevVersion(c){ const vs=c.versions||[]; if (roVer) return vs.find(v=>v.n===roVer-1)||null; return vs.length ? vs[vs.length-1] : null; }
+function docText(c){ return hasHtml(c) ? stripTags(c.html||'') : (c.src||''); }
+function verText(v){ return (v.type==='word'||v.type==='html') ? stripTags(v.html||'') : (v.type==='pdf' ? pdfLinesText(v.ocr) : (v.src||'')); }
+function pdfLinesText(ocr){ if (!ocr) return ''; return Object.keys(ocr).sort((a,b)=>a-b).map(p=>(ocr[p]||[]).map(l=>l.t).join('\n')).join('\n'); }
+// PDF 의 글자 줄(OCR 또는 글자층)에서 구절을 찾아 상자를 만든다. 띄어쓰기 무시
+function findInPdfLines(lines, phrase){
+  const want=normT(phrase); if (!want || !lines) return null;
+  for (const p of Object.keys(lines).sort((a,b)=>a-b)){ const L=lines[p]||[]; let flat='', map=[];
+    L.forEach((ln,i)=>{ const t=normT(ln.t); for (let k=0;k<t.length;k++) map.push(i); flat+=t; });
+    const at=flat.indexOf(want); if (at<0) continue;
+    const i0=map[at], i1=map[Math.min(flat.length-1, at+want.length-1)]; const boxes=[]; for (let i=i0;i<=i1;i++){ const b=L[i].b; if (b) boxes.push(b.slice()); }
+    if (boxes.length) return {page:+p, rects:boxes};
+  }
+  return null;
+}
+// 현재 버전 위에서 직전 버전 메모의 자리 찾기 → c._ghosts = [{m, h(옛 번호), start,end | page,rects, lost, hint}]
+function computeGhosts(c){
+  const pv=prevVersion(c); if (!pv || roVer){ c._ghosts=[]; return c._ghosts; }
+  const carried=new Set(c.carried||[]); const cur=docText(c);
+  const list=[];
+  (pv.marks||[]).forEach((m,i)=>{ if (!m.mid) m.mid=markKey(m); if (carried.has(m.mid)) return; const g={m, h:i+1, lost:true, hint:''};
+    if (isPdf(c)){ const hit=findInPdfLines(c.ocr, m.text||''); if (hit){ g.page=hit.page; g.rects=hit.rects; g.lost=false; } }
+    else { const rm=remapMarks([Object.assign({}, m)], verText(pv), cur)[0]; if (rm && !rm.lost){ g.start=rm.start; g.end=rm.end; g.lost=false; } }
+    // 자동 힌트: 삭제·바꾸기는 구절이 남았는지로 짐작. 메모(의견)는 사람이 판단
+    const curN = isPdf(c) ? normT(pdfLinesText(c.ocr)) : normT(cur); const has = m.text && curN.includes(normT(m.text));
+    if (m.kind==='del') g.hint = has ? '아직 남아 있음' : '구절 사라짐';
+    else if (m.kind==='rep') g.hint = (m.after && curN.includes(normT(m.after))) ? '바꾼 문장 있음' : (has ? '아직 그대로' : '다르게 고침?');
+    else g.hint = has ? '구절 그대로' : '구절 바뀜';
+    list.push(g); });
+  c._ghosts=list; return list;
+}
+let ghostsOn=true; try { ghostsOn = localStorage.getItem('redpen.ghosts')!=='0'; } catch(e){}
+function drawGhostsText(c, cont){
+  if (!ghostsOn) return; const gs=c._ghosts||[]; if (!gs.length) return;
+  gs.filter(g=>!g.lost).sort((a,b)=>b.start-a.start).forEach(g=>{ wrapRange(cont, g.start, g.end, 'ghost', 'g'+g.h, false); });
+  cont.querySelectorAll('.hunk.t-ghost[data-first]').forEach(sp=>{ const h=sp.dataset.h; const last=[...cont.querySelectorAll(`.hunk[data-h="${h}"]`)].pop(); const k=document.createElement('span'); k.className='mk ghost'; k.dataset.h=h; k.textContent=h.slice(1)+'ʹ'; k.title='직전 버전 메모 '+h.slice(1); k.addEventListener('click', ()=>{ const el=document.getElementById('ghost'+h.slice(1)); if (el){ el.scrollIntoView({block:'center', behavior:'smooth'}); el.classList.add('hot'); setTimeout(()=>el.classList.remove('hot'),1500); } }); (last||sp).after(k); });
+}
+function drawGhostsPdf(c, p){
+  const el=document.querySelector(`.page[data-p="${p}"] .marks`); if (!el) return; el.querySelectorAll('.ghost').forEach(x=>x.remove()); if (!ghostsOn) return;
+  (c._ghosts||[]).forEach(g=>{ if (g.lost || g.page!==p) return; g.rects.forEach((r,ri)=>{ const d=document.createElement('div'); d.className='mbox ghost'; d.style.left=(r[0]*100)+'%'; d.style.top=(r[1]*100)+'%'; d.style.width=(r[2]*100)+'%'; d.style.height=(r[3]*100)+'%'; el.appendChild(d);
+    if (ri===0){ const k=document.createElement('span'); k.className='mk ghost'; k.dataset.h='g'+g.h; k.textContent=g.h+'ʹ'; k.style.left=((r[0]+r[2])*100)+'%'; k.style.top=(r[1]*100)+'%'; k.addEventListener('click', ()=>{ const e2=document.getElementById('ghost'+g.h); if (e2){ e2.scrollIntoView({block:'center', behavior:'smooth'}); e2.classList.add('hot'); setTimeout(()=>e2.classList.remove('hot'),1500); } }); el.appendChild(k); } }); });
+}
+// 화면 아래 「직전 버전 메모」 목록(흐림) + 이월
+function renderGhostBox(c){
+  const box=$('#ghostBox'); if (!box) return; const pv=prevVersion(c); const gs=c._ghosts||[];
+  if (!pv || roVer){ box.hidden=true; box.innerHTML=''; return; }
+  const total=(pv.marks||[]).length, carried=(c.carried||[]).length;
+  box.hidden=false;
+  box.innerHTML=`<div class="ghead"><h3>${pv.n}버전 메모 ${fmtN(gs.length)}곳 <span class="msg">(이월 ${fmtN(carried)} / 전체 ${fmtN(total)})</span></h3>
+    <span class="spacer"></span><button class="btn small" id="ghostToggle">${ghostsOn?'문서 위 흐린 표시 숨기기':'문서 위 흐린 표시 보기'}</button>${(editable()&&gs.length)?`<button class="btn small" id="ghostAll">남은 메모 모두 이월</button>`:''}</div>
+    <p class="msg">직전 버전의 메모입니다. 반영된 것은 두고, 아직 남은 것은 「이월」로 이 버전에 넣어 이어서 다룹니다. 힌트는 구절이 남았는지로 짐작한 것이라 「메모」는 직접 판단해 주세요.</p>
+    ${gs.length ? `<div class="glist">${gs.map(g=>{ const m=g.m; const col=userColor(m.by, m.byId); return `<div class="gitem ${m.kind}" id="ghost${g.h}">
+      <div class="gh"><span class="mk ghost static">${g.h}ʹ</span><span class="chip kd ${m.kind}">${KIND[m.kind]}</span>${m.by?`<span class="who" style="--nc:${col||'var(--ink-3)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${isPdf(c)&&m.page?`<span class="chip">${m.page}쪽</span>`:''}${g.lost?'<span class="chip lostc" title="이 버전에서 같은 구절을 못 찾았습니다. 이월하면 자리 없이 목록에 남습니다">자리 못 찾음</span>':''}<span class="chip hint ${/사라짐|있음$/.test(g.hint)&&!/남아/.test(g.hint)?'ok':''}">${esc(g.hint)}</span><span class="spacer"></span>${editable()?`<button class="btn small" data-carry="${esc(m.mid)}">이월</button>`:''}</div>
+      <div class="gt">${esc(m.text||'')}${m.kind==='rep'?` <span class="after">→ ${esc(m.after||'')}</span>`:''}</div>
+      ${(m.reason||'').trim()?`<div class="gr">${md(m.reason||'', m.segs)}</div>`:''}</div>`; }).join('')}</div>` : `<p class="msg">남은 메모가 없습니다. 모두 이월했거나 ${pv.n}버전에 메모가 없었습니다.</p>`}`;
+  $('#ghostToggle').addEventListener('click', ()=>{ ghostsOn=!ghostsOn; try { localStorage.setItem('redpen.ghosts', ghostsOn?'1':'0'); } catch(e){} drawAllMarks(c); renderGhostBox(c); });
+  const ga=$('#ghostAll'); if (ga) ga.addEventListener('click', ()=>{ gs.slice().forEach(g=>carryGhost(c, g, true)); afterCarry(c, gs.length); });
+  box.querySelectorAll('[data-carry]').forEach(b=>b.addEventListener('click', ()=>{ const g=gs.find(x=>x.m.mid===b.dataset.carry); if (g){ carryGhost(c, g, true); afterCarry(c, 1); } }));
+}
+function carryGhost(c, g, silent){
+  const m=JSON.parse(JSON.stringify(g.m)); delete m.mt; m.mid=newMid(); m.from=(prevVersion(c)||{}).n||0; m.fromNo=g.h;
+  if (isPdf(c)){ if (g.lost){ m.page=0; m.rects=[]; m.lost=true; } else { m.page=g.page; m.rects=g.rects; delete m.lost; } }
+  else { if (g.lost){ m.start=-1; m.end=-1; m.lost=true; } else { m.start=g.start; m.end=g.end; delete m.lost; } }
+  c.marks=c.marks||[]; c.marks.push(m); c.carried=c.carried||[]; c.carried.push(g.m.mid);
+}
+function afterCarry(c, n){ pushHist(c, `직전 버전 메모 ${fmtN(n)}건 이월`); view.dirty=true; computeGhosts(c); drawAllMarks(c); refreshPdfHead(c); renderGhostBox(c); toast(`${fmtN(n)}건을 이 버전으로 옮겼습니다. 저장(Ctrl+S)하세요`); }
+function drawAllMarks(c){ if (!isPdf(c)){ if (!textRevMode && !pdfListMode) renderTextDoc(c); return; } document.querySelectorAll('.page').forEach(el=>{ drawMarks(c, +el.dataset.p); drawGhostsPdf(c, +el.dataset.p); }); }
 function bindSelection(cont, c0){
   let pop=null;
   const cur = ()=> (pdfState && pdfState.c) || c0;
@@ -1816,7 +1904,7 @@ document.addEventListener('contextmenu', e=>{
 // ── 메모 이동: 화면 위쪽 선을 기준으로 위/아래에서 가장 가까운 표시로 ──
 let jumpCur=null;   // 마지막으로 다녀간 메모 번호(Alt+Q/X 한 칸씩 이동의 기준)
 function jumpMemo(dir){
-  const line=headLine()+6; const hunks=[...document.querySelectorAll('#doc .hunk[data-h], .page .hunk[data-h]')];
+  const line=headLine()+6; const hunks=[...document.querySelectorAll('#doc .hunk[data-h]:not(.t-ghost), .page .hunk[data-h]')];
   const seen=new Set(); const items=[]; hunks.forEach(el=>{ const h=el.dataset.h; if (seen.has(h)) return; seen.add(h); items.push({h, top:el.getBoundingClientRect().top}); });
   if (!items.length){ toast('메모가 없습니다'); return; }
   items.sort((a,b)=>a.top-b.top);   // 문서 위치 순(번호 순이 아니라 글 순서)
@@ -2009,8 +2097,8 @@ function renderEdit(main){
       const src=$('#fOrig').value; if (!src.trim()) return err('원문을 넣어 주세요.');
       d = Object.assign({}, c, base, {type:'text', id, src, marks: (hasMarks?remapMarks(c.marks, c.src||'', src):[]), lockPw, unlockReq, vis:readVis()}); delete d.pdf; delete d.pages; delete d.html;
     }
-    if (snap){ d.versions=[...(c.versions||[]), snap]; delete d._verCache; if (isPdf(d)){ if (!oldPdf) return err('이전 버전의 PDF 가 메모리에 없습니다. 문서를 다시 열어 주세요'); d._snapPdf={file:snap.pdfFile, b64:oldPdf}; d.ocr=null; d.ocrAt='';
-      d.marks=(c.marks||[]).map(m=>Object.assign({}, m, {rects:[], page:0, lost:true})); } }
+    if (snap){ d.versions=[...(c.versions||[]), snap]; delete d._verCache; d.marks=[]; d.carried=[]; d._ghosts=null; d.note=''; d.noteSegs=[];
+      if (isPdf(d)){ if (!oldPdf) return err('이전 버전의 PDF 가 메모리에 없습니다. 문서를 다시 열어 주세요'); d._snapPdf={file:snap.pdfFile, b64:oldPdf}; d.ocr=null; d.ocrAt=''; } }
     view = {mode:'case', id:d.id, draft:d, dirty:true, show:'side', newVer:false};
     const btn=$('#doCompare'); const msgEl=$('#editMsg'); msgEl.className='msg'; msgEl.id='saveMsg';
     await saveDoc(d, btn); killWordEditor();
@@ -2325,7 +2413,7 @@ async function saveDoc(c, btn){
     if (msg) msg.textContent='다른 사람 저장분과 합치는 중…';
     let merged=0; try { merged=await mergeRemote(c); } catch(e){ console.warn('merge', e); }
     if (merged) toast(`다른 사람이 저장한 메모 ${fmtN(merged)}건을 합쳤습니다`);
-    const payload = isPdf(c) ? {marks:c.marks||[], note:c.note||'', pages:c.pages||0, noteSegs:c.noteSegs||[], noteMt:c.noteMt||0, ocr:c.ocr||null, ocrAt:c.ocrAt||'', versions:c.versions||[]} : {src:c.src||'', html:c.html||'', htmlSrc:c.htmlSrc||'', marks:c.marks||[], note:c.note||'', noteSegs:c.noteSegs||[], noteMt:c.noteMt||0, versions:c.versions||[]};
+    const payload = isPdf(c) ? {marks:c.marks||[], note:c.note||'', pages:c.pages||0, noteSegs:c.noteSegs||[], noteMt:c.noteMt||0, ocr:c.ocr||null, ocrAt:c.ocrAt||'', versions:c.versions||[], carried:c.carried||[]} : {src:c.src||'', html:c.html||'', htmlSrc:c.htmlSrc||'', marks:c.marks||[], note:c.note||'', noteSegs:c.noteSegs||[], noteMt:c.noteMt||0, versions:c.versions||[], carried:c.carried||[]};
     // 문서 열쇠 정하기
     //  · 지정 없음·잠금 없음 = 사이트키 K
     //  · 지정 없음·잠금 = 문서키 Kd 를 문서 비밀번호와 편집자키 Ke 로 각각 감쌈(편집자는 비밀번호 없이 연다)
