@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T12:34:34+09:00">
+<meta name="build" content="2026-09-20T12:55:23+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -313,7 +313,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
 .pop button{border:0;background:transparent;color:var(--btn-ink);padding:4px 9px;border-radius:3px;cursor:pointer;font-size:calc(12.5px * var(--ui,1))}
 .pop button:hover{background:rgba(127,127,127,.3)}
 .pop button.d{color:#F0776E} .pop button.r{color:#F0D060} .pop button.m{color:#7FC49A}
-.pop kbd{font-family:var(--mono);font-size:calc(10px * var(--ui,1));opacity:.7;margin-left:2px}
+.pop kbd{font-family:var(--mono);font-size:calc(10px * var(--ui,1));opacity:.7;margin-left:2px} .popsel{display:none}
 .pdfmsg{padding:40px;text-align:center;color:var(--ink-3);border:1px dashed var(--rule)}
 
 /* 메모 목록만 보기 */
@@ -500,6 +500,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   .pop{position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;transform:none!important;z-index:16;border-radius:12px 12px 0 0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));justify-content:center;gap:10px}
   .pop button{font-size:16px;padding:12px 18px;min-height:48px;border:1px solid rgba(255,255,255,.25);border-radius:8px}
   .pop kbd{display:none}
+  .pop{flex-wrap:wrap} .pop .popsel{display:block;width:100%;text-align:center;color:#fff;opacity:.85;font-size:14px;line-height:1.4;padding:0 6px 8px;white-space:normal;word-break:break-all}
   .toast{z-index:60}
 }
 body.area-mode .page{touch-action:none}
@@ -1338,7 +1339,8 @@ function ensureNpop(){
   el.innerHTML=`<div class="npop-head"><span class="npop-title"></span><span class="spacer"></span><button class="npop-nav" data-d="-1" aria-label="이전 메모" title="이전 메모">↑</button><button class="npop-nav" data-d="1" aria-label="다음 메모" title="다음 메모">↓</button><button class="npop-x" aria-label="닫기" title="닫기">✕</button></div><div class="npop-body"></div>`;
   el.querySelector('.npop-x').addEventListener('click', ()=>closeNotePop());
   el.querySelectorAll('.npop-nav').forEach(b=>b.addEventListener('click', ()=>{ const nh=npop.h+(+b.dataset.d); if (document.getElementById('note'+nh)) mountNotePop(nh); }));
-  el.addEventListener('focusin', ()=>el.classList.add('kb'));                                   // 키보드가 올라오면 위쪽에 붙인다
+  el.addEventListener('focusin', e=>{ if (e.target.matches('textarea, input, [contenteditable="true"], .md')) el.classList.add('kb'); });   // 글 입력칸에 커서가 들어올 때만(키보드) 위쪽에 붙인다 — 단추 포커스에 튀면 손을 뗄 때 단추가 그 자리에 없다
+  el.querySelectorAll('.npop-head button').forEach(b=>b.addEventListener('pointerdown', e=>e.preventDefault()));
   el.addEventListener('focusout', ()=>setTimeout(()=>{ if (!el.contains(document.activeElement)) el.classList.remove('kb'); }, 120));
   window.addEventListener('popstate', ()=>{ if (npop.h!=null) closeNotePop(true); });          // 안드로이드 뒤로 가기 = 닫기
   document.body.append(back, el); npop.el=el; npop.back=back; return el;
@@ -1541,14 +1543,14 @@ function bindTextSelection(cont, c0){
     if (c.marks.some(m=>m.start<end && start<m.end)){ toast('이미 표시된 글자와 겹칩니다'); return; }
     const rects=[...range.getClientRects()]; const last=rects[rects.length-1]; if (!last) return; const cr=cont.getBoundingClientRect();
     pop=document.createElement('div'); pop.className='pop'; pop.style.left=(last.left+last.width/2-cr.left)+'px'; pop.style.top=(last.bottom-cr.top)+'px';
-    pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
+    pop.innerHTML = `<span class="popsel">${esc(text.length>44 ? text.slice(0,44)+'…' : text)}</span><button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
     pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
       const c=cur(); pushHist(c, `${KIND[b.dataset.k]} 추가 · ${text.slice(0,18)}${text.length>18?'…':''}`);
       c.marks.push({mid:newMid(), mt:Date.now(), start, end, kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : '', byId: me ? me.id : '', _editing:true, _fresh:true}); c.marks.sort((x,y)=>x.start-y.start);
       view.dirty=true; sel.removeAllRanges(); kill(); renderTextDoc(c); refreshPdfHead(c);
       const idx=c.marks.findIndex(m=>m.start===start && m.end===end); setTimeout(()=>focusHunk(idx+1), 50);
     }));
-    cont.appendChild(pop);
+    (isMob()?document.body:cont).appendChild(pop);
   }, 0); });
   document.addEventListener('mousedown', e=>{ if (pop && !pop.contains(e.target)) kill(); });
   document.addEventListener('keydown', e=>{ if (!pop || !e.altKey) return; const i={Digit1:0, Digit2:1, Digit3:2, Numpad1:0, Numpad2:1, Numpad3:2}[e.code]; if (i===undefined) return; e.preventDefault(); const b=pop.querySelectorAll('button')[i]; if (b) b.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true})); });
@@ -1945,7 +1947,7 @@ async function drawPages(){
     const x0=Math.max(0, Math.floor(box.l - r.left - M)), y0=Math.max(0, Math.floor(box.t - r.top - M));
     const x1=Math.min(pg.vp.width, Math.ceil(box.r - r.left + M)), y1=Math.min(pg.vp.height, Math.ceil(box.b - r.top + M));
     if (x1-x0<8 || y1-y0<8){ removeTile(pg); return false; }
-    let d=Math.min((window.devicePixelRatio||1)*s, 8); const A=1.6e7; if ((x1-x0)*(y1-y0)*d*d>A) d=Math.sqrt(A/((x1-x0)*(y1-y0)));   // 타일 64MB 상한
+    let d=Math.min((window.devicePixelRatio||1)*s, 16); const A=1.6e7; if ((x1-x0)*(y1-y0)*d*d>A) d=Math.sqrt(A/((x1-x0)*(y1-y0)));   // 타일 64MB 상한
     const key=[x0,y0,x1,y1,d.toFixed(2)].join(','); if (pg.tileKey===key) return true;
     if (pg.busy) return null; pg.busy=true;
     try {
@@ -2149,7 +2151,7 @@ function bindSelection(cont, c0){
       const last = merged[merged.length-1];
       pop=document.createElement('div'); pop.className='pop';
       pop.style.left=((last[0]+last[2]/2)*100)+'%'; pop.style.top=((last[1]+last[3])*100)+'%';
-      pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
+      pop.innerHTML = `<span class="popsel">${esc(text.length>44 ? text.slice(0,44)+'…' : text)}</span><button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
       pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
         const c = cur(); pushHist(c, `${KIND[b.dataset.k]} 추가 · ${text.slice(0,18)}${text.length>18?'…':''}`);
         c.marks.push({page:+pageEl.dataset.p, rects:merged.map(r=>r.map(v=>+v.toFixed(4))), kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : '', byId: me ? me.id : '', _editing:true, _fresh:true, mid:newMid(), mt:Date.now()});
@@ -2160,7 +2162,7 @@ function bindSelection(cont, c0){
         const idx = c.marks.findIndex(m=>m.text===text && m.page===+pageEl.dataset.p && m.kind===b.dataset.k);
         setTimeout(()=>focusHunk(idx+1), 50);
       }));
-      pageEl.appendChild(pop);
+      (isMob()?document.body:pageEl).appendChild(pop);
     }, 0);
   });
   document.addEventListener('mousedown', e=>{ if (pop && !pop.contains(e.target)) kill(); });
@@ -2192,7 +2194,7 @@ function bindSelection(cont, c0){
     const prr=pageEl.getBoundingClientRect(); if (!r || r[2]*prr.width<8 || r[3]*prr.height<8) return;   // 8px 미만 네모는 무시(쪽 크기와 무관)
     const c=cur(); const rect=r.map(v=>+v.toFixed(4)); const text='[영역] '+pageEl.dataset.p+'쪽';
     pop=document.createElement('div'); pop.className='pop'; pop.style.left=((rect[0]+rect[2]/2)*100)+'%'; pop.style.top=((rect[1]+rect[3])*100)+'%';
-    pop.innerHTML = `<button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
+    pop.innerHTML = `<span class="popsel">${esc(text.length>44 ? text.slice(0,44)+'…' : text)}</span><button class="d" data-k="del">삭제 <kbd>Alt+1</kbd></button><button class="r" data-k="rep">바꾸기 <kbd>Alt+2</kbd></button><button class="m" data-k="memo">메모 <kbd>Alt+3</kbd></button>`;
     pop.querySelectorAll('button').forEach(b=>b.addEventListener('mousedown', ev=>{ ev.preventDefault(); ev.stopPropagation();
       const c=cur(); pushHist(c, `${KIND[b.dataset.k]} 영역 추가 · ${pageEl.dataset.p}쪽`);
       c.marks.push({page:+pageEl.dataset.p, rects:[rect], area:true, kind:b.dataset.k, text, after:'', reason:'', by: me ? me.name : '', byId: me ? me.id : '', mid:newMid(), mt:Date.now(), _editing:true, _fresh:true});
@@ -2200,7 +2202,7 @@ function bindSelection(cont, c0){
       view.dirty=true; kill(); drawAllMarks(c); refreshPdfHead(c);
       const idx=c.marks.findIndex(m=>m.area && m.page===+pageEl.dataset.p && m.rects[0][0]===rect[0] && m.rects[0][1]===rect[1]); setTimeout(()=>focusHunk(idx+1), 50);
     }));
-    pageEl.appendChild(pop);
+    (isMob()?document.body:pageEl).appendChild(pop);
   });
   // 메뉴가 떠 있을 때 Alt+1/2/3 = 삭제/바꾸기/메모
   document.addEventListener('keydown', e=>{
