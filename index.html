@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T21:14:30+09:00">
+<meta name="build" content="2026-09-20T21:41:10+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -1379,8 +1379,8 @@ function ensureNpop(){
   el.innerHTML=`<div class="npop-head"><span class="npop-title"></span><span class="spacer"></span><button class="npop-nav" data-d="-1" aria-label="이전 메모" title="이전 메모">↑</button><button class="npop-nav" data-d="1" aria-label="다음 메모" title="다음 메모">↓</button><button class="npop-x" aria-label="닫기" title="닫기">✕</button></div><div class="npop-body"></div>`;
   el.querySelector('.npop-x').addEventListener('click', ()=>closeNotePop());
   el.querySelectorAll('.npop-nav').forEach(b=>b.addEventListener('click', e=>{ e.preventDefault(); const nh=(+npop.h)+(+b.dataset.d); if (nh>=1 && document.getElementById('note'+nh)){ mountNotePop(nh); ensureHunkVisible(nh); } }));   // 이웃 메모로 가면 그 구절이 보이게 화면도 따라간다
-  el.addEventListener('focusin', e=>{ if (e.target.matches('textarea, input, [contenteditable="true"], .md')){ el.classList.add('kb'); pinOverlays(); } });   // 글 입력칸에 커서가 들어올 때만(키보드) 위쪽에 붙인다 — 단추 포커스에 튀면 손을 뗄 때 단추가 그 자리에 없다
-  el.addEventListener('focusout', ()=>setTimeout(()=>{ if (!el.contains(document.activeElement)){ el.classList.remove('kb'); pinOverlays(); } }, 120));
+  el.addEventListener('focusin', e=>{ if (e.target.matches('textarea, input, [contenteditable="true"], .md')){ el.classList.add('kb'); pinOverlays('force'); } });   // 글 입력칸에 커서가 들어올 때만(키보드) 위쪽에 붙인다 — 단추 포커스에 튀면 손을 뗄 때 단추가 그 자리에 없다
+  el.addEventListener('focusout', ()=>setTimeout(()=>{ if (!el.contains(document.activeElement)){ el.classList.remove('kb'); pinOverlays('force'); } }, 120));
   window.addEventListener('popstate', ()=>{ if (npop.h!=null) closeNotePop(true); });          // 안드로이드 뒤로 가기 = 닫기
   document.body.append(back, el); npop.el=el; npop.back=back; return el;
 }
@@ -1400,7 +1400,7 @@ function mountNotePop(h){
   el.querySelector('.npop-body').replaceChildren(n);
   const c=view.draft||cases.find(x=>x.id===view.id); el.querySelector('.npop-title').textContent=`메모 ${h} / ${c?fmtN(c.marks.length):'?'}`;
   const total=(c && c.marks) ? c.marks.length : 0; el.querySelector('.npop-nav[data-d="-1"]').disabled=(h<=1); el.querySelector('.npop-nav[data-d="1"]').disabled=(h>=total);   // 이웃 판정은 메모 개수로
-  placeNpop(h); el.classList.add('open'); npop.back.classList.add('open'); document.body.classList.add('npop-open'); hot(h,true); pinOverlays();
+  placeNpop(h); el.classList.add('open'); npop.back.classList.add('open'); document.body.classList.add('npop-open'); hot(h,true); pinOverlays('force'); requestAnimationFrame(()=>{ if (npop.h===h) pinOverlays('force'); });
   const t=n.querySelector('textarea:not([hidden]), .md[contenteditable]'); if (t){ t.focus({preventScroll:true}); if (t.isContentEditable){ const r=document.createRange(); r.selectNodeContents(t); r.collapse(false); const sl=getSelection(); sl.removeAllRanges(); sl.addRange(r); } }
 }
 function ensureHunkVisible(h){
@@ -1409,7 +1409,7 @@ function ensureHunkVisible(h){
   const r=t.getBoundingClientRect(); const pr=npop.el.getBoundingClientRect();
   const hidden = r.bottom < vt+8 || r.top > vb-8 || (pr.height>0 && r.bottom > pr.top && r.top < pr.bottom);   // 창 밖이거나 팝오버 밑
   if (!hidden) return;
-  t.scrollIntoView({block:'center', inline:'nearest'}); placeNpop(h); pinOverlays();
+  t.scrollIntoView({block:'center', inline:'nearest'}); placeNpop(h); pinOverlays('force');
 }
 function openNotePop(h){ h=+h; if (!document.getElementById('note'+h)) return; const first=npop.h==null; mountNotePop(h);   // 열 때는 화면을 안 움직인다(탭한 자리는 이미 보인다) — 따라가기는 ↑↓ 때만
   if (first){ try { npop.sr=history.scrollRestoration||'auto'; history.scrollRestoration='manual'; } catch(e){}   // 닫을 때 뒤로 가기가 열었던 자리로 되돌리지 않게
@@ -3253,8 +3253,8 @@ function showLinkMenu(x, y, items){
 function isMob(){ return window.matchMedia('(max-width:760px)').matches; }   // innerWidth 는 아이폰 핀치 줌에 줄어든다 → 미디어쿼리(레이아웃 폭)로
 // ── 폰: 손가락으로 글자를 고르면(선택이 멎고 0.45초) 기존 선택 처리(mouseup)를 그대로 부른다 → 삭제/바꾸기/메모 막대가 아래에 뜬다 ──
 // ── 핀치 줌은 레이아웃 전체를 키우므로 화면에 고정한 막대·팝오버·메뉴도 같이 커져 밀려난다 → 떠 있는 UI 는 보이는 창(visualViewport)에 맞춰 다시 놓고 1/배율로 되돌린다(본문만 커진 것처럼 보이게) ──
-function pinApply(el, o){ if (!el._pinSaved) el._pinSaved={}; if (!el._pinLast) el._pinLast={};
-  for (const k in o){ if (el._pinLast[k]===o[k]) continue;   // 같은 값이면 건드리지 않는다
+function pinApply(el, o, force){ if (!el._pinSaved) el._pinSaved={}; if (!el._pinLast) el._pinLast={};
+  for (const k in o){ if (!force && el._pinLast[k]===o[k]) continue;   // 같은 값이면 건드리지 않는다(force 면 다시 쓴다)
     if (!(k in el._pinSaved)) el._pinSaved[k]=[el.style.getPropertyValue(k), el.style.getPropertyPriority(k)];
     el.style.setProperty(k, o[k], 'important'); el._pinLast[k]=o[k]; } }
 function pinRestore(el){ if (el) el._pinLast=null; const sv=el && el._pinSaved; if (!sv) return; for (const k in sv){ const [v,pr]=sv[k]; if (v) el.style.setProperty(k, v, pr); else el.style.removeProperty(k); } el._pinSaved=null; }
@@ -3329,14 +3329,16 @@ function pinOverlays(only){
   if (BARE) return;
   const vv=window.visualViewport; if (!vv) return; const s=vv.scale||1, on=s>1.02, k=1/s;
   const picking = on && (Date.now()-selBusy < 700);   // 고르는 중
-  if (picking && only!=='pop') return;   // 고르는 동안에는 아무것도 안 건드린다(손잡이 추적 방해) — 막 만든 막대만 예외
+  if (picking && only!=='pop' && only!=='force') return;   // 고르는 동안에는 안 건드린다 — 막 만든 막대와 방금 연 팝오버만 예외
   const lw=document.documentElement.clientWidth, L=vv.offsetLeft, T=vv.offsetTop, W=vv.width, H=vv.height;
   document.querySelectorAll('.pop').forEach(el=>{ if (getComputedStyle(el).position!=='fixed') return; if (!on){ pinRestore(el); return; }   // 선택 막대: 보이는 창 아래
     pinApply(el, {transform:`scale(${k})`, 'transform-origin':'left top', left:L+'px', right:'auto', bottom:'auto', width:lw+'px'}); pinApply(el, {top:(T+H-el.offsetHeight*k)+'px'}); });
   if (only==='pop') return;
   const np=document.querySelector('.npop.open');                                                                                    // 메모 팝오버: 키보드면 위, 아니면 아래
   if (np){ if (!on){ if (np._pinSaved){ pinRestore(np); if (npop.h!=null) placeNpop(npop.h); } }
-    else { const kb=np.classList.contains('kb'); pinApply(np, {'max-height':Math.round(H*s*(kb?0.46:0.55))+'px', transform:`scale(${k})`, 'transform-origin':'left top', left:(L+8*k)+'px', right:'auto', width:(lw-16)+'px', bottom:'auto'}); pinApply(np, {top:(kb ? T+8*k : T+H-(np.offsetHeight+8)*k)+'px'}); } }
+    else { const kb=np.classList.contains('kb'); const F=(only==='force');
+      pinApply(np, {'max-height':Math.round(H*s*(kb?0.46:0.55))+'px', transform:`scale(${k})`, 'transform-origin':'left top', left:(L+8*k)+'px', right:'auto', width:(lw-16)+'px', bottom:'auto'}, F);
+      pinApply(np, {top:(kb ? T+8*k : T+H-(np.offsetHeight+8)*k)+'px'}, F); } }
   const bk=document.querySelector('.npop-back.open'); if (bk){ if (!on) pinRestore(bk); else pinApply(bk, {left:L+'px', top:T+'px', width:W+'px', height:H+'px', right:'auto', bottom:'auto'}); }
   document.querySelectorAll('.imenu').forEach(el=>{ if (!on){ pinRestore(el); return; } pinApply(el, {transform:`scale(${k})`, 'transform-origin':'left top'});   // ⋯ 메뉴: 줄이고 보이는 창 안으로
     const r=el.getBoundingClientRect(); let x=r.left, y=r.top; if (x+r.width>L+W-4) x=L+W-4-r.width; if (y+r.height>T+H-4) y=T+H-4-r.height; x=Math.max(L+4,x); y=Math.max(T+4,y); pinApply(el, {left:x+'px', top:y+'px'}); });
