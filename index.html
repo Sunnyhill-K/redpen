@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T10:11:05+09:00">
+<meta name="build" content="2026-09-20T10:20:13+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -425,6 +425,10 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
 /* ── 토스트 ── */
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:8px 14px;border-radius:4px;font-size:calc(13px * var(--ui,1));opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
 .toast.show{opacity:1}
+.prog{position:fixed;right:18px;bottom:18px;width:min(360px,calc(100vw - 36px));background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.22);padding:10px 12px;z-index:40;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s;font-size:calc(13px * var(--ui,1))}
+.prog.show{opacity:1;transform:none} .prog .pl{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px} .prog .pt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap} .prog .pp{font-family:var(--mono);color:var(--ink-2)}
+.prog .pbar{height:8px;background:var(--paper-3);border-radius:4px;overflow:hidden} .prog .pfill{height:100%;width:0;background:var(--ins);border-radius:4px;transition:width .25s}
+.prog.indet .pfill{width:35%;animation:pslide 1.1s linear infinite} @keyframes pslide{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
 
 /* ── 반응형 ── */
 @media (max-width:760px){
@@ -827,7 +831,7 @@ async function exportDomPdfAnnots(c){
     const marks=c.marks.map((m,i)=>{ const h=i+1; const rs=[]; host.querySelectorAll(`.hunk[data-h="${h}"]`).forEach(el=>{ [...el.getClientRects()].forEach(r=>{ if (r.width>1 && r.height>1) rs.push({x:r.left-hr.left, y:r.top-hr.top, w:r.width, h:r.height}); }); }); return {m, h, rs}; });
     // 3) 그림으로 찍기(긴 문서는 조각으로)
     const S=2, CH=2400; const chunks=[];
-    for (let y=0;y<totalH;y+=CH){ const hgt=Math.min(CH, totalH-y);
+    for (let y=0;y<totalH;y+=CH){ const hgt=Math.min(CH, totalH-y); Prog.set(y/totalH*0.7, `쪽 찍는 중 ${Math.round(y/totalH*100)}%`);
       const cv=await window.html2canvas(host, {scale:S, backgroundColor:'#ffffff', useCORS:true, logging:false, x:hr.left+window.scrollX, y:hr.top+window.scrollY+y, width:W, height:hgt, windowWidth:Math.max(W, document.documentElement.clientWidth), scrollX:0, scrollY:0});
       chunks.push({y, h:hgt, cv}); }
     const rowBlank=(yy)=>{ const ch=chunks.find(k=>yy>=k.y && yy<k.y+k.h); if (!ch) return true; const ctx2=ch.cv.getContext('2d'); const d=ctx2.getImageData(0, Math.min(ch.cv.height-1, Math.round((yy-ch.y)*S)), ch.cv.width, 1).data; for (let i=0;i<d.length;i+=16){ if (d[i]<235||d[i+1]<235||d[i+2]<235) return false; } return true; };
@@ -835,7 +839,7 @@ async function exportDomPdfAnnots(c){
     const pagesY=[]; let y0=0; while (y0<totalH){ let y1=Math.min(y0+pageH, totalH); if (y1<totalH){ let t=y1; while (t>y0+pageH*0.6 && !rowBlank(t)) t-=2; if (t>y0+pageH*0.6) y1=t; } pagesY.push([y0,y1]); y0=y1; }
     // 5) PDF 조립
     const pdfDoc=await PDFDocument.create(); let n=0;
-    for (let pi=0; pi<pagesY.length; pi++){ const [a,b]=pagesY[pi]; const page=pdfDoc.addPage([PW,PH]);
+    for (let pi=0; pi<pagesY.length; pi++){ const [a,b]=pagesY[pi]; const page=pdfDoc.addPage([PW,PH]); Prog.set(0.7+pi/pagesY.length*0.3, `PDF 쪽 만드는 중 ${pi+1}/${pagesY.length}`);
       const pc=document.createElement('canvas'); pc.width=Math.round(W*S); pc.height=Math.max(1, Math.round((b-a)*S)); const pctx=pc.getContext('2d'); pctx.fillStyle='#fff'; pctx.fillRect(0,0,pc.width,pc.height);
       for (const ch of chunks){ const top=Math.max(a, ch.y), bot=Math.min(b, ch.y+ch.h); if (bot<=top) continue; pctx.drawImage(ch.cv, 0, Math.round((top-ch.y)*S), ch.cv.width, Math.round((bot-top)*S), 0, Math.round((top-a)*S), pc.width, Math.round((bot-top)*S)); }
       const jpg=await pdfDoc.embedJpg(await new Promise(r=>{ pc.toBlob(async bl=>r(new Uint8Array(await bl.arrayBuffer())), 'image/jpeg', 0.88); }));
@@ -881,10 +885,10 @@ a.mk{cursor:pointer}.mk.tipon{background:var(--del);color:#fff}.mk.memo.tipon{ba
 `;
 }
 // PDF 쪽을 그림(JPEG)으로 다시 찍는다 — 화면에 아직 안 그린 쪽도 전부
-async function exportPdfPages(){
+async function exportPdfPages(onProg){
   const st=pdfState; if (!st || !st.doc) throw new Error('PDF 가 아직 열리지 않았습니다');
   const out=[]; const W=1400, MAXD=16000, MAXA=1.2e8;
-  for (let p=1;p<=st.doc.numPages;p++){
+  for (let p=1;p<=st.doc.numPages;p++){ if (onProg) onProg(p-1, st.doc.numPages);
     const page=await st.doc.getPage(p); const base=page.getViewport({scale:1}); let scale=W/base.width;
     if (base.height*scale>MAXD) scale=MAXD/base.height; if (base.width*base.height*scale*scale>MAXA) scale=Math.sqrt(MAXA/(base.width*base.height));
     const vp=page.getViewport({scale}); const cv=document.createElement('canvas'); cv.width=Math.floor(vp.width); cv.height=Math.floor(vp.height);
@@ -908,10 +912,11 @@ function exportNote(c, m, i){
 async function exportDoc(c){
   collectMarks(c);
   const btn=$('#exportBtn'); if (btn){ btn.disabled=true; btn.textContent='만드는 중…'; }
+  Prog.start('내보내기 준비');
   try {
     let body='';
     if (isPdf(c)){
-      const pages=await exportPdfPages();
+      const pages=await exportPdfPages((p,n)=>Prog.set(p/n*0.9, `쪽 그리는 중 ${p}/${n}`));
       body=pages.map(pg=>{ const notes=c.marks.map((m,i)=>m.page===pg.p?exportNote(c,m,i):'').join('');
         return `<section class="xpage"><div class="page" style="aspect-ratio:${pg.w} / ${pg.h}"><img src="${pg.src}" alt="${pg.p}쪽"><div class="marks">${exportMarks(c,pg.p)}</div><div class="pno">${pg.p} / ${pages.length}</div></div>${notes?`<div class="xnotes">${notes}</div>`:''}</section>`; }).join('');
     } else {
@@ -954,7 +959,7 @@ ${body}
     if (!w){ const a=document.createElement('a'); a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove(); toast('새 창이 막혀 HTML 파일로 내려받았습니다'); }
     else toast('새 탭에 열었습니다 · 거기서 「PDF로 저장」 또는 「HTML 파일로 내려받기」');
   } catch(e){ toast('내보내기 실패: '+((e&&e.message)||e)); }
-  finally { if (btn){ btn.disabled=false; btn.textContent='내보내기'; } }
+  finally { Prog.done(); if (btn){ btn.disabled=false; btn.textContent='내보내기 ▾'; } }
 }
 function overallHtml(c){
   const ph='전체 인상, 남겨 둔 것, 의뢰인에게 전할 말';
@@ -1353,7 +1358,7 @@ async function compressPdf(bytes, say){
   for (const t of tries){
     const out=await window.PDFLib.PDFDocument.create();
     for (let p=1;p<=n;p++){
-      say(`압축 중 ${p}/${n}쪽`);
+      say(`PDF 압축 중 ${p}/${n}쪽`, (p-1)/n);
       const page=await src.getPage(p); const base=page.getViewport({scale:1});
       const scale=Math.min(t.w/base.width, 16000/base.height, 4); const vp=page.getViewport({scale});
       const cv=document.createElement('canvas'); cv.width=Math.floor(vp.width); cv.height=Math.floor(vp.height);
@@ -1380,12 +1385,13 @@ async function ocrDoc(c, btn){
   if (ocrBusy || !pdfState || !pdfState.doc) return; ocrBusy=true; if (btn) btn.disabled=true;
   const total=pdfState.doc.numPages; let cur=0;
   const say=(t)=>{ if (btn) btn.textContent=t; };
+  const prog=(pageFrac)=>Prog.set(((cur-1)+pageFrac)/total, `글자 인식 ${cur}/${total}쪽`);
   try {
-    say('OCR 준비 중…'); const worker=await getTess(p=>say(`글자 인식 ${cur}/${total}쪽 · ${Math.round(p*100)}%`));
+    say('인식 중…'); Prog.start('글자 인식 준비 (인식기 불러오는 중)'); const worker=await getTess(p=>Prog.set(null, `글자 인식 준비 · 인식기 ${Math.round(p*100)}%`));
     try { await worker.setParameters({tessedit_pageseg_mode:'4', preserve_interword_spaces:'1', user_defined_dpi:'300'}); } catch(e){}
     const out={}; const counts=[];
     for (let p=1;p<=total;p++){
-      cur=p; say(`글자 인식 ${p}/${total}쪽…`);
+      cur=p; prog(0);
       const page=await pdfState.doc.getPage(p); const base=page.getViewport({scale:1}); const scale=Math.min(4, 2400/base.width); const vp=page.getViewport({scale});
       const W=Math.floor(vp.width), H=Math.floor(vp.height); const TILE=3000, OV=160; const lines=[];
       for (let y=0; y<H; y+=TILE-OV){
@@ -1393,8 +1399,7 @@ async function ocrDoc(c, btn){
         const cv=document.createElement('canvas'); cv.width=W; cv.height=h;
         const tvp=page.getViewport({scale, offsetX:0, offsetY:-y});
         await page.render({canvasContext: cv.getContext('2d'), viewport: tvp}).promise;
-        say(`글자 인식 ${p}/${total}쪽 · ${Math.min(100, Math.round((y+h)/H*100))}%`);
-        const {data}=await worker.recognize(cv, {}, {text:true, blocks:true});
+        const {data}=await worker.recognize(cv, {}, {text:true, blocks:true}); prog(Math.min(1, (y+h)/H));
         let ls=data.lines||[]; if (!ls.length && data.blocks) ls=data.blocks.flatMap(b=>(b.paragraphs||[]).flatMap(pg=>pg.lines||[]));
         const last = (y+h>=H); ls.forEach(l=>{ if (!l.bbox) return; const mid=(l.bbox.y0+l.bbox.y1)/2;
           if (y>0 && mid < OV/2) return; if (!last && mid > h-OV/2) return;   // 줄의 중점이 이 띠의 담당 구간(겹침 절반 기준)에 있을 때만 채택
@@ -1410,8 +1415,8 @@ async function ocrDoc(c, btn){
     // 이미 그려진 쪽의 글자층을 OCR 층으로 바꿔 끼운다
     document.querySelectorAll('.page').forEach(el=>{ const p=+el.dataset.p; const tl=el.querySelector('.textLayer'); if (tl && out[p]){ const vw=el.getBoundingClientRect().width; tl.innerHTML=''; buildOcrLayer(tl, out[p], {width:vw, height:el.getBoundingClientRect().height}); } });
     toast(`글자 인식 끝. 쪽별 줄 수 ${counts.join(', ')} · 저장(Ctrl+S)하면 다른 사람도 드래그할 수 있습니다`); computeGhosts(c); drawAllMarks(c); renderGhostBox(c);
-    say('글자 다시 인식');
-  } catch(e){ toast('글자 인식 실패: '+((e&&e.message)||e)); say('글자 인식(OCR)'); }
+    say('글자 다시 인식'); Prog.done();
+  } catch(e){ Prog.done(); toast('글자 인식 실패: '+((e&&e.message)||e)); say('글자 인식(OCR)'); }
   finally { ocrBusy=false; if (btn) btn.disabled=false; }
 }
 // OCR 단어를 투명 글자로 깔아 드래그 선택이 되게 한다(줄 단위 상자 안에 단어 상자)
@@ -1512,8 +1517,8 @@ function refreshPdfHead(c){
     {l:'HTML 로 내보내기 — 딱지에 마우스 올리면 메모 팝업 · 인쇄로 PDF 저장', f:()=>exportDoc(c)},
     {l: isPdf(c) ? '주석 PDF 로 내보내기 — 원본 PDF 에 표시·메모를 주석으로 (Acrobat·Edge 팝업)' : '주석 PDF 로 내보내기 — 쪽을 그림으로 찍어 표시·메모를 주석으로 (글자 선택 불가)', f:()=>{ const b=$('#exportPdfBtn'); if (b) b.click(); }}]); });
   const xp=$('#exportPdfBtn'); if (xp) xp.addEventListener('click', async ()=>{ const xb2=$('#exportBtn'); if (xb2){ xb2.disabled=true; xb2.textContent='만드는 중…'; }
-    try { collectMarks(c); const bytes=await (isPdf(c) ? exportPdfAnnots(c) : exportDomPdfAnnots(c)); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})); a.download=((c.title||'문서').replace(/[\\/:*?"<>|]/g,'_'))+' 주석.pdf'; document.body.appendChild(a); a.click(); a.remove(); toast(`주석 ${fmtN(c.marks.length)}개를 넣은 PDF 를 내려받았습니다`); }
-    catch(e){ toast('주석 PDF 실패: '+((e&&e.message)||e)); } finally { if (xb2){ xb2.disabled=false; xb2.textContent='내보내기 ▾'; } } });
+    try { collectMarks(c); Prog.start('주석 PDF 만드는 중'); const bytes=await (isPdf(c) ? exportPdfAnnots(c) : exportDomPdfAnnots(c)); Prog.done(); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})); a.download=((c.title||'문서').replace(/[\\/:*?"<>|]/g,'_'))+' 주석.pdf'; document.body.appendChild(a); a.click(); a.remove(); toast(`주석 ${fmtN(c.marks.length)}개를 넣은 PDF 를 내려받았습니다`); }
+    catch(e){ Prog.done(); toast('주석 PDF 실패: '+((e&&e.message)||e)); } finally { if (xb2){ xb2.disabled=false; xb2.textContent='내보내기 ▾'; } } });
   const ub=$('#undoBtn'), rb=$('#redoBtn'), cb=$('#clearBtn');
   if (ub) ub.addEventListener('click', ()=>undoMarks(c));
   if (rb) rb.addEventListener('click', ()=>redoMarks(c));
@@ -1694,6 +1699,13 @@ async function drawPages(){
   const io = new IntersectionObserver(entries=>{ entries.forEach(en=>{ if (en.isIntersecting){ const pg=pages.find(x=>x.el===en.target); if (pg){ renderOne(pg); io.unobserve(en.target); } } }); }, {rootMargin:'1200px 0px'});
   if (SW.nolazy){ for (const pg of pages) await renderOne(pg); }
   else { pages.slice(0,2).forEach(pg=>renderOne(pg)); pages.slice(2).forEach(pg=>io.observe(pg.el)); }
+  // 글자층이 없는 PDF(캡처본)는 처음 열 때 한 번 자동으로 글자 인식 → 저장
+  if (!st.c.ocr && !st.c._autoOcr && editable() && !ocrBusy){ st.c._autoOcr=true;
+    (async()=>{ try { let chars=0; for (let p=1;p<=Math.min(2, pages.length);p++){ const tc=await pages[p-1].page.getTextContent(); chars+=tc.items.map(i=>i.str).join('').replace(/\s/g,'').length; }
+      if (chars>=20 || st.token!==token) return;
+      toast('글자층이 없는 PDF 라 글자 인식을 자동으로 시작합니다'); await ocrDoc(st.c, $('#ocrBtn'));
+      if (st.c.ocr && view.mode==='case' && view.id===st.c.id) await saveDoc(st.c, null);
+    } catch(e){ console.warn('auto ocr', e); } })(); }
   st.io=io;
   if (editable() && !cont.dataset.selBound){ cont.dataset.selBound='1'; bindSelection(cont, st.c); }
   fitOverall();
@@ -2112,15 +2124,20 @@ function renderEdit(main){
   let pdfBytes=null;
   const setPdf=(bytes, name, label)=>{ let bin=''; for (let i=0;i<bytes.length;i+=0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000));
     pdfB64 = btoa(bin); pdfBytes=bytes; pdfName = name; pdfDirty = true; view.dirty=true;
-    $('#pdfName').innerHTML = `${esc(label)} · ${fmtN(Math.round(bytes.length/1024))}KB` + (bytes.length > 3*1024*1024 ? ` <button type="button" class="btn small" id="pdfShrink">가볍게 압축</button>` : '');
-    const sb=$('#pdfShrink'); if (sb) sb.addEventListener('click', async e=>{ e.preventDefault(); e.stopPropagation(); sb.disabled=true;
-      try { const out=await compressPdf(pdfBytes, t=>{ sb.textContent=t; }); setPdf(out, pdfName, pdfName+' (압축)'); toast(`압축 끝: ${fmtN(Math.round(bytes.length/1024))}KB → ${fmtN(Math.round(out.length/1024))}KB · 글자층은 사라지니 저장 후 「글자 인식」을 돌리세요`); }
-      catch(ex){ sb.textContent='압축 실패'; toast('압축 실패: '+((ex&&ex.message)||ex)); } });
+    const kb=n=>fmtN(Math.round(n/1024))+'KB';
+    $('#pdfName').innerHTML = `${esc(label)} · ${kb(bytes.length)}` + (pdfOrig && pdfOrig!==bytes ? ` <span class="msg">(원본 ${kb(pdfOrig.length)})</span> <button type="button" class="btn small" id="pdfOrigBtn">원본 그대로 쓰기</button>` : (bytes.length > 3*1024*1024 ? ` <button type="button" class="btn small" id="pdfShrink">가볍게 압축</button>` : ''));
+    const sb=$('#pdfShrink'); if (sb) sb.addEventListener('click', async e=>{ e.preventDefault(); e.stopPropagation(); sb.disabled=true; await shrinkNow(); });
+    const ob=$('#pdfOrigBtn'); if (ob) ob.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); const o=pdfOrig; pdfOrig=null; setPdf(o, pdfName, pdfName); });
   };
+  let pdfOrig=null;
+  const shrinkNow=async()=>{ const src=pdfBytes; Prog.start('PDF 압축 중');
+    try { const out=await compressPdf(src, (t,f)=>Prog.set(f, t)); Prog.done(); if (out.length < src.length*0.9){ pdfOrig=src; setPdf(out, pdfName, pdfName+' (압축)'); toast(`압축: ${fmtN(Math.round(src.length/1024))}KB → ${fmtN(Math.round(out.length/1024))}KB · 글자층이 사라져 저장 뒤 글자 인식이 자동으로 돕니다`); } else toast('더 줄어들지 않아 원본을 그대로 씁니다'); }
+    catch(ex){ Prog.done(); toast('압축 실패: '+((ex&&ex.message)||ex)); } };
   const takePdf = async f => {
     if (!/\.pdf$/i.test(f.name)){ $('#pdfName').textContent='PDF 파일만 넣을 수 있습니다.'; return; }
     if (f.size > 50*1024*1024){ $('#pdfName').textContent='50MB를 넘는 PDF는 넣을 수 없습니다. 쪽을 나누거나 압축해 주세요.'; return; }
-    const buf = new Uint8Array(await f.arrayBuffer()); setPdf(buf, f.name, f.name);
+    const buf = new Uint8Array(await f.arrayBuffer()); pdfOrig=null; setPdf(buf, f.name, f.name);
+    if (buf.length > 3*1024*1024) await shrinkNow();   // 큰 PDF 는 기본으로 압축(「원본 그대로 쓰기」로 되돌릴 수 있음)
     if (!$('#fTitle').value.trim()) $('#fTitle').value = f.name.replace(/\.pdf$/i,'');
   };
   const zone=$('#zone');
@@ -2401,13 +2418,20 @@ async function docKey(c, d){
 const apiUrl = path => `https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${path}`;
 const rawUrl = path => `https://raw.githubusercontent.com/${GH.owner}/${GH.repo}/${GH.branch}/${path}?v=${Date.now()}`;
 const authH = extra => Object.assign({Authorization:'Bearer '+token, Accept:'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28'}, extra||{});
-async function ghRead(path){
+async function readBody(r, onProg){
+  const total=+(r.headers.get('content-length')||0);
+  if (!onProg || !r.body || !total) return new Uint8Array(await r.arrayBuffer());
+  const reader=r.body.getReader(); const chunks=[]; let got=0;
+  for (;;){ const {done, value}=await reader.read(); if (done) break; chunks.push(value); got+=value.length; onProg(Math.min(1, got/total)); }
+  const out=new Uint8Array(got); let o=0; for (const ch of chunks){ out.set(ch, o); o+=ch.length; } return out;
+}
+async function ghRead(path, onProg){
   if (token){
     const r=await fetch(apiUrl(path)+`?ref=${GH.branch}&v=${Date.now()}`, {headers:authH({Accept:'application/vnd.github.raw+json'}), cache:'no-store'});
-    if (r.status===404) return null; if (!r.ok) throw new Error('깃헙 읽기 실패 '+r.status); return new Uint8Array(await r.arrayBuffer());
+    if (r.status===404) return null; if (!r.ok) throw new Error('깃헙 읽기 실패 '+r.status); return readBody(r, onProg);
   }
   const r=await fetch(rawUrl(path), {cache:'no-store'});
-  if (r.status===404) return null; if (!r.ok) throw new Error('읽기 실패 '+r.status); return new Uint8Array(await r.arrayBuffer());
+  if (r.status===404) return null; if (!r.ok) throw new Error('읽기 실패 '+r.status); return readBody(r, onProg);
 }
 async function ghSha(path){
   const cut=path.lastIndexOf('/'); const dir=cut>=0?path.slice(0,cut):''; const name=path.slice(cut+1);
@@ -2415,10 +2439,13 @@ async function ghSha(path){
   if (r.status===404) return null; if (!r.ok) throw new Error('깃헙 목록 실패 '+r.status);
   const arr=await r.json(); const f=(Array.isArray(arr)?arr:[]).find(x=>x.name===name); return f?f.sha:null;
 }
-async function ghWrite(path, u8, message){
+function xhrPut(url, body, onProg){ return new Promise(res=>{ const x=new XMLHttpRequest(); x.open('PUT', url); const h=authH({'Content-Type':'application/json'}); for (const k in h) x.setRequestHeader(k, h[k]);
+  x.upload.onprogress=e=>{ if (e.lengthComputable && onProg) onProg(e.loaded/e.total); }; x.onload=()=>res({ok:x.status>=200&&x.status<300, status:x.status, text:async()=>x.responseText}); x.onerror=()=>res({ok:false, status:0, text:async()=>'network error'}); x.send(body); }); }
+async function ghWrite(path, u8, message, onProg){
   for (let attempt=0; attempt<2; attempt++){
     const sha=await ghSha(path);
-    const r=await fetch(apiUrl(path), {method:'PUT', headers:authH({'Content-Type':'application/json'}), body: JSON.stringify(Object.assign({message, content:b64(u8), branch:GH.branch}, sha?{sha}:{}))});
+    const body=JSON.stringify(Object.assign({message, content:b64(u8), branch:GH.branch}, sha?{sha}:{}));
+    const r = (onProg && body.length>512*1024) ? await xhrPut(apiUrl(path), body, onProg) : await fetch(apiUrl(path), {method:'PUT', headers:authH({'Content-Type':'application/json'}), body});
     if (r.ok) return;
     if ((r.status===409||r.status===422) && attempt===0) continue;
     throw new Error('깃헙 쓰기 실패 '+r.status+' '+(await r.text()).slice(0,160));
@@ -2452,7 +2479,7 @@ async function loadDoc(c){
   else { c.lock=false; if (Array.isArray(d.vis)) c._legacyVis=true; }   // 옛 방식(화면 제한만) — 한 번 저장하면 봉인된다
   const payload=JSON.parse(td.decode(await decB(key, ub64(d.ct))));
   Object.assign(c, {title:d.title, date:d.date, ts:d.ts||'', type:d.type||'text', client:d.client, vis:(Array.isArray(d.vis)?d.vis:null), owner:d.owner||''}, payload);
-  if (isPdf(c)){ const pe=await ghRead(`docs/${c.id}.pdf.enc`); if (!pe) throw new Error('PDF 파일이 없습니다'); tmark('PDF 파일 받음'); c.pdf=b64(await decB(key, pe)); tmark('PDF 복호화'); }
+  if (isPdf(c)){ Prog.start('PDF 받는 중'); try { const pe=await ghRead(`docs/${c.id}.pdf.enc`, f=>Prog.set(f*0.85, `PDF 받는 중 (${fmtN(Math.round(f*100))}%)`)); if (!pe) throw new Error('PDF 파일이 없습니다'); tmark('PDF 파일 받음'); Prog.set(0.9, 'PDF 여는 중'); c.pdf=b64(await decB(key, pe)); tmark('PDF 복호화'); } finally { Prog.done(); } }
   const legacy = cfg.legacyAuthor || ((cfg.users||[]).find(u=>u.role==='admin')||{}).name || '';
   if (legacy) (c.marks||[]).forEach(m=>{ if (!m.by) m.by=legacy; });   // 계정 도입 전 메모 → 도입한 관리자 이름
   const idOf=nm=>{ const u=findUser(nm, ''); return u?u.id:''; };
@@ -2476,8 +2503,8 @@ async function saveDoc(c, btn){
   const msg=$('#saveMsg'); if (msg){ msg.textContent='저장하는 중…'; msg.className='msg'; } if (btn) btn.disabled=true;
   try {
     if (!token) throw new Error('편집자만 저장할 수 있습니다');
-    ensureMids(c);
-    if (msg) msg.textContent='다른 사람 저장분과 합치는 중…';
+    ensureMids(c); Prog.start('저장 준비');
+    if (msg) msg.textContent='다른 사람 저장분과 합치는 중…'; Prog.set(0.08, '다른 사람 저장분과 합치는 중');
     let merged=0; try { merged=await mergeRemote(c); } catch(e){ console.warn('merge', e); }
     if (merged) toast(`다른 사람이 저장한 메모 ${fmtN(merged)}건을 합쳤습니다`);
     const payload = isPdf(c) ? {marks:c.marks||[], note:c.note||'', pages:c.pages||0, noteSegs:c.noteSegs||[], noteMt:c.noteMt||0, ocr:c.ocr||null, ocrAt:c.ocrAt||'', versions:c.versions||[], carried:c.carried||[]} : {src:c.src||'', html:c.html||'', htmlSrc:c.htmlSrc||'', marks:c.marks||[], note:c.note||'', noteSegs:c.noteSegs||[], noteMt:c.noteMt||0, versions:c.versions||[], carried:c.carried||[]};
@@ -2520,13 +2547,13 @@ async function saveDoc(c, btn){
     c.lockPw=''; c.unlockReq=false;
     const ct = b64(await encB(key, te.encode(JSON.stringify(payload))));
     stampNow(c); if (!c.owner && me) c.owner=me.id; c.loaded=true; const m=meta(c);
-    if (c._snapPdf){ if (msg) msg.textContent='이전 버전 PDF 보관 중…'; await ghWrite(c._snapPdf.file, await encB(key, b64ToBytes(c._snapPdf.b64)), `version pdf: ${c.title}`); delete c._snapPdf; }
-    if (isPdf(c) && (c.pdfDirty || keyChanged)){ if (!c.pdf) throw new Error('PDF 내용이 메모리에 없습니다. 문서를 다시 열어 주세요'); if (msg) msg.textContent='PDF 올리는 중…'; await ghWrite(`docs/${c.id}.pdf.enc`, await encB(key, b64ToBytes(c.pdf)), `pdf: ${c.title}`); c.pdfDirty=false; }
-    if (msg) msg.textContent='문서 저장하는 중…';
+    if (c._snapPdf){ if (msg) msg.textContent='이전 버전 PDF 보관 중…'; Prog.set(0.2, '이전 버전 PDF 보관 중'); await ghWrite(c._snapPdf.file, await encB(key, b64ToBytes(c._snapPdf.b64)), `version pdf: ${c.title}`, f=>Prog.set(0.2+f*0.2, '이전 버전 PDF 보관 중')); delete c._snapPdf; }
+    if (isPdf(c) && (c.pdfDirty || keyChanged)){ if (!c.pdf) throw new Error('PDF 내용이 메모리에 없습니다. 문서를 다시 열어 주세요'); if (msg) msg.textContent='PDF 올리는 중…'; const mb=(c.pdf.length*0.75/1048576).toFixed(1); Prog.set(0.4, `PDF 올리는 중 (${mb}MB)`); await ghWrite(`docs/${c.id}.pdf.enc`, await encB(key, b64ToBytes(c.pdf)), `pdf: ${c.title}`, f=>Prog.set(0.4+f*0.4, `PDF 올리는 중 (${mb}MB)`)); c.pdfDirty=false; }
+    if (msg) msg.textContent='문서 저장하는 중…'; Prog.set(0.85, '문서 저장하는 중');
     await ghWrite(`docs/${c.id}.json`, te.encode(JSON.stringify(Object.assign({}, m, c.lock?{lock:true, wrap}:{}, uw?{uw}:{}, {ct}))), `save: ${c.title}`);
-    await updateIndex(list=>{ const i=list.findIndex(x=>x.id===c.id); if (i>=0) list[i]=m; else list.push(m); });
+    Prog.set(0.95, '목록 갱신'); await updateIndex(list=>{ const i=list.findIndex(x=>x.id===c.id); if (i>=0) list[i]=m; else list.push(m); }); Prog.done();
     const idx=cases.findIndex(x=>x.id===c.id); if (idx>=0){ if (cases[idx]!==c) Object.assign(cases[idx], c); } else cases.push(c);
-    c.ver=m.ver; c.n=m.n; renderList();   // 왼쪽 목록의 버전·개수 칩도 바로 갱신
+    { const tgt=(idx>=0?cases[idx]:c); tgt.ver=m.ver; tgt.n=m.n; c.ver=m.ver; } renderList();   // 왼쪽 목록의 버전·개수 칩도 바로 갱신(목록 객체가 따로일 때도)
     c._base=new Set(c.marks.map(m=>m.mid)); c._baseTs=c.ts||'';
     const wasDraft=!!view.draft; const y=window.scrollY;
     view.draft=null; view.id=c.id; view.dirty=false; location.hash='case='+c.id; toast('저장했습니다');
@@ -2534,7 +2561,7 @@ async function saveDoc(c, btn){
     if (!wasDraft && isPdf(c)){ refreshPdfHead(c); restoreSpot(y, true); }
     else { pendingSpot={y, focus:true}; render(); if (!isPdf(c)){ pendingSpot=null; restoreSpot(y, true); } }
     return true;
-  } catch(e){ if (msg){ msg.textContent=(e&&e.message)||String(e); msg.className='msg err'; } if (btn) btn.disabled=false; toast('저장 실패: '+((e&&e.message)||e)); return false; }
+  } catch(e){ Prog.done(); if (msg){ msg.textContent=(e&&e.message)||String(e); msg.className='msg err'; } if (btn) btn.disabled=false; toast('저장 실패: '+((e&&e.message)||e)); return false; }
 }
 async function deleteDoc(c, btn){
   const msg=$('#saveMsg'); if (msg){ msg.textContent='지우는 중…'; msg.className='msg'; } if (btn) btn.disabled=true;
@@ -2828,6 +2855,15 @@ function ask(msg, okLabel){
     document.body.appendChild(ov); ov.querySelector('.primary').focus();
   });
 }
+// ══════════════ 진행 막대: 몇 초 넘게 걸리는 일은 전부 이걸로 보여 준다(0.6초 안에 끝나면 안 뜸) ══════════════
+const Prog=(()=>{ let el=null, showT=null, on=false;
+  const ensure=()=>{ if (!el){ el=document.createElement('div'); el.className='prog'; el.innerHTML='<div class="pl"><span class="pt"></span><span class="pp"></span></div><div class="pbar"><div class="pfill"></div></div>'; document.body.appendChild(el); } return el; };
+  const paint=(frac,label)=>{ ensure(); if (label!=null) el.querySelector('.pt').textContent=label; if (frac==null){ el.classList.add('indet'); el.querySelector('.pp').textContent=''; } else { el.classList.remove('indet'); const f=Math.max(0,Math.min(1,frac)); el.querySelector('.pfill').style.width=(f*100)+'%'; el.querySelector('.pp').textContent=Math.round(f*100)+'%'; } };
+  return {
+    start(label){ ensure(); on=true; paint(0,label); clearTimeout(showT); showT=setTimeout(()=>{ if (on) el.classList.add('show'); }, 600); },
+    set(frac,label){ if (!on) this.start(label); paint(frac,label); },
+    done(){ on=false; clearTimeout(showT); if (el){ paint(1); setTimeout(()=>{ if (!on) el.classList.remove('show'); }, 350); } }
+  }; })();
 function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'), 2200); }
 async function copyText(t, ok){
   try { await navigator.clipboard.writeText(t); toast(ok); }
