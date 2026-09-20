@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T19:09:11+09:00">
+<meta name="build" content="2026-09-20T19:54:21+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -291,7 +291,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .textLayer span{pointer-events:auto}
 .textLayer br{display:none}
 .textLayer ::selection{background:rgba(45,91,185,.5)}
-.textLayer span{padding-top:.6em;margin-top:-.6em;padding-bottom:.6em}
+.textLayer span{padding-top:.15em;margin-top:-.15em}
 .textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:-1;cursor:default;user-select:none;-webkit-user-select:none}
 .textLayer.selecting .endOfContent{top:0}   /* 고르는 중에는 글자층 전체를 덮어, 빈 곳으로 끌어도 선택이 여기서 멈춘다 */
 .textLayer.ocr .oline{position:absolute;color:transparent;white-space:pre;transform-origin:0 0;cursor:text;font-family:Arial,sans-serif;letter-spacing:0}
@@ -1958,7 +1958,7 @@ async function drawPages(){
   const mkCanvas=(pg, d)=>{ const cv=document.createElement('canvas'); cv.width=Math.floor(pg.vp.width*d); cv.height=Math.floor(pg.vp.height*d); cv.style.width=pg.vp.width+'px'; cv.style.height=pg.vp.height+'px'; return cv; };
   const renderOne = async (pg)=>{
     if (pg.done || st.token!==token) return; pg.done=true;
-    if (SW.nocanvas){ const tl0=document.createElement('div'); tl0.className='textLayer'; tl0.style.setProperty('--scale-factor', String(pg.scale)); pg.el.prepend(tl0); try { const tc=await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl0, viewport: pg.vp, textDivs: []}).promise; } catch(e){} addEoc(tl0); tmark('쪽 '+pg.p+' 글자층만'); return; }
+    if (SW.nocanvas){ const tl0=document.createElement('div'); tl0.className='textLayer'; tl0.style.setProperty('--scale-factor', String(pg.scale)); pg.el.prepend(tl0); try { const tc=await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl0, viewport: pg.vp, textDivs: []}).promise; } catch(e){} addEoc(tl0); fillGaps(tl0, pg.vp.height); tmark('쪽 '+pg.p+' 글자층만'); return; }
     const d=clampD(pg, dprEff); const canvas=mkCanvas(pg, d);
     const tl=document.createElement('div'); tl.className='textLayer'; tl.style.setProperty('--scale-factor', String(pg.scale));
     pg.el.prepend(canvas, tl); pg.cv=canvas; pg.d=d; pg.busy=true;
@@ -1966,7 +1966,7 @@ async function drawPages(){
     if (st.token!==token) return;
     if (st.c.ocr && st.c.ocr[pg.p]) buildOcrLayer(tl, st.c.ocr[pg.p], pg.vp);
     else { try { const tc = await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl, viewport: pg.vp, textDivs: []}).promise; } catch(e){} }
-    addEoc(tl);
+    addEoc(tl); fillGaps(tl, pg.vp.height);
     tmark('쪽 '+pg.p+' 그림');
   };
   const io = new IntersectionObserver(entries=>{ entries.forEach(en=>{ if (en.isIntersecting){ const pg=pages.find(x=>x.el===en.target); if (pg){ renderOne(pg); io.unobserve(en.target); } } }); }, {rootMargin:'1200px 0px'});
@@ -2030,6 +2030,22 @@ async function drawPages(){
   if (editable() && !cont.dataset.selBound){ cont.dataset.selBound='1'; bindSelection(cont, st.c); }
   fitOverall();
   if (pendingSpot){ const ps=pendingSpot; pendingSpot=null; restoreSpot(ps.y, !!ps.focus); }
+}
+// 줄과 줄 사이의 빈 곳을 없앤다. pdf.js 의 글자 조각은 높이가 글자만 해서(5px 남짓)
+// 그 사이가 비고, 손가락을 거기 놓으면 브라우저가 붙잡을 글자를 못 찾아 그 쪽의 첫 글자로 보낸다.
+// 각 줄을 「다음 줄이 시작하는 자리」까지 늘려 두면 어디를 짚어도 어느 줄엔가 닿는다.
+function fillGaps(tl, pageH){
+  if (!tl || !pageH) return;
+  const sps=[...tl.querySelectorAll(':scope > span')]; if (sps.length<2) return;
+  const rows=[];
+  sps.forEach(sp=>{ const t=parseFloat(sp.style.top); if (isNaN(t)) return;
+    const row=rows.find(r=>Math.abs(r.t-t)<0.35); if (row) row.list.push(sp); else rows.push({t, list:[sp]}); });
+  rows.sort((a,b)=>a.t-b.t);
+  for (let i=0;i<rows.length-1;i++){
+    const gap=(rows[i+1].t-rows[i].t)/100*pageH;                 // 이 줄부터 다음 줄까지(px)
+    if (!(gap>0) || gap>pageH*0.4) continue;                     // 너무 벌어진 곳(쪽 바뀜 등)은 건너뛴다
+    rows[i].list.forEach(sp=>{ sp.style.paddingBottom=Math.round(gap)+'px'; });
+  }
 }
 function addEoc(tl){ if (BARE || !tl) return; let e=tl.querySelector(':scope > .endOfContent'); if (!e){ e=document.createElement('div'); e.className='endOfContent'; } tl.appendChild(e); }
 function drawMarks(c, p){
