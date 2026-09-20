@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T13:42:04+09:00">
+<meta name="build" content="2026-09-20T13:51:06+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -769,7 +769,7 @@ function renderHelp(main){
 function headHtml(c, statsHtml, toolsHtml){
   const isDraft = !!view.draft;
   return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':(c.type==='word'?'Word':(isHtmlDoc(c)?'HTML':'텍스트'))}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}${Array.isArray(c.vis)?`<span class="chip" title="지정된 뷰어만 봄">👁 ${c.vis.length}명 지정</span>`:''}<span>${esc(c.client||'')}</span><span>${esc(fmtWhen(c))}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
-    <h2>${esc(c.title||'(제목 없음)')}<span class="hbtns">${verChip(c)}${editable() ? `<button class="btn small" id="editCase">정보 수정</button><button class="btn small" id="newVer" title="고친 글을 새 버전으로 올립니다. 이전 버전은 그대로 남고, 메모는 새 버전의 같은 구절로 옮겨집니다">이 문서 새 버전 올리기</button>` : ''}${(c.versions||[]).length ? `<button class="btn small" id="verCmp" title="두 버전을 문장 단위로 나란히 놓고 바뀐 곳만 칠합니다">버전 비교</button>` : ''}${roVer ? `<button class="btn small primary" id="verBack">현재 버전으로</button>` : ((editable() && (c.versions||[]).length) ? `<button class="btn small danger" id="verDrop" title="지금 버전을 지우고 직전 버전으로 되돌립니다">현재 버전 삭제</button>` : '')}${isPdf(c) ? `<button class="btn small" id="dlPdf" title="저장된 원본 PDF 를 그대로 내려받습니다">원본 PDF 내려받기</button>` : ''}</span></h2>
+    <h2>${esc(c.title||'(제목 없음)')}<span class="hbtns">${verChip(c)}${editable() ? `<button class="btn small" id="editCase">정보 수정</button><button class="btn small" id="newVer" title="고친 글을 새 버전으로 올립니다. 이전 버전과 그 메모는 그대로 남고, 새 버전은 빈 메모로 시작합니다">이 문서 새 버전 올리기</button>` : ''}${(c.versions||[]).length ? `<button class="btn small" id="verCmp" title="두 버전을 문장 단위로 나란히 놓고 바뀐 곳만 칠합니다">버전 비교</button>` : ''}${roVer ? `<button class="btn small primary" id="verBack">현재 버전으로</button>` : ((editable() && (c.versions||[]).length) ? `<button class="btn small danger" id="verDrop" title="지금 버전을 지우고 직전 버전으로 되돌립니다">현재 버전 삭제</button>` : '')}${isPdf(c) ? `<button class="btn small" id="dlPdf" title="저장된 원본 PDF 를 그대로 내려받습니다">원본 PDF 내려받기</button>` : ''}</span></h2>
     <div class="stats">${statsHtml}</div>
     <div class="tools">${toolsHtml}
       <button class="btn small" id="copyLink">링크 복사</button>
@@ -1790,7 +1790,7 @@ document.addEventListener('keydown', e=>{
 function renderPdfNotes(c){
   const notes=$('#notes'); if (!notes) return;
   const canEdit = editable();
-  const pv=prevVersion(c); const gs=(!roVer && pv) ? (c._ghosts||computeGhosts(c)) : []; const gTotal=pv?(pv.marks||[]).length:0, gCarried=(c.carried||[]).length;
+  const pv=GHOSTS ? prevVersion(c) : null; const gs=(!roVer && pv) ? (c._ghosts||computeGhosts(c)) : []; const gTotal=pv?(pv.marks||[]).length:0, gCarried=(c.carried||[]).length;
   const ghostHead = (!roVer && pv) ? `<span class="gsum" title="직전 버전(${pv.n}버전)의 메모. 반영된 것은 두고 남은 것만 「이월」로 이 버전에 넣습니다">· ${pv.n}버전 메모 ${fmtN(gs.length)} <span class="dim">(이월 ${fmtN(gCarried)}/${fmtN(gTotal)})</span></span>${gs.length?`<button class="tb" id="ghostAll" title="남은 ${pv.n}버전 메모를 모두 이 버전으로">모두 이월</button>`:''}<button class="tb" id="ghostToggle" title="문서 위 점선 표시 ${ghostsOn?'숨기기':'보이기'}">${ghostsOn?'점선 숨김':'점선 표시'}</button>` : '';
   const ghostNotes = gs.map(g=>{ const m=g.m; const col=userColor(m.by, m.byId); return `
     <div class="note ghost ${m.kind}" data-h="g${g.h}" id="ghost${g.h}"><div class="n"><span class="mk ghost static">${g.h}ʹ</span><span class="chip kd ${m.kind}">${KIND[m.kind]}</span>${m.by?`<span class="who" style="--nc:${col||'var(--ink-3)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${g.lost?'<span class="chip lostc" title="이 버전에서 같은 구절을 못 찾았습니다. 이월하면 자리 없이 목록에 남습니다">자리 못 찾음</span>':''}<span class="chip hint ${/사라짐|있음$/.test(g.hint)&&!/남아/.test(g.hint)?'ok':''}">${esc(g.hint)}</span><span class="spacer"></span>${editable()?`<button class="carry" data-carry="${esc(m.mid)}" title="이 메모를 이 버전에 넣어 이어서 다룹니다">이월</button>`:''}</div>
@@ -2093,8 +2093,9 @@ function findInPdfLines(lines, phrase){
   return null;
 }
 // 현재 버전 위에서 직전 버전 메모의 자리 찾기 → c._ghosts = [{m, h(옛 번호), start,end | page,rects, lost, hint}]
+const GHOSTS=false;   // 직전 버전 메모를 새 버전에 흐리게 겹쳐 보이기(점선 상자·회색 딱지·이월). 2026-09-20 쑤닐님 「지금은 헷갈린다, 버전업만」 → 꺼 둠. 코드는 그대로라 true 로 되살릴 수 있다
 function computeGhosts(c){
-  const pv=prevVersion(c); if (!pv || roVer){ c._ghosts=[]; return c._ghosts; }
+  const pv=prevVersion(c); if (!GHOSTS || !pv || roVer){ c._ghosts=[]; return c._ghosts; }
   const carried=new Set(c.carried||[]); const cur=docText(c);
   const list=[];
   (pv.marks||[]).forEach((m,i)=>{ if (!m.mid) m.mid=markKey(m); if (carried.has(m.mid)) return; const g={m, h:i+1, lost:true, hint:''};
@@ -2344,7 +2345,7 @@ function renderEdit(main){
   const hasMarks = (c.marks||[]).length>0 && !isNew;
   const edId='wordEd'+(++wordEdSeq); wordEdId=edId;
   main.innerHTML = `<div class="edit"><h2>${isNew?'새 퇴고(새 글 작성)':(newVer?`이 문서 새 버전 올리기 — ${nextVer}버전`:'정보 수정')}</h2>
-    ${newVer?`<p class="msg" style="margin:-6px 0 12px">지금 내용은 <b>${nextVer-1}버전</b>으로 남고, 저장하는 내용이 <b>${nextVer}버전(현재)</b>이 됩니다. 메모는 새 버전의 같은 구절로 옮겨집니다.</p>`:''}
+    ${newVer?`<p class="msg" style="margin:-6px 0 12px">지금 내용은 <b>${nextVer-1}버전</b>으로 남고, 저장하는 내용이 <b>${nextVer}버전(현재)</b>이 됩니다. 이전 버전의 메모는 이전 버전에만 남고, 새 버전은 빈 메모로 시작합니다.</p>`:''}
     <div class="types" ${isNew?'':'hidden'}>
       <label class="${type==='text'?'on':''}"><input type="radio" name="ty" value="text" ${type==='text'?'checked':''}><div><b>텍스트</b><span>슬랙·블로그·붙여넣기. 원문 위에 바로 표시합니다.</span></div></label>
       <label class="${type==='word'?'on':''}"><input type="radio" name="ty" value="word" ${type==='word'?'checked':''}><div><b>Word · 구글 문서</b><span>.docx 파일을 넣거나, 구글 문서·Word 화면에서 복사해 붙여 넣으세요. 제목·굵게·표·그림이 살아 있습니다.</span></div></label>
