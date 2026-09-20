@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T10:01:42+09:00">
+<meta name="build" content="2026-09-20T10:11:05+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -721,7 +721,7 @@ function bindHead(c, collect){
       Object.assign(c, JSON.parse(JSON.stringify({src:last.src||'', html:last.html||'', htmlSrc:last.htmlSrc||'', marks:last.marks||[], note:last.note||'', noteSegs:last.noteSegs||[], ocr:last.ocr||null, pages:last.pages||0})));
       c.versions=vs.slice(0,-1); c.carried=[]; c._ghosts=null; c._verCache={}; view.dirty=true;
       const ok=await saveDoc(c, null); if (ok && c._dropPdfFile){ try { await ghDelete(c._dropPdfFile, 'drop version pdf'); } catch(e){} delete c._dropPdfFile; }
-      if (ok) toast(`${last.n}버전으로 되돌렸습니다`);
+      if (ok){ toast(`${last.n}버전으로 되돌렸습니다`); view.ver=null; view.cmp=null; render(); }
     } catch(e){ toast('되돌리기 실패: '+((e&&e.message)||e)); vd.disabled=false; vd.textContent='현재 버전 삭제'; }
   });
   const nv=$('#newVer'); if (nv) nv.addEventListener('click', async ()=>{ if (view.dirty && !(await leaveOk())) return; collect(c); view.mode='edit'; view.draft=c; view.newVer=true; render(); });
@@ -2526,6 +2526,7 @@ async function saveDoc(c, btn){
     await ghWrite(`docs/${c.id}.json`, te.encode(JSON.stringify(Object.assign({}, m, c.lock?{lock:true, wrap}:{}, uw?{uw}:{}, {ct}))), `save: ${c.title}`);
     await updateIndex(list=>{ const i=list.findIndex(x=>x.id===c.id); if (i>=0) list[i]=m; else list.push(m); });
     const idx=cases.findIndex(x=>x.id===c.id); if (idx>=0){ if (cases[idx]!==c) Object.assign(cases[idx], c); } else cases.push(c);
+    c.ver=m.ver; c.n=m.n; renderList();   // 왼쪽 목록의 버전·개수 칩도 바로 갱신
     c._base=new Set(c.marks.map(m=>m.mid)); c._baseTs=c.ts||'';
     const wasDraft=!!view.draft; const y=window.scrollY;
     view.draft=null; view.id=c.id; view.dirty=false; location.hash='case='+c.id; toast('저장했습니다');
