@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T13:23:35+09:00">
+<meta name="build" content="2026-09-20T13:33:28+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -67,7 +67,7 @@ a{color:var(--ins)}
 .btn.primary:hover{opacity:.9}
 .btn.danger{color:var(--del);border-color:var(--del-line)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
-.btn.small{padding:3px 8px;font-size:calc(12px * var(--ui,1))} .mobonly{display:none}
+.btn.small{padding:3px 8px;font-size:calc(12px * var(--ui,1))} .mobonly{display:none} .top .sm{display:none}
 
 /* ── 본체 ── */
 .shell{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:calc(100vh - 50px)}
@@ -492,7 +492,14 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   .pager button{padding:0 6px;min-width:30px} .pager input{width:34px;padding:3px 0}
   /* 상단 바 둘째 줄: 새 퇴고 ┈ ↶ ↷ 저장 */
   .top .brk{display:block;flex-basis:100%;height:0;margin-top:-8px}
-  .top .topacts{display:inline-flex;gap:6px;margin-left:auto}
+  .top .topacts{display:inline-flex;gap:5px;margin-left:auto}
+  .top .lg{display:none} .top .sm{display:inline}
+  .topacts .btn.ico{padding:8px 8px;font-size:19px;font-weight:700;color:var(--ink);line-height:1}
+  .topacts #tList{padding:8px 10px} .topacts #tList.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  /* 목록: 접히면 아예 안 보이고(「펼치기」 띠가 제목을 덮던 것), 문서 안에서 [목록]으로 펴면 문서 위에 덮인다 */
+  #btnRail{display:none}
+  .shell.nrail .rail{display:none}
+  body.inDoc .shell:not(.nrail) .rail{position:fixed;left:0;right:0;top:var(--top-h,50px);bottom:0;z-index:12;overflow-y:auto;background:var(--paper-2);box-shadow:0 8px 24px rgba(0,0,0,.25);padding-bottom:40px;border-bottom:0}
   /* 문서별 ⋯ 는 마우스를 올려야 나타났다 — 손가락에는 올림이 없다 */
   .cases li .more{opacity:1}
 }
@@ -534,7 +541,7 @@ body.area-mode .page{touch-action:none}
   <button class="btn ico" id="btnList" title="홈" aria-label="홈"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" style="vertical-align:-3px"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-6h4v6"/></svg></button>
   <button class="btn ico" id="btnReload" title="새로고침 (최신 판으로)" aria-label="새로고침">↻</button>
   <button class="btn ico" id="btnTheme" title="어둡게" aria-label="화면 밝기"></button>
-  <button class="btn ico mobonly" id="topMore" title="더 보기" aria-label="더 보기">⋯</button><span class="brk mobonly" aria-hidden="true"></span><button class="btn primary" id="btnNew" title="새 문서를 넣거나 직접 씁니다 · Alt+N">새 퇴고(새 글 작성)</button><span class="topacts mobonly"><button class="btn ico" id="tUndo" title="되돌리기" aria-label="되돌리기">↶</button><button class="btn ico" id="tRedo" title="다시 실행" aria-label="다시 실행">↷</button><button class="btn primary" id="tSave" title="저장">저장</button></span>
+  <button class="btn ico mobonly" id="topMore" title="더 보기" aria-label="더 보기">⋯</button><span class="brk mobonly" aria-hidden="true"></span><button class="btn primary" id="btnNew" title="새 문서를 넣거나 직접 씁니다 · Alt+N"><span class="lg">새 퇴고(새 글 작성)</span><span class="sm">새 퇴고(작성)</span></button><span class="topacts mobonly"><button class="btn" id="tList" title="문서 목록 열기/닫기">목록</button><button class="btn ico" id="tUndo" title="되돌리기" aria-label="되돌리기">↶</button><button class="btn ico" id="tRedo" title="다시 실행" aria-label="다시 실행">↷</button><button class="btn primary" id="tSave" title="저장">저장</button></span>
 </header>
 
 <div class="shell">
@@ -677,6 +684,7 @@ async function openCase(id){
 function render(){
   renderList(); requestAnimationFrame(syncTopActs);
   if (npop.h!=null) closeNotePop();
+  document.body.classList.toggle('inDoc', view.mode!=='list');
   if (isMob()){ const sh=$('.shell'); if (sh){ const fold = view.mode!=='list'; if (sh.classList.contains('nrail')!==fold){ sh.classList.toggle('nrail', fold); try { syncFold(); } catch(e){} } } }   // 폰: 문서를 열면 목록을 접고, 홈이면 편다
   const main=$('#main'); main.innerHTML=''; document.body.classList.remove('zoomed-body'); document.body.style.minWidth='';
   if (view.mode==='list'){ renderHome(main); window.scrollTo(0,0); return; }
@@ -3200,7 +3208,10 @@ async function copyText(t, ok){
 $('#btnList').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'list',id:null,draft:null,dirty:false,show:'side'}; location.hash=''; render(); });
 $('#btnReload').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; location.reload(); });
 // 폰 상단 바의 되돌리기·다시 실행·저장은 도구줄의 진짜 단추를 눌러 준다(도구줄은 스크롤에 사라지므로)
-function syncTopActs(){ const u=$('#tUndo'), r=$('#tRedo'), sv=$('#tSave'); if (!u) return; const ub=$('#undoBtn'), rb=$('#redoBtn'), sb=$('#saveCase'); u.disabled=!(ub && !ub.disabled); r.disabled=!(rb && !rb.disabled); sv.disabled=!(sb && !sb.disabled); }
+function syncTopActs(){ const u=$('#tUndo'), r=$('#tRedo'), sv=$('#tSave'); if (!u) return; const ub=$('#undoBtn'), rb=$('#redoBtn'), sb=$('#saveCase'); u.disabled=!(ub && !ub.disabled); r.disabled=!(rb && !rb.disabled); sv.disabled=!(sb && !sb.disabled);
+  const tl=$('#tList'), sh=$('.shell'); if (tl && sh) tl.classList.toggle('on', !sh.classList.contains('nrail')); }
+// 폰의 [목록]: 문서 위에 목록을 덮어 보인다(문서를 고르면 접힌다). 접힌 목록의 「펼치기」 띠는 폰에서 없앤다
+{ const tl=$('#tList'); if (tl) tl.addEventListener('click', ()=>{ const sh=$('.shell'); if (!sh) return; if (npop.h!=null) closeNotePop(); sh.classList.toggle('nrail'); try { syncFold(); } catch(e){} syncTopActs(); }); }
 [['#tUndo','#undoBtn'],['#tRedo','#redoBtn'],['#tSave','#saveCase']].forEach(([a,b])=>{ const el=$(a); if (el) el.addEventListener('click', ()=>{ const t=$(b); if (t && !t.disabled) t.click(); }); });
 $('#topMore').addEventListener('click', ()=>{ const who=$('#whoami'); openFold($('#topMore'), $('.top'), ['btnList','btnReload','btnTheme','uiMinus','uiReset','uiPlus','btnUsers','btnPw','btnHelp','btnLock'], (who&&who.textContent.trim())||''); });
 $('#btnHelp').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'help',id:null,draft:null,dirty:false,show:'side'}; location.hash='help'; render(); });
