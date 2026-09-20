@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T20:22:01+09:00">
+<meta name="build" content="2026-09-20T20:50:10+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -205,7 +205,8 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .lreps{margin-top:4px;color:var(--ink-2);font-size:.95em} .xreps{margin-top:4px;padding-left:8px;border-left:2px solid #e3e5df;font-size:13px} .xrep{padding:2px 0}
 .reacts{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:4px;min-height:18px} .reacts .rc{border:1px solid var(--rule);background:var(--paper-2);border-radius:10px;padding:0 7px;font-size:calc(14px * var(--ui,1));line-height:1.5;cursor:pointer;color:var(--ink)} .reacts .rc.on{border-color:var(--ins);background:var(--ins-bg)} .reacts .rc:hover{border-color:var(--ink-3)}
 .radd{position:relative;display:inline-flex} .radd .rplus{border:1px dashed var(--rule);background:transparent;border-radius:10px;padding:0 6px;font-size:calc(11px * var(--ui,1));line-height:1.5;cursor:pointer;color:var(--ink-3);opacity:.6} .note:hover .radd .rplus,.radd.open .rplus{opacity:1} .radd .rplus:hover{color:var(--ink);border-color:var(--ink-3)}
-.radd .rmenu{display:none;position:absolute;left:0;bottom:calc(100% + 2px);padding-bottom:6px;background:var(--paper);border:1px solid var(--rule);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);padding:4px;gap:2px;z-index:6;white-space:nowrap} .radd.open .rmenu,.radd:hover .rmenu{display:flex;flex-direction:column;gap:3px} .radd .rmenu{padding:8px 10px 10px} .rmenu .rrow{display:grid;grid-template-columns:repeat(7,auto);gap:2px;align-items:center;justify-content:start} .rmenu .rext{display:none;border-top:1px solid var(--rule);padding-top:3px} .radd.ext .rext{display:grid} .rmenu .rmore{font-weight:700;color:var(--ink-3)} .rmenu .rin{width:56px;font:inherit;font-size:14px;border:1px solid var(--rule);border-radius:4px;padding:1px 4px;background:var(--paper-2);color:var(--ink)} .rmenu .rin:focus{border-color:var(--focus);outline:none} .radd .rcus{display:none;align-items:center;gap:7px;border-top:1px solid var(--rule);margin-top:3px;padding-top:5px} .radd.ext .rcus{display:flex} .rmenu .rtip{color:var(--ink-3);font-size:calc(10.5px * var(--ui,1));font-family:var(--sans);white-space:nowrap} .rmenu .rtip.on{color:var(--ins);font-weight:600} .radd .rboard{display:none;grid-template-columns:repeat(7,1fr);gap:1px;margin-top:3px;padding-top:5px;border-top:1px solid var(--rule)} .radd.pick .rboard{display:grid} .radd .rpg{display:none;align-items:center;justify-content:center;gap:8px;padding-top:2px} .radd.pick .rpg{display:flex} .radd .rmenu .rpg button{font-size:13px;line-height:1;padding:1px 7px;color:var(--ink-3);border:1px solid var(--rule);border-radius:4px} .radd .rmenu .rpg button:hover{color:var(--ink);border-color:var(--ink-3)} .radd .rpg .pn{color:var(--ink-3);font-size:calc(10.5px * var(--ui,1));font-family:var(--mono)} .radd .rmenu .rboard button{font-size:17px;padding:2px 0;line-height:1.2} .radd .rboard button.sel{background:var(--ins-bg);outline:1px solid var(--ins)} .radd.down .rmenu{bottom:auto;top:calc(100% + 2px)} .radd.down::after{bottom:auto;top:100%} .radd::after{content:'';position:absolute;left:-16px;right:-16px;bottom:100%;height:16px} .radd .rmenu button{border:0;background:transparent;font-size:19px;line-height:1.2;padding:2px 5px;border-radius:4px;cursor:pointer} .radd .rmenu button:hover{background:var(--paper-2)}
+.radd .rmenu{display:none;position:absolute;left:0;bottom:calc(100% + 2px);padding-bottom:6px;background:var(--paper);border:1px solid var(--rule);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);padding:4px;gap:2px;z-index:6;white-space:nowrap} .radd.open .rmenu{display:flex;flex-direction:column;gap:3px}
+@media (hover:hover){.radd:hover .rmenu{display:flex;flex-direction:column;gap:3px}} .radd .rmenu{padding:8px 10px 10px} .rmenu .rrow{display:grid;grid-template-columns:repeat(7,auto);gap:2px;align-items:center;justify-content:start} .rmenu .rext{display:none;border-top:1px solid var(--rule);padding-top:3px} .radd.ext .rext{display:grid} .rmenu .rmore{font-weight:700;color:var(--ink-3)} .rmenu .rin{width:56px;font:inherit;font-size:14px;border:1px solid var(--rule);border-radius:4px;padding:1px 4px;background:var(--paper-2);color:var(--ink)} .rmenu .rin:focus{border-color:var(--focus);outline:none} .radd .rcus{display:none;align-items:center;gap:7px;border-top:1px solid var(--rule);margin-top:3px;padding-top:5px} .radd.ext .rcus{display:flex} .rmenu .rtip{color:var(--ink-3);font-size:calc(10.5px * var(--ui,1));font-family:var(--sans);white-space:nowrap} .rmenu .rtip.on{color:var(--ins);font-weight:600} .radd .rboard{display:none;grid-template-columns:repeat(7,1fr);gap:1px;margin-top:3px;padding-top:5px;border-top:1px solid var(--rule)} .radd.pick .rboard{display:grid} .radd .rpg{display:none;align-items:center;justify-content:center;gap:8px;padding-top:2px} .radd.pick .rpg{display:flex} .radd .rmenu .rpg button{font-size:13px;line-height:1;padding:1px 7px;color:var(--ink-3);border:1px solid var(--rule);border-radius:4px} .radd .rmenu .rpg button:hover{color:var(--ink);border-color:var(--ink-3)} .radd .rpg .pn{color:var(--ink-3);font-size:calc(10.5px * var(--ui,1));font-family:var(--mono)} .radd .rmenu .rboard button{font-size:17px;padding:2px 0;line-height:1.2} .radd .rboard button.sel{background:var(--ins-bg);outline:1px solid var(--ins)} .radd.down .rmenu{bottom:auto;top:calc(100% + 2px)} .radd.down::after{bottom:auto;top:100%} .radd::after{content:'';position:absolute;left:-16px;right:-16px;bottom:100%;height:16px} .radd .rmenu button{border:0;background:transparent;font-size:19px;line-height:1.2;padding:2px 5px;border-radius:4px;cursor:pointer} .radd .rmenu button:hover{background:var(--paper-2)}
 .note .n .nv{display:inline-flex;gap:3px;margin-left:4px} .note .nvb{border:1px solid var(--ink-3);background:var(--paper);color:var(--ink);cursor:pointer;padding:1px 8px;font-size:calc(13px * var(--ui,1));font-weight:700;line-height:1.3;border-radius:4px;font-family:var(--sans)} .note .nvb:hover{border-color:var(--ink);background:var(--paper-2)}
 .note textarea{width:100%;border:0;border-bottom:1px dashed var(--rule);background:transparent;resize:none;padding:2px 0;line-height:1.5;min-height:22px;font-size:calc(14.5px * var(--ui,1));overflow:hidden}
 .note textarea:focus{border-bottom-color:var(--focus);outline:none}
@@ -481,6 +482,14 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   .seg button,.pager button,.pager input{min-height:40px}
   .fab{width:38px;height:38px}
   .cases li{padding-block:13px}
+  /* 반응 피커: 손가락 크기로 */
+  .reacts{gap:6px;min-height:34px} .reacts .rc{min-height:34px;padding:0 11px;font-size:calc(15px * var(--ui,1))}
+  .radd .rplus{min-height:34px;padding:0 13px;font-size:calc(14px * var(--ui,1));opacity:1}
+  .radd .rmenu{padding:10px 12px 12px} .radd .rmenu button{font-size:24px;padding:7px 9px}
+  .radd .rmenu .rpg button{font-size:16px;padding:5px 12px}
+  .rmenu .rin{width:70px;font-size:16px;padding:6px 8px} .rmenu .rtip{font-size:calc(12px * var(--ui,1))}
+  .radd .rboard{gap:2px} .radd .rmenu .rboard button{font-size:23px;padding:6px 0}
+  .rl{font-size:calc(13px * var(--ui,1));padding:6px 8px} .reply .rh{gap:8px}
   input,textarea,select{font-size:16px}
   /* 상단 바: 브랜드 · 새 퇴고 · ⋯ 만 남기고 접는다 */
   .top #whoami,.top .zoom,.top #btnUsers,.top #btnPw,.top #btnLock,.top #btnHelp,.top #btnList,.top #btnReload,.top #btnTheme{display:none}
@@ -868,7 +877,8 @@ function toggleReact(c, i, e){
 function bindReacts(root, c){
   root.querySelectorAll('.rc').forEach(b=>b.addEventListener('click', ()=>toggleReact(c, +b.dataset.i, b.dataset.e)));
   root.querySelectorAll('.rplus').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const w=b.parentElement; document.querySelectorAll('.radd.open').forEach(x=>{ if (x!==w) closeRadd(x); }); if (w.classList.contains('open')) closeRadd(w); else { w.classList.add('open'); w._pin=true; requestAnimationFrame(()=>placeMenu(w)); } }));
-  root.querySelectorAll('.radd').forEach(w=>{ w.addEventListener('mouseenter', ()=>{ clearTimeout(w._t); w.classList.add('open'); requestAnimationFrame(()=>placeMenu(w)); }); w.addEventListener('mouseleave', ()=>{ if (w._pin || w.contains(document.activeElement)) return; clearTimeout(w._t); w._t=setTimeout(()=>closeRadd(w), 500); }); });
+  root.querySelectorAll('.radd').forEach(w=>{ if (isMob()) return;   // 폰은 ＋ 를 눌러서만 연다
+    w.addEventListener('mouseenter', ()=>{ clearTimeout(w._t); w.classList.add('open'); requestAnimationFrame(()=>placeMenu(w)); }); w.addEventListener('mouseleave', ()=>{ if (w._pin || w.contains(document.activeElement)) return; clearTimeout(w._t); w._t=setTimeout(()=>closeRadd(w), 500); }); });
   root.querySelectorAll('.rmenu .rrow button[data-e]').forEach(b=>b.addEventListener('click', ()=>{ const w=b.closest('.radd'); closeRadd(w); toggleReact(c, +b.dataset.i, b.dataset.e); }));
   root.querySelectorAll('.rmore').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const w=b.closest('.radd'); w.classList.add('open'); w.classList.toggle('ext'); w._pin=true; if (!w.classList.contains('ext')) w.classList.remove('pick'); requestAnimationFrame(()=>placeMenu(w)); }));
   root.querySelectorAll('.rin').forEach(inp=>{ const w=inp.closest('.radd');   // 누르면 이모티콘 판 · 방향키로 고르고 Enter 로 이 칸에 · 다시 Enter 로 달기
@@ -1593,7 +1603,7 @@ function bindTextSelection(cont, c0){
       view.dirty=true; sel.removeAllRanges(); kill(); renderTextDoc(c); refreshPdfHead(c);
       const idx=c.marks.findIndex(m=>m.start===start && m.end===end); setTimeout(()=>focusHunk(idx+1), 50);
     }));
-    (isMob()?document.body:cont).appendChild(pop);
+    (isMob()?document.body:cont).appendChild(pop); pinOverlays('pop');
   }, 0); });
   document.addEventListener('mousedown', e=>{ if (pop && !pop.contains(e.target)) kill(); });
   document.addEventListener('keydown', e=>{ if (!pop || !e.altKey) return; const i={Digit1:0, Digit2:1, Digit3:2, Numpad1:0, Numpad2:1, Numpad3:2}[e.code]; if (i===undefined) return; e.preventDefault(); const b=pop.querySelectorAll('button')[i]; if (b) b.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true})); });
@@ -2237,7 +2247,7 @@ function bindSelection(cont, c0){
         const idx = c.marks.findIndex(m=>m.text===text && m.page===+pageEl.dataset.p && m.kind===b.dataset.k);
         setTimeout(()=>focusHunk(idx+1), 50);
       }));
-      (isMob()?document.body:pageEl).appendChild(pop);
+      (isMob()?document.body:pageEl).appendChild(pop); pinOverlays('pop');
     }, 0);
   });
   document.addEventListener('mousedown', e=>{ if (pop && !pop.contains(e.target)) kill(); });
@@ -2277,7 +2287,7 @@ function bindSelection(cont, c0){
       view.dirty=true; kill(); drawAllMarks(c); refreshPdfHead(c);
       const idx=c.marks.findIndex(m=>m.area && m.page===+pageEl.dataset.p && m.rects[0][0]===rect[0] && m.rects[0][1]===rect[1]); setTimeout(()=>focusHunk(idx+1), 50);
     }));
-    (isMob()?document.body:pageEl).appendChild(pop);
+    (isMob()?document.body:pageEl).appendChild(pop); pinOverlays('pop');
   });
   // 메뉴가 떠 있을 때 Alt+1/2/3 = 삭제/바꾸기/메모
   document.addEventListener('keydown', e=>{
@@ -3285,14 +3295,15 @@ function selDiag(extra){
   selDiagBox.textContent=selDiagLines.join('\n');
 }
 let selBusy=0, fingerDown=false, fingerAt=0;   // 마지막으로 고른 글이 바뀐 시각 · 손가락이 닿아 있는지와 그 시각
-function pinOverlays(){
+function pinOverlays(only){
   if (BARE) return;
   const vv=window.visualViewport; if (!vv) return; const s=vv.scale||1, on=s>1.02, k=1/s;
   const picking = on && (Date.now()-selBusy < 700);   // 고르는 중
-  if (picking) return;   // 글을 고르는 동안에는 떠 있는 UI 를 하나도 건드리지 않는다(손잡이 추적을 방해한다)
+  if (picking && only!=='pop') return;   // 고르는 동안에는 아무것도 안 건드린다(손잡이 추적 방해) — 막 만든 막대만 예외
   const lw=document.documentElement.clientWidth, L=vv.offsetLeft, T=vv.offsetTop, W=vv.width, H=vv.height;
   document.querySelectorAll('.pop').forEach(el=>{ if (getComputedStyle(el).position!=='fixed') return; if (!on){ pinRestore(el); return; }   // 선택 막대: 보이는 창 아래
     pinApply(el, {transform:`scale(${k})`, 'transform-origin':'left top', left:L+'px', right:'auto', bottom:'auto', width:lw+'px'}); pinApply(el, {top:(T+H-el.offsetHeight*k)+'px'}); });
+  if (only==='pop') return;
   const np=document.querySelector('.npop.open');                                                                                    // 메모 팝오버: 키보드면 위, 아니면 아래
   if (np){ if (!on){ if (np._pinSaved){ pinRestore(np); if (npop.h!=null) placeNpop(npop.h); } }
     else { const kb=np.classList.contains('kb'); pinApply(np, {'max-height':Math.round(H*s*(kb?0.46:0.55))+'px', transform:`scale(${k})`, 'transform-origin':'left top', left:(L+8*k)+'px', right:'auto', width:(lw-16)+'px', bottom:'auto'}); pinApply(np, {top:(kb ? T+8*k : T+H-(np.offsetHeight+8)*k)+'px'}); } }
@@ -3355,6 +3366,14 @@ if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFra
     setTimeout(pinOverlays, 250);   // 고르기가 멎으면 상단 바를 제자리로(고르는 중 판정 600ms 를 막 넘긴 뒤)
   }, 450); });
 }
+const PC_ONLY={
+  ocrBtn:'글자 인식은 쪽마다 수십 초가 걸리고 메모리를 많이 써서, 폰에서는 브라우저가 문서를 닫아 버릴 수 있습니다.',
+  verCmp:'버전 비교는 옛 판과 새 판을 나란히 놓고 보는 화면이라 폰의 좁은 폭에는 잘 맞지 않습니다.',
+  exportBtn:'내보내기는 쪽을 처음부터 다시 그려 만들기 때문에 폰에서는 오래 걸리고 도중에 멈출 수 있습니다.'
+};
+function askPcOnly(name, why, go){
+  ask(name+' — '+why+' PC 에서 하시는 것을 권합니다.', '그래도 폰에서 하기').then(ok=>{ if (ok) go(); });
+}
 const FOLD_LAB={uiMinus:'화면 글자 작게', uiReset:'화면 글자 크기 100%로', uiPlus:'화면 글자 크게', zoomOut:'문서 축소', zoomReset:'문서 배율 100%로', zoomIn:'문서 확대', btnList:'홈 (문서 목록)', btnReload:'새로고침', undoBtn:'되돌리기', redoBtn:'다시 실행', fabTop:'맨 위로', fabBottom:'맨 아래로'};
 function foldItems(scope, order){
   const out=[];
@@ -3363,7 +3382,9 @@ function foldItems(scope, order){
     if (b.id==='saveCase' && $('#tSave')) return;                                   // 저장은 상단 바에 있으니 ⋯ 에도 안 넣는다
     let l=FOLD_LAB[b.id] || (b.textContent||'').replace(/\s+/g,' ').trim() || b.getAttribute('aria-label') || b.title || '';
     l=l.replace(/\s*▾$/,'').replace(/\s*\(.*?\)$/,''); if (!l) return;
-    out.push({id:b.id, l: b.disabled ? l+' — 지금은 못 씀' : l, f: b.disabled ? null : ()=>b.click()});
+    const why = isMob() ? PC_ONLY[b.id] : null;
+    const label = b.disabled ? l+' — 지금은 못 씀' : (why ? l+' — PC에서' : l);
+    out.push({id:b.id, l: label, f: b.disabled ? null : ()=>{ if (why) askPcOnly(l, why, ()=>b.click()); else b.click(); }});
   });
   if (order) out.sort((a,b)=>{ const i=order.indexOf(a.id), j=order.indexOf(b.id); return (i<0?99:i)-(j<0?99:j); });
   return out;
