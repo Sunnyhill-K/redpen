@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T10:35:22+09:00">
+<meta name="build" content="2026-09-20T10:38:50+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -199,9 +199,12 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .note .n .x{border:0;background:transparent;color:var(--ink-3);cursor:pointer;padding:0 2px;font-size:calc(13px * var(--ui,1));line-height:1}
 .note .n .x:hover{color:var(--del)}
 .note .n .nn{cursor:pointer;border:1px solid transparent;border-radius:8px;padding:0 5px;margin-left:-5px} .note .n .nn:hover{border-color:currentColor}
+.replies{margin-top:4px;padding-left:8px;border-left:2px solid var(--paper-3)} .reply{padding:3px 0 4px;border-bottom:1px dotted var(--paper-3)} .reply .rh{display:flex;gap:6px;align-items:center;font-size:calc(11px * var(--ui,1))} .reply .who{color:var(--nc);border:1px solid var(--nc);border-radius:3px;padding:0 5px;font-family:var(--sans)} .reply .rt{color:var(--ink-3);font-family:var(--mono)} .reply .rb{white-space:pre-wrap;line-height:1.5;font-size:calc(13.5px * var(--ui,1));margin-top:2px}
+.rl{border:0;background:transparent;color:var(--ink-3);cursor:pointer;font-size:calc(11px * var(--ui,1));padding:0 3px;font-family:var(--sans)} .rl:hover{color:var(--ink);text-decoration:underline} .radd2{margin-top:2px;color:var(--ins)} .rform{margin-top:4px} .rta{width:100%;font:inherit;font-size:calc(13.5px * var(--ui,1));border:1px solid var(--rule);border-radius:4px;padding:6px 8px;background:var(--paper-2);color:var(--ink);resize:vertical;line-height:1.45} .rta:focus{border-color:var(--focus);outline:none} .rbtns{display:flex;gap:6px;margin-top:4px}
+.lreps{margin-top:4px;color:var(--ink-2);font-size:.95em} .xreps{margin-top:4px;padding-left:8px;border-left:2px solid #e3e5df;font-size:13px} .xrep{padding:2px 0}
 .reacts{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:4px;min-height:18px} .reacts .rc{border:1px solid var(--rule);background:var(--paper-2);border-radius:10px;padding:0 7px;font-size:calc(12px * var(--ui,1));line-height:1.5;cursor:pointer;color:var(--ink)} .reacts .rc.on{border-color:var(--ins);background:var(--ins-bg)} .reacts .rc:hover{border-color:var(--ink-3)}
 .radd{position:relative;display:inline-flex} .radd .rplus{border:1px dashed var(--rule);background:transparent;border-radius:10px;padding:0 6px;font-size:calc(11px * var(--ui,1));line-height:1.5;cursor:pointer;color:var(--ink-3);opacity:.6} .note:hover .radd .rplus,.radd.open .rplus{opacity:1} .radd .rplus:hover{color:var(--ink);border-color:var(--ink-3)}
-.radd .rmenu{display:none;position:absolute;left:0;bottom:calc(100% + 2px);padding-bottom:6px;background:var(--paper);border:1px solid var(--rule);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);padding:4px;gap:2px;z-index:6;white-space:nowrap} .radd.open .rmenu,.radd:hover .rmenu{display:flex} .radd::after{content:'';position:absolute;left:0;right:0;bottom:100%;height:8px} .radd .rmenu button{border:0;background:transparent;font-size:16px;padding:2px 5px;border-radius:4px;cursor:pointer} .radd .rmenu button:hover{background:var(--paper-2)}
+.radd .rmenu{display:none;position:absolute;left:0;bottom:calc(100% + 2px);padding-bottom:6px;background:var(--paper);border:1px solid var(--rule);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);padding:4px;gap:2px;z-index:6;white-space:nowrap} .radd.open .rmenu,.radd:hover .rmenu{display:flex;flex-direction:column;gap:3px} .rmenu .rrow{display:flex;gap:2px;align-items:center;flex-wrap:wrap;max-width:236px} .rmenu .rext{display:none;border-top:1px solid var(--rule);padding-top:3px} .radd.ext .rext{display:flex} .rmenu .rmore{font-weight:700;color:var(--ink-3)} .rmenu .rin{width:52px;font:inherit;font-size:14px;border:1px solid var(--rule);border-radius:4px;padding:1px 4px;background:var(--paper-2);color:var(--ink)} .radd::after{content:'';position:absolute;left:0;right:0;bottom:100%;height:8px} .radd .rmenu button{border:0;background:transparent;font-size:16px;padding:2px 5px;border-radius:4px;cursor:pointer} .radd .rmenu button:hover{background:var(--paper-2)}
 .note .n .nv{display:inline-flex;gap:3px;margin-left:4px} .note .nvb{border:1px solid var(--ink-3);background:var(--paper);color:var(--ink);cursor:pointer;padding:1px 8px;font-size:calc(13px * var(--ui,1));font-weight:700;line-height:1.3;border-radius:4px;font-family:var(--sans)} .note .nvb:hover{border-color:var(--ink);background:var(--paper-2)}
 .note textarea{width:100%;border:0;border-bottom:1px dashed var(--rule);background:transparent;resize:none;padding:2px 0;line-height:1.5;min-height:22px;font-size:calc(14.5px * var(--ui,1));overflow:hidden}
 .note textarea:focus{border-bottom-color:var(--focus);outline:none}
@@ -704,12 +707,34 @@ function headHtml(c, statsHtml, toolsHtml){
       <span class="msg" id="saveMsg"></span>
     </div>`;
 }
+// ── 답글(대댓글): 메모 아래에 줄줄이. 쓴 사람만 수정·삭제(관리자는 삭제 가능) ──
+function fmtTs(ts){ if (!ts) return ''; const d=new Date(ts); if (isNaN(d)) return ''; const z=n=>String(n).padStart(2,'0'); return `${z(d.getMonth()+1)}/${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`; }
+function repliesHtml(m, i){
+  const rs=m.replies||[]; const mine=me?me.id:''; const admin=me&&me.role==='admin';
+  const items=rs.map((r,k)=>{ const col=userColor(r.by, r.byId); const own=r.byId===mine; return `<div class="reply" data-k="${k}"><div class="rh"><span class="who" style="--nc:${col||'var(--ink-2)'}">${esc(userLabel(r.by, r.byId)||r.by||'')}</span><span class="rt">${fmtTs(r.ts)}${r.mt&&r.mt!==r.ts?' (수정)':''}</span><span class="spacer"></span>${(own&&editable())?`<button class="rl" data-act="edit" data-i="${i}" data-k="${k}">수정</button>`:''}${((own||admin)&&editable())?`<button class="rl" data-act="del" data-i="${i}" data-k="${k}">삭제</button>`:''}</div><div class="rb">${md(r.t||'')}</div></div>`; }).join('');
+  return `<div class="replies">${items}${(me&&editable())?`<button class="rl radd2" data-i="${i}">답글${rs.length?' '+rs.length:''}</button><div class="rform" hidden><textarea class="rta" rows="2" placeholder="답글 — Enter 저장 · Shift+Enter 줄바꿈 · Esc 취소"></textarea><div class="rbtns"><button class="btn small primary" data-act="save">남기기</button><button class="btn small" data-act="cancel">취소</button></div></div>`:''}</div>`;
+}
+function bindReplies(root, c){
+  const rerender=(i)=>{ const m=c.marks[i]; const n=document.getElementById('note'+(i+1)); if (!n) return; const old=n.querySelector('.replies'); if (old) old.outerHTML=repliesHtml(m, i); bindReplies(n, c); requestAnimationFrame(layoutNotes); };
+  const openForm=(box, i, k, text)=>{ const f=box.querySelector('.rform'); const ta=f.querySelector('.rta'); f.hidden=false; f.dataset.k=(k==null?'':k); ta.value=text||''; ta.focus(); requestAnimationFrame(layoutNotes);
+    ta.onkeydown=e=>{ if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); f.querySelector('[data-act="save"]').click(); } if (e.key==='Escape'){ e.preventDefault(); f.querySelector('[data-act="cancel"]').click(); } };
+    f.querySelector('[data-act="save"]').onclick=()=>{ const v=ta.value.trim(); if (!v) return; const m=c.marks[i]; m.replies=m.replies||[]; const kk=f.dataset.k;
+      if (kk!==''){ const r=m.replies[+kk]; if (r){ pushHist(c, `메모 ${i+1} 답글 수정`); r.t=v; r.mt=Date.now(); } }
+      else { pushHist(c, `메모 ${i+1} 답글`); m.replies.push({id:newMid(), by:me.name, byId:me.id, t:v, ts:Date.now()}); }
+      m.mt=Date.now(); view.dirty=true; const ub=$('#undoBtn'); if (ub) ub.disabled=false; rerender(i); };
+    f.querySelector('[data-act="cancel"]').onclick=()=>{ f.hidden=true; ta.value=''; requestAnimationFrame(layoutNotes); }; };
+  root.querySelectorAll('.radd2').forEach(b=>b.addEventListener('click', ()=>openForm(b.parentElement, +b.dataset.i, null, '')));
+  root.querySelectorAll('.reply .rl[data-act="edit"]').forEach(b=>b.addEventListener('click', ()=>{ const i=+b.dataset.i, k=+b.dataset.k; const r=c.marks[i].replies[k]; openForm(b.closest('.replies'), i, k, r.t); }));
+  root.querySelectorAll('.reply .rl[data-act="del"]').forEach(b=>b.addEventListener('click', async ()=>{ const i=+b.dataset.i, k=+b.dataset.k; if (!(await ask('이 답글을 지웁니다.', '지우기'))) return; pushHist(c, `메모 ${i+1} 답글 삭제`); c.marks[i].replies.splice(k,1); if (!c.marks[i].replies.length) delete c.marks[i].replies; c.marks[i].mt=Date.now(); view.dirty=true; rerender(i); }));
+}
 // ── 메모 반응(슬랙 이모티콘): 👍 ✅ ❤️ 👀 😂 🙏 — 사람마다 한 번씩, 다시 누르면 취소 ──
 const REACTS=['👍','✅','❤️','👀','😂','🙏'];
+const REACTS_MORE=['🎉','🔥','💯','👏','🙌','✨','🚀','🤔','😮','😢','😅','🙂','❌','⭐','💡','📌','☕','🫡'];
+const reactKeys = r => { const ks=Object.keys(r||{}).filter(e=>(r[e]||[]).length); return [...REACTS.filter(e=>ks.includes(e)), ...ks.filter(e=>!REACTS.includes(e))]; };
 function reactsHtml(m, i){
   const r=m.reacts||{}; const mine=me?me.id:'';
-  const chips=REACTS.filter(e=>(r[e]||[]).length).map(e=>{ const ids=r[e]; const names=ids.map(id=>{ const u=(cfg.users||[]).find(x=>x.id===id); return u?u.name:id; }).join(', '); return `<button class="rc ${ids.includes(mine)?'on':''}" data-i="${i}" data-e="${e}" title="${esc(names)}">${e} ${ids.length}</button>`; }).join('');
-  return `<div class="reacts">${chips}${me?`<span class="radd"><button class="rplus" data-i="${i}" title="반응 남기기">＋</button><span class="rmenu">${REACTS.map(e=>`<button data-i="${i}" data-e="${e}">${e}</button>`).join('')}</span></span>`:''}</div>`;
+  const chips=reactKeys(r).map(e=>{ const ids=r[e]; const names=ids.map(id=>{ const u=(cfg.users||[]).find(x=>x.id===id); return u?u.name:id; }).join(', '); return `<button class="rc ${ids.includes(mine)?'on':''}" data-i="${i}" data-e="${esc(e)}" title="${esc(names)}">${esc(e)} ${ids.length}</button>`; }).join('');
+  return `<div class="reacts">${chips}${me?`<span class="radd"><button class="rplus" data-i="${i}" title="반응 남기기">＋</button><span class="rmenu"><span class="rrow">${REACTS.map(e=>`<button data-i="${i}" data-e="${e}">${e}</button>`).join('')}<button class="rmore" title="더 보기">…</button></span><span class="rrow rext">${REACTS_MORE.map(e=>`<button data-i="${i}" data-e="${e}">${e}</button>`).join('')}<input class="rin" data-i="${i}" maxlength="4" placeholder="직접" title="이모티콘을 직접 넣고 Enter (윈도: Win+.)"></span></span></span>`:''}</div>`;
 }
 function toggleReact(c, i, e){
   if (!me) return; const m=c.marks[i]; if (!m) return; m.reacts=m.reacts||{}; const ids=m.reacts[e]||[]; const k=ids.indexOf(me.id);
@@ -721,7 +746,9 @@ function toggleReact(c, i, e){
 function bindReacts(root, c){
   root.querySelectorAll('.rc').forEach(b=>b.addEventListener('click', ()=>toggleReact(c, +b.dataset.i, b.dataset.e)));
   root.querySelectorAll('.rplus').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const w=b.parentElement; document.querySelectorAll('.radd.open').forEach(x=>{ if (x!==w) x.classList.remove('open'); }); w.classList.toggle('open'); }));
-  root.querySelectorAll('.rmenu button').forEach(b=>b.addEventListener('click', ()=>{ b.closest('.radd').classList.remove('open'); toggleReact(c, +b.dataset.i, b.dataset.e); }));
+  root.querySelectorAll('.rmenu button[data-e]').forEach(b=>b.addEventListener('click', ()=>{ b.closest('.radd').classList.remove('open'); toggleReact(c, +b.dataset.i, b.dataset.e); }));
+  root.querySelectorAll('.rmore').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const w=b.closest('.radd'); w.classList.add('open'); w.classList.toggle('ext'); const inp=w.querySelector('.rin'); if (w.classList.contains('ext') && inp) inp.focus(); }));
+  root.querySelectorAll('.rin').forEach(inp=>{ inp.addEventListener('keydown', e=>{ if (e.key==='Enter'){ e.preventDefault(); const v=inp.value.trim(); if (!v || !/\p{Extended_Pictographic}/u.test(v)) { toast('이모티콘만 넣을 수 있습니다'); return; } inp.value=''; inp.closest('.radd').classList.remove('open','ext'); toggleReact(c, +inp.dataset.i, v); } if (e.key==='Escape'){ inp.closest('.radd').classList.remove('open','ext'); } }); inp.addEventListener('click', e=>e.stopPropagation()); });
 }
 document.addEventListener('click', e=>{ if (!e.target.closest || !e.target.closest('.radd')) document.querySelectorAll('.radd.open').forEach(x=>x.classList.remove('open')); });
 // 버전 칩: 현재 N버전 / 옛 버전 읽기 전용, 버전이 둘 이상이면 고르기
@@ -783,17 +810,17 @@ function bindHead(c, collect){
 // ── 메모 목록(표) + 복사용 텍스트: 텍스트형·PDF형 공통 ──
 function listItems(c){
   const withTags=(t,segs)=>{ if (!segs||!segs.length) return t||''; let out='', pos=0; for (const g of [...segs].sort((x,y)=>x.s-y.s)){ out+=t.slice(pos,g.s)+'['+g.by+'] '+t.slice(g.s,g.e); pos=g.e; } return out+t.slice(pos); };
-  return (c.marks||[]).map((m,i)=>({n:i+1, where: isPdf(c) ? m.page+'쪽' : '', kind:KIND[m.kind], k:m.kind, before:m.text||'', after:m.after||'', reason:withTags(m.reason||'', m.segs), who:(m.by||''), whoId:(m.byId||''), reacts:REACTS.filter(e=>(m.reacts||{})[e]&&m.reacts[e].length).map(e=>e+' '+m.reacts[e].length).join(' ')}));
+  return (c.marks||[]).map((m,i)=>({n:i+1, where: isPdf(c) ? m.page+'쪽' : '', kind:KIND[m.kind], k:m.kind, before:m.text||'', after:m.after||'', reason:withTags(m.reason||'', m.segs), who:(m.by||''), whoId:(m.byId||''), reacts:REACTS.filter(e=>(m.reacts||{})[e]&&m.reacts[e].length).map(e=>e+' '+m.reacts[e].length).join(' '), replies:(m.replies||[]).map(r=>'['+(userLabel(r.by, r.byId)||r.by||'')+'] '+(r.t||''))}));
 }
 function listHtml(items, withWhere){
   if (!items.length) return `<div class="mlist"><div class="none">표시가 없습니다.</div></div>`;
   return `<div class="mlist"><table><thead><tr><th>#</th>${withWhere?'<th>위치</th>':''}<th>종류</th><th>작성</th><th>원문</th><th>바꿀 문장</th><th>이유</th></tr></thead><tbody>${items.map(it=>`
-    <tr><td class="n"><button class="jump" data-n="${it.n}" title="문서의 이 자리로 이동">${it.n}</button></td>${withWhere?`<td class="w">${esc(it.where)}</td>`:''}<td class="kd"><span class="chip kd ${esc(it.k||'')}">${esc(it.kind)}</span>${it.n===items.length?' <span class="chip last">마지막</span>':''}</td><td class="w who" style="${userColor(it.who, it.whoId)?`color:${userColor(it.who, it.whoId)}`:''}">${esc(userLabel(it.who, it.whoId)||it.who)}</td><td class="before">${esc(it.before)}</td><td class="after">${esc(it.after)}</td><td class="reason">${md(it.reason)}${it.reacts?` <span class="chip">${esc(it.reacts)}</span>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+    <tr><td class="n"><button class="jump" data-n="${it.n}" title="문서의 이 자리로 이동">${it.n}</button></td>${withWhere?`<td class="w">${esc(it.where)}</td>`:''}<td class="kd"><span class="chip kd ${esc(it.k||'')}">${esc(it.kind)}</span>${it.n===items.length?' <span class="chip last">마지막</span>':''}</td><td class="w who" style="${userColor(it.who, it.whoId)?`color:${userColor(it.who, it.whoId)}`:''}">${esc(userLabel(it.who, it.whoId)||it.who)}</td><td class="before">${esc(it.before)}</td><td class="after">${esc(it.after)}</td><td class="reason">${md(it.reason)}${it.reacts?` <span class="chip">${esc(it.reacts)}</span>`:''}${(it.replies||[]).length?`<div class="lreps">${it.replies.map(r=>`<div>↳ ${md(r)}</div>`).join('')}</div>`:''}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function listText(c, items){
   const head = `${c.title||''} · 퇴고 메모 ${fmtN(items.length)}곳 (${c.date||''})`;
   const plain = t => t||'';
-  return head + '\n' + items.map(it=>`${it.n}. ${it.who?'['+it.who+'] ':''}${it.where?'['+it.where+'] ':''}${it.kind}${it.before?' · '+it.before:''}${it.after?'\n   → '+it.after:''}${it.reason?'\n   이유: '+plain(it.reason):''}`).join('\n');
+  return head + '\n' + items.map(it=>`${it.n}. ${it.who?'['+it.who+'] ':''}${it.where?'['+it.where+'] ':''}${it.kind}${it.before?' · '+it.before:''}${it.after?'\n   → '+it.after:''}${it.reason?'\n   이유: '+plain(it.reason):''}${(it.replies||[]).map(r=>'\n   ↳ '+r).join('')}`).join('\n');
 }
 // ══════════════ 주석 PDF: 원본 PDF 에 표시를 PDF 주석으로 박는다(pdf-lib 저수준 객체) ══════════════
 // 좌표: 우리 표시는 pdf.js 뷰포트 기준 0-1 비율(왼쪽 위 원점) → viewport.convertToPdfPoint 로 PDF 좌표(회전·크롭 반영)
@@ -933,7 +960,7 @@ function exportNote(c, m, i){
   const h=i+1; const col=userColor(m.by, m.byId);
   return `<div class="xn ${m.kind}" id="xn${h}"><div class="xh">${(m.lost||(m.start<0 && !m.rects))?`<span class="xno">${h}</span>`:`<a class="xno" href="#xm${h}" title="본문의 표시 자리로">${h}</a>`}<span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="xwho" ${col?`style="--nc:${col}"`:''}>${esc(userLabel(m.by, m.byId))}</span>`:''}${(isPdf(c)&&m.page)?`<span class="xpg">${m.page}쪽</span>`:''}${(m.lost||(m.start<0 && !m.rects))?'':`<a class="xback" href="#xm${h}" title="본문의 표시 자리로 돌아가기">↩ 본문</a>`}</div>`
     + (m.text?`<div class="xsrc">${esc(m.text)}</div>`:'') + (m.kind==='rep'?`<div class="xafter">→ ${esc(m.after||'')}</div>`:'')
-    + ((m.reason||'').trim()?`<div class="xtxt">${md(m.reason||'', m.segs)}</div>`:'') + (m.reacts?`<div class="xtxt" style="color:var(--ink-3)">${esc(REACTS.filter(e=>m.reacts[e]&&m.reacts[e].length).map(e=>e+' '+m.reacts[e].length).join('  '))}</div>`:'') + `</div>`;
+    + ((m.reason||'').trim()?`<div class="xtxt">${md(m.reason||'', m.segs)}</div>`:'') + (m.reacts?`<div class="xtxt" style="color:var(--ink-3)">${esc(reactKeys(m.reacts).map(e=>e+' '+m.reacts[e].length).join('  '))}</div>`:'') + ((m.replies||[]).length?`<div class="xreps">${m.replies.map(r=>`<div class="xrep"><b style="color:${userColor(r.by, r.byId)||'inherit'}">${esc(userLabel(r.by, r.byId)||r.by||'')}</b> ${md(r.t||'')}</div>`).join('')}</div>`:'') + `</div>`;
 }
 async function exportDoc(c){
   collectMarks(c);
@@ -1596,11 +1623,11 @@ function renderPdfNotes(c){
   const ghostHead = (!roVer && pv) ? `<span class="gsum" title="직전 버전(${pv.n}버전)의 메모. 반영된 것은 두고 남은 것만 「이월」로 이 버전에 넣습니다">· ${pv.n}버전 메모 ${fmtN(gs.length)} <span class="dim">(이월 ${fmtN(gCarried)}/${fmtN(gTotal)})</span></span>${gs.length?`<button class="tb" id="ghostAll" title="남은 ${pv.n}버전 메모를 모두 이 버전으로">모두 이월</button>`:''}<button class="tb" id="ghostToggle" title="문서 위 점선 표시 ${ghostsOn?'숨기기':'보이기'}">${ghostsOn?'점선 숨김':'점선 표시'}</button>` : '';
   const ghostNotes = gs.map(g=>{ const m=g.m; const col=userColor(m.by, m.byId); return `
     <div class="note ghost ${m.kind}" data-h="g${g.h}" id="ghost${g.h}"><div class="n"><span class="mk ghost static">${g.h}ʹ</span><span class="chip kd ${m.kind}">${KIND[m.kind]}</span>${m.by?`<span class="who" style="--nc:${col||'var(--ink-3)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${g.lost?'<span class="chip lostc" title="이 버전에서 같은 구절을 못 찾았습니다. 이월하면 자리 없이 목록에 남습니다">자리 못 찾음</span>':''}<span class="chip hint ${/사라짐|있음$/.test(g.hint)&&!/남아/.test(g.hint)?'ok':''}">${esc(g.hint)}</span><span class="spacer"></span>${editable()?`<button class="carry" data-carry="${esc(m.mid)}" title="이 메모를 이 버전에 넣어 이어서 다룹니다">이월</button>`:''}</div>
-    <div class="gt">${esc(m.text||'')}${m.kind==='rep'?` <span class="after">→ ${esc(m.after||'')}</span>`:''}</div>${(m.reason||'').trim()?`<div class="txt">${md(m.reason||'', m.segs)}</div>`:''}</div>`; }).join('');
+    <div class="gt">${esc(m.text||'')}${m.kind==='rep'?` <span class="after">→ ${esc(m.after||'')}</span>`:''}</div>${(m.reason||'').trim()?`<div class="txt">${md(m.reason||'', m.segs)}</div>`:''}${(m.replies||[]).length?`<div class="replies ro">${m.replies.map(r=>`<div class="reply"><div class="rh"><span class="who" style="--nc:${userColor(r.by, r.byId)||'var(--ink-3)'}">${esc(userLabel(r.by, r.byId)||r.by||'')}</span></div><div class="rb">${md(r.t||'')}</div></div>`).join('')}</div>`:''}</div>`; }).join('');
   notes.innerHTML = `<div class="notes-title">교정 메모 ${fmtN(c.marks.length)}${ghostHead}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
     <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span class="nn" title="원문의 이 자리로">${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}${m.lost?'<span class="chip lostc" title="본문을 고치면서 이 구절이 사라져 표시할 자리가 없습니다. 글은 남아 있습니다.">자리 잃음</span>':''}${m.from?`<span class="chip ver" title="${m.from}버전의 ${m.fromNo||''}번 메모를 이월">${m.from}버전에서</span>`:''}<span class="k">${esc(m.text)}</span><span class="nv"><button class="nvb" data-d="-1" title="바로 위 메모 (Alt+↑)" tabindex="-1">↑</button><button class="nvb" data-d="1" title="바로 아래 메모 (Alt+↓)" tabindex="-1">↓</button></span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
-    ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', 'txt', m.segs) : `<div class="txt">${md(m.reason||'', m.segs)}</div>`}${reactsHtml(m, i)}</div>`; }).join('');
+    ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', 'txt', m.segs) : `<div class="txt">${md(m.reason||'', m.segs)}</div>`}${reactsHtml(m, i)}${repliesHtml(m, i)}</div>`; }).join('');
   notes.querySelectorAll('.nn').forEach(b=>b.addEventListener('click', ()=>{ const n=b.closest('.note'); if (n){ jumpCur=n.dataset.h; if (pdfListMode){ pdfListMode=false; textRevMode=false; refreshPdfHead(c); setTimeout(()=>jumpToHunk(+n.dataset.h), 60); } else jumpToHunk(+n.dataset.h); } }));
   notes.querySelectorAll('.nvb').forEach(b=>b.addEventListener('click', e=>{ e.preventDefault(); const n=b.closest('.note'); if (n) jumpCur=n.dataset.h; jumpMemo(+b.dataset.d); }));
   notes.querySelectorAll('.x').forEach(b=>b.addEventListener('click', ()=>{
@@ -1616,7 +1643,7 @@ function renderPdfNotes(c){
         const m=c.marks[+t.dataset.i]; if (m && t.dataset.f==='reason'){ m.segs=updSegs(m.segs, bef, cur, (me && m.by && !sameUser(m, me)) ? me.name : null, me ? me.id : ''); m.mt=Date.now(); }
         t.value=cur; collectMarks(c); if (f.isContentEditable) f.innerHTML=md(cur, m ? m.segs : null); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
   });
-  bindReacts(notes, c);
+  bindReacts(notes, c); bindReplies(notes, c);
   notes.insertAdjacentHTML('beforeend', ghostNotes);
   const gt=$('#ghostToggle'); if (gt) gt.addEventListener('click', ()=>{ ghostsOn=!ghostsOn; try { localStorage.setItem('redpen.ghosts', ghostsOn?'1':'0'); } catch(e){} drawAllMarks(c); renderPdfNotes(c); });
   const ga=$('#ghostAll'); if (ga) ga.addEventListener('click', ()=>{ const n=gs.length; gs.slice().forEach(g=>carryGhost(c, g, true)); afterCarry(c, n); });
