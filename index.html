@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T14:59:00+09:00">
+<meta name="build" content="2026-09-20T15:17:16+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -3173,10 +3173,15 @@ function showLinkMenu(x, y, items){
 function isMob(){ return window.matchMedia('(max-width:760px)').matches; }   // innerWidth 는 아이폰 핀치 줌에 줄어든다 → 미디어쿼리(레이아웃 폭)로
 // ── 폰: 손가락으로 글자를 고르면(선택이 멎고 0.45초) 기존 선택 처리(mouseup)를 그대로 부른다 → 삭제/바꾸기/메모 막대가 아래에 뜬다 ──
 // ── 핀치 줌은 레이아웃 전체를 키우므로 화면에 고정한 막대·팝오버·메뉴도 같이 커져 밀려난다 → 떠 있는 UI 는 보이는 창(visualViewport)에 맞춰 다시 놓고 1/배율로 되돌린다(본문만 커진 것처럼 보이게) ──
-function pinApply(el, o){ if (!el._pinSaved) el._pinSaved={}; for (const k in o){ if (!(k in el._pinSaved)) el._pinSaved[k]=[el.style.getPropertyValue(k), el.style.getPropertyPriority(k)]; el.style.setProperty(k, o[k], 'important'); } }
-function pinRestore(el){ const sv=el && el._pinSaved; if (!sv) return; for (const k in sv){ const [v,pr]=sv[k]; if (v) el.style.setProperty(k, v, pr); else el.style.removeProperty(k); } el._pinSaved=null; }
+function pinApply(el, o){ if (!el._pinSaved) el._pinSaved={}; if (!el._pinLast) el._pinLast={};
+  for (const k in o){ if (el._pinLast[k]===o[k]) continue;   // 같은 값이면 건드리지 않는다
+    if (!(k in el._pinSaved)) el._pinSaved[k]=[el.style.getPropertyValue(k), el.style.getPropertyPriority(k)];
+    el.style.setProperty(k, o[k], 'important'); el._pinLast[k]=o[k]; } }
+function pinRestore(el){ if (el) el._pinLast=null; const sv=el && el._pinSaved; if (!sv) return; for (const k in sv){ const [v,pr]=sv[k]; if (v) el.style.setProperty(k, v, pr); else el.style.removeProperty(k); } el._pinSaved=null; }
+let selBusy=0;   // 마지막으로 고른 글이 바뀐 시각
 function pinOverlays(){
   const vv=window.visualViewport; if (!vv) return; const s=vv.scale||1, on=s>1.02, k=1/s;
+  const picking = on && (Date.now()-selBusy < 600);   // 고르는 중
   const lw=document.documentElement.clientWidth, L=vv.offsetLeft, T=vv.offsetTop, W=vv.width, H=vv.height;
   document.querySelectorAll('.pop').forEach(el=>{ if (getComputedStyle(el).position!=='fixed') return; if (!on){ pinRestore(el); return; }   // 선택 막대: 보이는 창 아래
     pinApply(el, {transform:`scale(${k})`, 'transform-origin':'left top', left:L+'px', right:'auto', bottom:'auto', width:lw+'px'}); pinApply(el, {top:(T+H-el.offsetHeight*k)+'px'}); });
@@ -3187,12 +3192,12 @@ function pinOverlays(){
   document.querySelectorAll('.imenu').forEach(el=>{ if (!on){ pinRestore(el); return; } pinApply(el, {transform:`scale(${k})`, 'transform-origin':'left top'});   // ⋯ 메뉴: 줄이고 보이는 창 안으로
     const r=el.getBoundingClientRect(); let x=r.left, y=r.top; if (x+r.width>L+W-4) x=L+W-4-r.width; if (y+r.height>T+H-4) y=T+H-4-r.height; x=Math.max(L+4,x); y=Math.max(T+4,y); pinApply(el, {left:x+'px', top:y+'px'}); });
   const ts=$('#toast'); if (ts){ if (!on) pinRestore(ts); else { pinApply(ts, {transform:`scale(${k}) translateX(-50%)`, 'transform-origin':'left top', left:(L+W/2)+'px', bottom:'auto'}); pinApply(ts, {top:(T+H-(22+ts.offsetHeight)*k)+'px'}); } }
-  const tp=$('.top'); if (tp){ if (!on || getComputedStyle(tp).position!=='fixed') pinRestore(tp); else pinApply(tp, {transform:`scale(${k})`, 'transform-origin':'left top', left:L+'px', top:T+'px', width:lw+'px', right:'auto'}); }   // 상단 바(폰에선 fixed)
+  const tp=$('.top'); if (tp && !picking){ if (!on || getComputedStyle(tp).position!=='fixed') pinRestore(tp); else pinApply(tp, {transform:`scale(${k})`, 'transform-origin':'left top', left:L+'px', top:T+'px', width:lw+'px', right:'auto'}); }   // 상단 바(폰에선 fixed)
   document.querySelectorAll('.ask').forEach(el=>{ const box=el.querySelector('.box'); if (!on){ pinRestore(el); if (box) pinRestore(box); return; }   // 확인창: 배경은 보이는 창, 상자는 원래 크기로 가운데
     pinApply(el, {left:L+'px', top:T+'px', width:W+'px', height:H+'px', right:'auto', bottom:'auto'});
     if (box) pinApply(box, {transform:`scale(${k})`, 'transform-origin':'center center', width:Math.min(420, lw-32)+'px', 'max-width':'none', flex:'none', 'max-height':Math.round(H*s-32)+'px', overflow:'auto'}); });   // flex:none — 좁아진 배경(보이는 창 폭)에 맞춰 줄어들지 않게
   const pgc=$('.prog'); if (pgc){ if (!on || getComputedStyle(pgc).display==='none') pinRestore(pgc); else { pinApply(pgc, {transform:`scale(${k})`, 'transform-origin':'left top', right:'auto', bottom:'auto'}); pinApply(pgc, {left:(L+W-(pgc.offsetWidth+18)*k)+'px', top:(T+H-(pgc.offsetHeight+18)*k)+'px'}); } }   // 진행 카드
-  const rail=$('.rail'); if (rail){ const overlay = isMob() && document.body.classList.contains('inDoc') && !$('.shell').classList.contains('nrail');   // 목록 덮개
+  const rail=picking ? null : $('.rail'); if (rail){ const overlay = isMob() && document.body.classList.contains('inDoc') && !$('.shell').classList.contains('nrail');   // 목록 덮개
     if (!on || !overlay) pinRestore(rail); else pinApply(rail, {transform:`scale(${k})`, 'transform-origin':'left top', left:L+'px', top:T+'px', width:lw+'px', height:Math.round(H*s)+'px', right:'auto', bottom:'auto'}); }
 }
 if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFrame(pinT); pinT=requestAnimationFrame(pinOverlays); };
@@ -3215,10 +3220,11 @@ if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFra
 }
 { // 등록은 늘 하고(헤드리스도 지나가게) 발동 때만 폰 폭인지 본다
   let selT=null;
-  document.addEventListener('selectionchange', ()=>{ if (!isMob()) return; clearTimeout(selT); selT=setTimeout(()=>{
+  document.addEventListener('selectionchange', ()=>{ selBusy=Date.now(); if (!isMob()) return; clearTimeout(selT); selT=setTimeout(()=>{
     const sel=window.getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
     const cont=$('#doc'); if (!cont || !editable()) return; const r=sel.getRangeAt(0); if (!cont.contains(r.commonAncestorContainer)) return;
     cont.dispatchEvent(new MouseEvent('mouseup', {bubbles:true, cancelable:true}));
+    setTimeout(pinOverlays, 250);   // 고르기가 멎으면 상단 바를 제자리로(고르는 중 판정 600ms 를 막 넘긴 뒤)
   }, 450); });
 }
 const FOLD_LAB={uiMinus:'화면 글자 작게', uiReset:'화면 글자 크기 100%로', uiPlus:'화면 글자 크게', zoomOut:'문서 축소', zoomReset:'문서 배율 100%로', zoomIn:'문서 확대', btnList:'홈 (문서 목록)', btnReload:'새로고침', undoBtn:'되돌리기', redoBtn:'다시 실행', fabTop:'맨 위로', fabBottom:'맨 아래로'};
