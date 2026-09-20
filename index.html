@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T15:39:36+09:00">
+<meta name="build" content="2026-09-20T15:48:31+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -3182,6 +3182,55 @@ function pinApply(el, o){ if (!el._pinSaved) el._pinSaved={}; if (!el._pinLast) 
     if (!(k in el._pinSaved)) el._pinSaved[k]=[el.style.getPropertyValue(k), el.style.getPropertyPriority(k)];
     el.style.setProperty(k, o[k], 'important'); el._pinLast[k]=o[k]; } }
 function pinRestore(el){ if (el) el._pinLast=null; const sv=el && el._pinSaved; if (!sv) return; for (const k in sv){ const [v,pr]=sv[k]; if (v) el.style.setProperty(k, v, pr); else el.style.removeProperty(k); } el._pinSaved=null; }
+let selGuard={r:null, len:0, busy:false};
+// 손잡이를 끌 때 선택이 갑자기 문서 처음·끝까지 튀면 직전의 멀쩡한 선택으로 되돌린다.
+// PDF 글자층은 줄마다 떨어진 절대위치 조각이라 브라우저가 빈 곳에서 고를 자리를 못 찾고 크게 건너뛴다.
+function guardSel(){
+  if (selGuard.busy) return false;
+  const sl=window.getSelection();
+  if (!sl || !sl.rangeCount || sl.isCollapsed){ selGuard.r=null; selGuard.len=0; return false; }
+  const r=sl.getRangeAt(0); const a=r.commonAncestorContainer; const el=(a.nodeType===1?a:a.parentElement);
+  const tl=el && el.closest ? el.closest('.textLayer') : null;
+  if (!tl){ selGuard.r=null; selGuard.len=0; return false; }
+  const len=String(sl).length;
+  if (selGuard.r && selGuard.len>0 && len>=selGuard.len*5 && len-selGuard.len>200){
+    selGuard.busy=true;
+    try { sl.removeAllRanges(); sl.addRange(selGuard.r); } catch(e){}
+    setTimeout(()=>{ selGuard.busy=false; }, 0);
+    selDiag('튐 막음 '+selGuard.len+'자 → '+len+'자');
+    return true;
+  }
+  try { selGuard.r=r.cloneRange(); } catch(e){ selGuard.r=null; }
+  selGuard.len=len; return false;
+}
+// ── 진단 모드: 주소 끝에 ?seldiag 를 붙이면 고를 때마다 어디가 잡혔는지 화면 아래에 적는다 ──
+const SELDIAG=/[?&]seldiag/.test(location.search);
+let selDiagBox=null, selDiagLines=[];
+function selNodeDesc(n, off){
+  if (!n) return '-';
+  const el = n.nodeType===1 ? n : n.parentElement; if (!el) return '?';
+  if (el.classList && el.classList.contains('endOfContent')) return '끝표식';
+  if (el.tagName==='BR') return 'BR';
+  if (el.classList && el.classList.contains('textLayer')) return '글자층['+off+']';
+  if (el.classList && el.classList.contains('page')) return '쪽['+off+']';
+  if (el.classList && el.classList.contains('marks')) return '표시층';
+  if (el.tagName==='CANVAS') return '그림';
+  const tl = el.closest ? el.closest('.textLayer') : null;
+  if (tl && el.tagName==='SPAN'){ const i=[...tl.children].indexOf(el); return '조각'+i+'"'+(el.textContent||'').trim().slice(0,5)+'"@'+off; }
+  return (el.tagName||'?')+(el.className? '.'+String(el.className).slice(0,8):'');
+}
+function selDiag(extra){
+  if (!SELDIAG) return;
+  if (!selDiagBox){ selDiagBox=document.createElement('div'); selDiagBox.id='selDiagBox';
+    selDiagBox.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99;background:rgba(0,0,0,.82);color:#9f6;font:11px/1.35 monospace;padding:5px 7px;white-space:pre-wrap;max-height:34vh;overflow:auto';
+    document.body.appendChild(selDiagBox); }
+  const sl=window.getSelection(); let line;
+  if (!sl || !sl.rangeCount || sl.isCollapsed) line='(고른 글 없음)';
+  else line=selNodeDesc(sl.anchorNode, sl.anchorOffset)+' → '+selNodeDesc(sl.focusNode, sl.focusOffset)+' · '+String(sl).length+'자';
+  if (extra) line+='  ★'+extra;
+  selDiagLines.push(line); if (selDiagLines.length>9) selDiagLines.shift();
+  selDiagBox.textContent=selDiagLines.join('\n');
+}
 let selBusy=0, fingerDown=false, fingerAt=0;   // 마지막으로 고른 글이 바뀐 시각 · 손가락이 닿아 있는지와 그 시각
 function pinOverlays(){
   const vv=window.visualViewport; if (!vv) return; const s=vv.scale||1, on=s>1.02, k=1/s;
@@ -3228,6 +3277,8 @@ if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFra
 { // 등록은 늘 하고(헤드리스도 지나가게) 발동 때만 폰 폭인지 본다
   let selT=null;
   document.addEventListener('selectionchange', ()=>{ selBusy=Date.now();
+    if (guardSel()) return;
+    selDiag('');
     { const sl=window.getSelection(); if (!sl || sl.isCollapsed) document.querySelectorAll('.textLayer.selecting').forEach(t=>t.classList.remove('selecting')); }
     if (!isMob()) return; clearTimeout(selT); selT=setTimeout(function fire(){
     if (fingerDown && Date.now()-fingerAt < 4000){ clearTimeout(selT); selT=setTimeout(fire, 200); return; }   // 손가락이 닿아 있는 동안(손잡이 조작 중)에는 기다린다. 뗀 신호가 유실돼도 4초면 푼다
