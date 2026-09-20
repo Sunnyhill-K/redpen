@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T14:52:40+09:00">
+<meta name="build" content="2026-09-20T14:59:00+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -282,6 +282,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .sheet.pdf .notes-title{position:static;margin-bottom:8px}
 .pages{display:flex;flex-direction:column;gap:18px;position:relative;overflow:auto;max-width:100%;background:var(--paper-3);padding:14px;border-radius:3px}
 .page{position:relative;width:100%;margin:0 auto;flex:none;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);overflow:hidden}
+.page{user-select:none;-webkit-user-select:none} .textLayer{user-select:text;-webkit-user-select:text}   /* 줄을 넘겨 골라도 쪽 그림은 안 껴들게 */
 .page canvas{display:block;width:100%;height:auto}
 .page .pno{position:absolute;right:8px;bottom:6px;font-family:var(--mono);font-size:calc(10px * var(--ui,1));color:#8A909B;pointer-events:none;z-index:4}
 .textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;opacity:1;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:2}
@@ -368,7 +369,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
 .pastebox:focus{border-color:var(--focus)}
 .pastebox:empty::before{content:attr(data-ph);color:var(--ink-3);font-family:var(--sans)}
 .pastebox table{border-collapse:collapse} .pastebox td,.pastebox th{border:1px solid var(--rule);padding:3px 6px}
-.pastebox img,.txtdoc img{max-width:100%;height:auto}
+.pastebox img,.txtdoc img{max-width:100%;height:auto;-webkit-user-drag:none;user-drag:none}
 .edit .actions{display:flex;gap:8px;margin-top:16px;align-items:center;flex-wrap:wrap}
 .msg{font-size:calc(13px * var(--ui,1));color:var(--ink-2)}
 .msg.err{color:var(--del)}
@@ -2177,7 +2178,7 @@ function bindSelection(cont, c0){
       const pageEl = (range.commonAncestorContainer.nodeType===1 ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement).closest('.page');
       if (!pageEl) return;
       const pr=pageEl.getBoundingClientRect();
-      let rects=[...range.getClientRects()].filter(r=>r.width>2 && r.height>2).map(r=>[(r.left-pr.left)/pr.width,(r.top-pr.top)/pr.height,r.width/pr.width,r.height/pr.height]);   // 2px 미만 조각만 버림(쪽 크기와 무관)
+      let rects=[...range.getClientRects()].filter(r=>r.width>2 && r.height>2 && r.height < pr.height*0.25).map(r=>[(r.left-pr.left)/pr.width,(r.top-pr.top)/pr.height,r.width/pr.width,r.height/pr.height]);   // 쪽 높이 1/4 넘는 상자는 글줄이 아니라 그림 덩어리   // 2px 미만 조각만 버림(쪽 크기와 무관)
       if (!rects.length) return;
       // 같은 줄끼리 합치기
       rects.sort((a,b)=>a[1]-b[1]||a[0]-b[0]); const merged=[];
