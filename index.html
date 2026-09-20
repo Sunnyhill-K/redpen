@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T15:25:44+09:00">
+<meta name="build" content="2026-09-20T15:39:36+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -287,7 +287,9 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .page .pno{position:absolute;right:8px;bottom:6px;font-family:var(--mono);font-size:calc(10px * var(--ui,1));color:#8A909B;pointer-events:none;z-index:4}
 .textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;opacity:1;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:2}
 .textLayer span,.textLayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}
-.textLayer ::selection{background:rgba(45,91,185,.35)}
+.textLayer ::selection{background:rgba(45,91,185,.5)}
+.textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:-1;cursor:default;user-select:none;-webkit-user-select:none}
+.textLayer.selecting .endOfContent{top:0}   /* 고르는 중에는 글자층 전체를 덮어, 빈 곳으로 끌어도 선택이 여기서 멈춘다 */
 .textLayer.ocr .oline{position:absolute;color:transparent;white-space:pre;transform-origin:0 0;cursor:text;font-family:Arial,sans-serif;letter-spacing:0}
 .textLayer.ocr.show .oline{color:rgba(196,52,45,.75);outline:1px solid rgba(196,52,45,.5)}
 .marks{position:absolute;inset:0;z-index:3;pointer-events:none}
@@ -1952,7 +1954,7 @@ async function drawPages(){
   const mkCanvas=(pg, d)=>{ const cv=document.createElement('canvas'); cv.width=Math.floor(pg.vp.width*d); cv.height=Math.floor(pg.vp.height*d); cv.style.width=pg.vp.width+'px'; cv.style.height=pg.vp.height+'px'; return cv; };
   const renderOne = async (pg)=>{
     if (pg.done || st.token!==token) return; pg.done=true;
-    if (SW.nocanvas){ const tl0=document.createElement('div'); tl0.className='textLayer'; tl0.style.setProperty('--scale-factor', String(pg.scale)); pg.el.prepend(tl0); try { const tc=await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl0, viewport: pg.vp, textDivs: []}).promise; } catch(e){} tmark('쪽 '+pg.p+' 글자층만'); return; }
+    if (SW.nocanvas){ const tl0=document.createElement('div'); tl0.className='textLayer'; tl0.style.setProperty('--scale-factor', String(pg.scale)); pg.el.prepend(tl0); try { const tc=await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl0, viewport: pg.vp, textDivs: []}).promise; } catch(e){} addEoc(tl0); tmark('쪽 '+pg.p+' 글자층만'); return; }
     const d=clampD(pg, dprEff); const canvas=mkCanvas(pg, d);
     const tl=document.createElement('div'); tl.className='textLayer'; tl.style.setProperty('--scale-factor', String(pg.scale));
     pg.el.prepend(canvas, tl); pg.cv=canvas; pg.d=d; pg.busy=true;
@@ -1960,6 +1962,7 @@ async function drawPages(){
     if (st.token!==token) return;
     if (st.c.ocr && st.c.ocr[pg.p]) buildOcrLayer(tl, st.c.ocr[pg.p], pg.vp);
     else { try { const tc = await pg.page.getTextContent(); await window.pdfjsLib.renderTextLayer({textContentSource: tc, container: tl, viewport: pg.vp, textDivs: []}).promise; } catch(e){} }
+    addEoc(tl);
     tmark('쪽 '+pg.p+' 그림');
   };
   const io = new IntersectionObserver(entries=>{ entries.forEach(en=>{ if (en.isIntersecting){ const pg=pages.find(x=>x.el===en.target); if (pg){ renderOne(pg); io.unobserve(en.target); } } }); }, {rootMargin:'1200px 0px'});
@@ -2024,6 +2027,7 @@ async function drawPages(){
   fitOverall();
   if (pendingSpot){ const ps=pendingSpot; pendingSpot=null; restoreSpot(ps.y, !!ps.focus); }
 }
+function addEoc(tl){ if (!tl) return; let e=tl.querySelector(':scope > .endOfContent'); if (!e){ e=document.createElement('div'); e.className='endOfContent'; } tl.appendChild(e); }
 function drawMarks(c, p){
   const el = document.querySelector(`.page[data-p="${p}"] .marks`); if (!el) return;
   el.innerHTML='';
@@ -3178,7 +3182,7 @@ function pinApply(el, o){ if (!el._pinSaved) el._pinSaved={}; if (!el._pinLast) 
     if (!(k in el._pinSaved)) el._pinSaved[k]=[el.style.getPropertyValue(k), el.style.getPropertyPriority(k)];
     el.style.setProperty(k, o[k], 'important'); el._pinLast[k]=o[k]; } }
 function pinRestore(el){ if (el) el._pinLast=null; const sv=el && el._pinSaved; if (!sv) return; for (const k in sv){ const [v,pr]=sv[k]; if (v) el.style.setProperty(k, v, pr); else el.style.removeProperty(k); } el._pinSaved=null; }
-let selBusy=0, fingerDown=false;   // 마지막으로 고른 글이 바뀐 시각 · 손가락이 화면에 닿아 있는지
+let selBusy=0, fingerDown=false, fingerAt=0;   // 마지막으로 고른 글이 바뀐 시각 · 손가락이 닿아 있는지와 그 시각
 function pinOverlays(){
   const vv=window.visualViewport; if (!vv) return; const s=vv.scale||1, on=s>1.02, k=1/s;
   const picking = on && (Date.now()-selBusy < 600);   // 고르는 중
@@ -3205,7 +3209,9 @@ if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFra
   new MutationObserver(pinReq).observe(document.body, {childList:true}); }   // 막대·메뉴가 새로 붙으면 바로
 { // 폰: 표시된 구절을 탭해도 메모가 열린다. 선택을 지우려고 누른 탭(막대가 떠 있거나 선택이 있던 때)은 열지 않는다
   let hadSel=false;
-  document.addEventListener('pointerdown', ()=>{ fingerDown=true; const sl=window.getSelection(); hadSel=!!document.querySelector('.pop') || !!(sl && !sl.isCollapsed); }, true);
+  document.addEventListener('pointerdown', e=>{ fingerDown=true; fingerAt=Date.now();
+    { const t=e.target && e.target.closest && e.target.closest('.page .textLayer'); if (t) t.classList.add('selecting'); }   // 고르기 시작 전에 끝 표식을 펼쳐 둔다
+    const sl=window.getSelection(); hadSel=!!document.querySelector('.pop') || !!(sl && !sl.isCollapsed); }, true);
   ['pointerup','pointercancel'].forEach(t=>document.addEventListener(t, ()=>{ fingerDown=false; }, true));
   document.addEventListener('click', e=>{
     if (!isMob() || hadSel) return; const doc=$('#doc'); if (!doc || !e.target.closest || !doc.contains(e.target)) return;
@@ -3221,8 +3227,10 @@ if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFra
 }
 { // 등록은 늘 하고(헤드리스도 지나가게) 발동 때만 폰 폭인지 본다
   let selT=null;
-  document.addEventListener('selectionchange', ()=>{ selBusy=Date.now(); if (!isMob()) return; clearTimeout(selT); selT=setTimeout(function fire(){
-    if (fingerDown){ clearTimeout(selT); selT=setTimeout(fire, 200); return; }   // 손가락이 닿아 있는 동안(손잡이 조작 중)에는 기다린다
+  document.addEventListener('selectionchange', ()=>{ selBusy=Date.now();
+    { const sl=window.getSelection(); if (!sl || sl.isCollapsed) document.querySelectorAll('.textLayer.selecting').forEach(t=>t.classList.remove('selecting')); }
+    if (!isMob()) return; clearTimeout(selT); selT=setTimeout(function fire(){
+    if (fingerDown && Date.now()-fingerAt < 4000){ clearTimeout(selT); selT=setTimeout(fire, 200); return; }   // 손가락이 닿아 있는 동안(손잡이 조작 중)에는 기다린다. 뗀 신호가 유실돼도 4초면 푼다
     const sel=window.getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
     const cont=$('#doc'); if (!cont || !editable()) return; const r=sel.getRangeAt(0); if (!cont.contains(r.commonAncestorContainer)) return;
     cont.dispatchEvent(new MouseEvent('mouseup', {bubbles:true, cancelable:true}));
