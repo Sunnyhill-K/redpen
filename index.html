@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T14:15:22+09:00">
+<meta name="build" content="2026-09-20T14:26:32+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -481,7 +481,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   /* 문서 도구줄: 보기 전환 · 쪽 이동 · 저장 · ⋯ 만 */
   .head .tools > *{display:none}
   .head .tools > .seg,.head .tools > .pager{display:inline-flex}
-  .head .tools > #saveCase,.head .tools > #docMore{display:inline-block}
+  .head .tools > #docMore{display:inline-block}   /* 저장은 상단 바에 있으니 도구줄에선 뺀다 */
   .head .tools > .msg{display:inline}
   .head .hbtns button{display:none}
   .head .hint{display:none}
@@ -504,6 +504,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   .topacts #tList{padding:8px 10px} .topacts #tList.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
   /* 목록: 접히면 아예 안 보이고(「펼치기」 띠가 제목을 덮던 것), 문서 안에서 [목록]으로 펴면 문서 위에 덮인다 */
   #btnRail{display:none}
+  body.inDoc .shell:not(.nrail) #btnRail{display:inline-flex}   /* 덮개로 열려 있을 땐 「접기」로 그냥 닫을 수 있게 */
   .shell.nrail .rail{display:none}
   body.inDoc .shell:not(.nrail) .rail{position:fixed;left:0;right:0;top:var(--top-h,50px);bottom:0;z-index:12;overflow-y:auto;background:var(--paper-2);box-shadow:0 8px 24px rgba(0,0,0,.25);padding-bottom:40px;border-bottom:0}
   /* 문서별 ⋯ 는 마우스를 올려야 나타났다 — 손가락에는 올림이 없다 */
@@ -1359,9 +1360,8 @@ function ensureNpop(){
   const el=document.createElement('div'); el.className='npop';
   el.innerHTML=`<div class="npop-head"><span class="npop-title"></span><span class="spacer"></span><button class="npop-nav" data-d="-1" aria-label="이전 메모" title="이전 메모">↑</button><button class="npop-nav" data-d="1" aria-label="다음 메모" title="다음 메모">↓</button><button class="npop-x" aria-label="닫기" title="닫기">✕</button></div><div class="npop-body"></div>`;
   el.querySelector('.npop-x').addEventListener('click', ()=>closeNotePop());
-  el.querySelectorAll('.npop-nav').forEach(b=>b.addEventListener('click', ()=>{ const nh=npop.h+(+b.dataset.d); if (document.getElementById('note'+nh)) mountNotePop(nh); }));
+  el.querySelectorAll('.npop-nav').forEach(b=>b.addEventListener('click', e=>{ e.preventDefault(); const nh=(+npop.h)+(+b.dataset.d); if (nh>=1 && document.getElementById('note'+nh)) mountNotePop(nh); }));
   el.addEventListener('focusin', e=>{ if (e.target.matches('textarea, input, [contenteditable="true"], .md')){ el.classList.add('kb'); pinOverlays(); } });   // 글 입력칸에 커서가 들어올 때만(키보드) 위쪽에 붙인다 — 단추 포커스에 튀면 손을 뗄 때 단추가 그 자리에 없다
-  el.querySelectorAll('.npop-head button').forEach(b=>b.addEventListener('pointerdown', e=>e.preventDefault()));
   el.addEventListener('focusout', ()=>setTimeout(()=>{ if (!el.contains(document.activeElement)){ el.classList.remove('kb'); pinOverlays(); } }, 120));
   window.addEventListener('popstate', ()=>{ if (npop.h!=null) closeNotePop(true); });          // 안드로이드 뒤로 가기 = 닫기
   document.body.append(back, el); npop.el=el; npop.back=back; return el;
@@ -1381,7 +1381,7 @@ function mountNotePop(h){
   const ph=document.createElement('i'); ph.className='npop-ph'; ph.hidden=true; n.before(ph); npop.ph=ph; npop.h=h;
   el.querySelector('.npop-body').replaceChildren(n);
   const c=view.draft||cases.find(x=>x.id===view.id); el.querySelector('.npop-title').textContent=`메모 ${h} / ${c?fmtN(c.marks.length):'?'}`;
-  el.querySelector('.npop-nav[data-d="-1"]').disabled=!document.getElementById('note'+(h-1)); el.querySelector('.npop-nav[data-d="1"]').disabled=!document.getElementById('note'+(h+1));
+  const total=(c && c.marks) ? c.marks.length : 0; el.querySelector('.npop-nav[data-d="-1"]').disabled=(h<=1); el.querySelector('.npop-nav[data-d="1"]').disabled=(h>=total);   // 이웃 판정은 메모 개수로
   placeNpop(h); el.classList.add('open'); npop.back.classList.add('open'); document.body.classList.add('npop-open'); hot(h,true); pinOverlays();
   const t=n.querySelector('textarea:not([hidden]), .md[contenteditable]'); if (t){ t.focus({preventScroll:true}); if (t.isContentEditable){ const r=document.createRange(); r.selectNodeContents(t); r.collapse(false); const sl=getSelection(); sl.removeAllRanges(); sl.addRange(r); } }
 }
@@ -3210,6 +3210,7 @@ function foldItems(scope, order){
   const out=[];
   scope.querySelectorAll('button').forEach(b=>{
     if (b.classList.contains('mobonly') || b.hidden || b.offsetParent) return;   // 화면에 보이는 것·⋯ 자신은 뺀다
+    if (b.id==='saveCase' && $('#tSave')) return;                                   // 저장은 상단 바에 있으니 ⋯ 에도 안 넣는다
     let l=FOLD_LAB[b.id] || (b.textContent||'').replace(/\s+/g,' ').trim() || b.getAttribute('aria-label') || b.title || '';
     l=l.replace(/\s*▾$/,'').replace(/\s*\(.*?\)$/,''); if (!l) return;
     out.push({id:b.id, l: b.disabled ? l+' — 지금은 못 씀' : l, f: b.disabled ? null : ()=>b.click()});
@@ -3256,7 +3257,7 @@ $('#btnList').addEventListener('click', async ()=>{ if (!(await leaveOk())) retu
 $('#btnReload').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; location.reload(); });
 // 폰 상단 바의 되돌리기·다시 실행·저장은 도구줄의 진짜 단추를 눌러 준다(도구줄은 스크롤에 사라지므로)
 function syncTopActs(){ const u=$('#tUndo'), r=$('#tRedo'), sv=$('#tSave'); if (!u) return; const ub=$('#undoBtn'), rb=$('#redoBtn'), sb=$('#saveCase'); u.disabled=!(ub && !ub.disabled); r.disabled=!(rb && !rb.disabled); sv.disabled=!(sb && !sb.disabled);
-  const tl=$('#tList'), sh=$('.shell'); if (tl && sh) tl.classList.toggle('on', !sh.classList.contains('nrail')); }
+  const tl=$('#tList'), sh=$('.shell'); if (tl && sh){ const inDoc=document.body.classList.contains('inDoc'); const open=inDoc && !sh.classList.contains('nrail'); tl.classList.toggle('on', open); tl.textContent = open ? '목록 닫기' : '목록'; tl.disabled=!inDoc; } }
 // 폰의 [목록]: 문서 위에 목록을 덮어 보인다(문서를 고르면 접힌다). 접힌 목록의 「펼치기」 띠는 폰에서 없앤다
 { const tl=$('#tList'); if (tl) tl.addEventListener('click', ()=>{ const sh=$('.shell'); if (!sh) return; if (npop.h!=null) closeNotePop(); sh.classList.toggle('nrail'); try { syncFold(); } catch(e){} syncTopActs(); pinOverlays(); }); }
 [['#tUndo','#undoBtn'],['#tRedo','#redoBtn'],['#tSave','#saveCase']].forEach(([a,b])=>{ const el=$(a); if (el) el.addEventListener('click', ()=>{ const t=$(b); if (t && !t.disabled) t.click(); }); });
@@ -3273,7 +3274,7 @@ if (document.fonts) document.fonts.ready.then(syncTop);
 window.addEventListener('load', syncTop);
 try { if (localStorage.getItem('redpen.nrail')==='1') shell.classList.add('nrail'); } catch(e){}
 syncFold();
-$('#btnRail').addEventListener('click', e=>{ e.stopPropagation(); shell.classList.toggle('nrail'); syncFold(); try { localStorage.setItem('redpen.nrail', shell.classList.contains('nrail')?'1':'0'); } catch(e){}
+$('#btnRail').addEventListener('click', e=>{ e.stopPropagation(); shell.classList.toggle('nrail'); syncFold(); syncTopActs(); pinOverlays(); try { localStorage.setItem('redpen.nrail', shell.classList.contains('nrail')?'1':'0'); } catch(e){}
   requestAnimationFrame(()=>{ layoutNotes(); if (pdfState && $('#doc')) drawPages(); }); });
 // 레이아웃 폭(clientWidth)만 본다 — innerWidth 는 아이폰 핀치 줌에 따라 줄어 PDF 를 통째로 다시 그리게 했다
 let rsT=null, lastW=document.documentElement.clientWidth, lastStacked=isMob();
