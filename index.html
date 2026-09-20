@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T12:55:23+09:00">
+<meta name="build" content="2026-09-20T13:23:35+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -164,7 +164,7 @@ body.zoomed-body .head::before{content:'';position:absolute;left:-20px;top:0;bot
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
 .seg{display:inline-flex;border:1px solid var(--ink-2);border-radius:4px;overflow:hidden}
 .seg button{border:0;background:transparent;padding:5px 11px;cursor:pointer;border-right:1px solid var(--ink-2)}
-.seg button:last-child{border-right:0}
+.seg button:last-child{border-right:0} .seg .sm{display:none}
 .seg button.on{background:var(--btn);color:var(--btn-ink)}
 .spacer{flex:1}
 .pager{display:inline-flex;align-items:center;border:1px solid var(--ink-2);border-radius:4px;overflow:hidden;font-family:var(--mono);font-size:calc(12px * var(--ui,1));font-variant-numeric:tabular-nums}
@@ -486,6 +486,13 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   .head .hbtns button{display:none}
   .head .hint{display:none}
   .head h2{font-size:calc(21px * var(--ui,1))}
+  /* 도구줄을 한 줄에: 짧은 탭 이름 · 좁은 간격 · 작은 쪽 이동 칸 */
+  .seg .lg{display:none} .seg .sm{display:inline} .seg button{padding:8px 9px}
+  .head .tools{gap:6px} .head .tools .btn.small{padding:8px 10px}
+  .pager button{padding:0 6px;min-width:30px} .pager input{width:34px;padding:3px 0}
+  /* 상단 바 둘째 줄: 새 퇴고 ┈ ↶ ↷ 저장 */
+  .top .brk{display:block;flex-basis:100%;height:0;margin-top:-8px}
+  .top .topacts{display:inline-flex;gap:6px;margin-left:auto}
   /* 문서별 ⋯ 는 마우스를 올려야 나타났다 — 손가락에는 올림이 없다 */
   .cases li .more{opacity:1}
 }
@@ -527,7 +534,7 @@ body.area-mode .page{touch-action:none}
   <button class="btn ico" id="btnList" title="홈" aria-label="홈"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" style="vertical-align:-3px"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-6h4v6"/></svg></button>
   <button class="btn ico" id="btnReload" title="새로고침 (최신 판으로)" aria-label="새로고침">↻</button>
   <button class="btn ico" id="btnTheme" title="어둡게" aria-label="화면 밝기"></button>
-  <button class="btn ico mobonly" id="topMore" title="더 보기" aria-label="더 보기">⋯</button><button class="btn primary" id="btnNew" title="새 문서를 넣거나 직접 씁니다 · Alt+N">새 퇴고(새 글 작성)</button>
+  <button class="btn ico mobonly" id="topMore" title="더 보기" aria-label="더 보기">⋯</button><span class="brk mobonly" aria-hidden="true"></span><button class="btn primary" id="btnNew" title="새 문서를 넣거나 직접 씁니다 · Alt+N">새 퇴고(새 글 작성)</button><span class="topacts mobonly"><button class="btn ico" id="tUndo" title="되돌리기" aria-label="되돌리기">↶</button><button class="btn ico" id="tRedo" title="다시 실행" aria-label="다시 실행">↷</button><button class="btn primary" id="tSave" title="저장">저장</button></span>
 </header>
 
 <div class="shell">
@@ -668,7 +675,7 @@ async function openCase(id){
   render();
 }
 function render(){
-  renderList();
+  renderList(); requestAnimationFrame(syncTopActs);
   if (npop.h!=null) closeNotePop();
   if (isMob()){ const sh=$('.shell'); if (sh){ const fold = view.mode!=='list'; if (sh.classList.contains('nrail')!==fold){ sh.classList.toggle('nrail', fold); try { syncFold(); } catch(e){} } } }   // 폰: 문서를 열면 목록을 접고, 홈이면 편다
   const main=$('#main'); main.innerHTML=''; document.body.classList.remove('zoomed-body'); document.body.style.minWidth='';
@@ -778,9 +785,9 @@ function bindReplies(root, c){
   const openForm=(box, i, k, text)=>{ const f=box.querySelector('.rform'); const ta=f.querySelector('.rta'); f.hidden=false; f.dataset.k=(k==null?'':k); ta.value=text||''; ta.focus(); requestAnimationFrame(layoutNotes);
     ta.onkeydown=e=>{ if (e.key==='Enter' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); f.querySelector('[data-act="save"]').click(); } if (e.key==='Escape'){ e.preventDefault(); f.querySelector('[data-act="cancel"]').click(); } };
     f.querySelector('[data-act="save"]').onclick=()=>{ const v=ta.value.trim(); if (!v) return; const m=c.marks[i]; m.replies=m.replies||[]; const kk=f.dataset.k;
-      if (kk!==''){ const r=m.replies[+kk]; if (r){ if (r.t===v){ f.hidden=true; return; } ask('답글을 수정하시겠습니까?', '수정').then(ok=>{ if (!ok){ f.hidden=true; ta.value=''; requestAnimationFrame(layoutNotes); return; } pushHist(c, `메모 ${i+1} 답글 수정`); r.t=v; r.mt=Date.now(); m.mt=Date.now(); view.dirty=true; const ub=$('#undoBtn'); if (ub) ub.disabled=false; rerender(i); }); return; } }
+      if (kk!==''){ const r=m.replies[+kk]; if (r){ if (r.t===v){ f.hidden=true; return; } ask('답글을 수정하시겠습니까?', '수정').then(ok=>{ if (!ok){ f.hidden=true; ta.value=''; requestAnimationFrame(layoutNotes); return; } pushHist(c, `메모 ${i+1} 답글 수정`); r.t=v; r.mt=Date.now(); m.mt=Date.now(); view.dirty=true; const ub=$('#undoBtn'); if (ub) ub.disabled=false; syncTopActs(); rerender(i); }); return; } }
       else { pushHist(c, `메모 ${i+1} 답글`); m.replies.push({id:newMid(), by:me.name, byId:me.id, t:v, ts:Date.now()}); }
-      m.mt=Date.now(); view.dirty=true; const ub=$('#undoBtn'); if (ub) ub.disabled=false; rerender(i); };
+      m.mt=Date.now(); view.dirty=true; const ub=$('#undoBtn'); if (ub) ub.disabled=false; syncTopActs(); rerender(i); };
     f.querySelector('[data-act="cancel"]').onclick=()=>{ f.hidden=true; ta.value=''; requestAnimationFrame(layoutNotes); }; };
   root.querySelectorAll('.radd2').forEach(b=>b.addEventListener('click', ()=>openForm(b.parentElement, +b.dataset.i, null, '')));
   root.querySelectorAll('.reply .rl[data-act="edit"]').forEach(b=>b.addEventListener('click', ()=>{ const i=+b.dataset.i, k=+b.dataset.k; const r=c.marks[i].replies[k]; openForm(b.closest('.replies'), i, k, r.t); }));
@@ -831,7 +838,7 @@ function toggleReact(c, i, e){
   if (!me) return; const m=c.marks[i]; if (!m) return; m.reacts=m.reacts||{}; const ids=m.reacts[e]||[]; const k=ids.indexOf(me.id);
   if (k>=0) ids.splice(k,1); else { ids.push(me.id); if (!REACTS_FIXED.includes(e)){ const emo=myEmo(); const cur=emo[e]||{n:0,t:0}; emo[e]={n:cur.n+1, t:Date.now()}; savePref({emo}); } }
   if (ids.length) m.reacts[e]=ids; else delete m.reacts[e]; if (!Object.keys(m.reacts).length) delete m.reacts;
-  m.mt=Date.now(); view.dirty=true; const ub=$('#undoBtn'); if (ub) ub.disabled=false;
+  m.mt=Date.now(); view.dirty=true; const ub=$('#undoBtn'); if (ub) ub.disabled=false; syncTopActs();
   const n=document.getElementById('note'+(i+1)); if (n){ const old=n.querySelector('.reacts'); if (old) old.outerHTML=reactsHtml(m, i); bindReacts(n, c); }
   requestAnimationFrame(layoutNotes);
 }
@@ -1700,7 +1707,7 @@ function refreshPdfHead(c){
   const canEdit = editable();
   head.innerHTML = headHtml(c,
     `<span>메모 <b>${fmtN(c.marks.length)}</b>곳</span><span class="d">삭제 <b>${fmtN(n('del'))}</b></span><span class="i">바꾸기 <b>${fmtN(n('rep'))}</b></span><span class="m">메모만 <b>${fmtN(n('memo'))}</b></span>${isPdf(c)?`<span>쪽 <b>${c.pages?fmtN(c.pages):'?'}</b></span>`:`<span>글자 <b>${fmtN((hasHtml(c)?stripTags(c.html||''):(c.src||'')).replace(/\s/g,'').length)}</b>자</span>`}`,
-    `<div class="seg"><button id="modeDoc" class="${(!pdfListMode&&!textRevMode)?'on':''}">${isPdf(c)?'문서':'원문'} 위 메모 표시</button>${isPdf(c)?'':`<button id="modeRev" class="${textRevMode?'on':''}">수정본 그대로</button>`}<button id="modeList" class="${pdfListMode?'on':''}">메모 목록만</button></div>
+    `<div class="seg"><button id="modeDoc" class="${(!pdfListMode&&!textRevMode)?'on':''}"><span class="lg">${isPdf(c)?'문서':'원문'} 위 메모 표시</span><span class="sm">${isPdf(c)?'문서':'원문'} 위</span></button>${isPdf(c)?'':`<button id="modeRev" class="${textRevMode?'on':''}"><span class="lg">수정본 그대로</span><span class="sm">수정본</span></button>`}<button id="modeList" class="${pdfListMode?'on':''}"><span class="lg">메모 목록만</span><span class="sm">메모만</span></button></div>
      ${isPdf(c)?`<span class="pager" title="쪽 이동: Alt+W 이전 · Alt+S 다음 · Alt+G 번호 입력"><button id="pgPrev" aria-label="이전 쪽" title="Alt+W">‹</button><input id="pgIn" inputmode="numeric" value="${currentPage()||1}" aria-label="쪽 번호"><span class="sl">/</span><b id="pgTot">${c.pages||'?'}</b><button id="pgNext" aria-label="다음 쪽" title="Alt+S">›</button></span>`:`<button class="btn small" id="copyRev" title="표시를 반영한 수정본을 글자만 복사(슬랙·메모장용)">수정본 복사</button>${hasHtml(c)?`<button class="btn small" id="copyRich" title="표시를 반영한 수정본을 서식째 복사 — 구글 문서·Word·Gmail·네이버 편집기에 붙여 넣으면 굵게·색·표가 따라갑니다">서식까지 복사</button><button class="btn small" id="copyHtml" title="표시를 반영한 수정본의 HTML 코드를 복사 — 홈페이지·블로그 HTML 편집기용">HTML 복사</button><button class="btn small" id="dlHtml" title="표시를 반영한 수정본을 혼자 열리는 .html 파일로 내려받기">HTML 내려받기</button>`:''}`}
      <button class="btn small" id="toggleMarks" ${(pdfListMode||textRevMode)?'disabled':''}>${hidden?'메모 보이기':'메모 감추기'}</button>
      ${canEdit ? `<button class="btn small danger" id="clearBtn" ${c.marks.length?'':'disabled'}>메모 모두 지우기</button>
@@ -1726,7 +1733,7 @@ function refreshPdfHead(c){
   const xp=$('#exportPdfBtn'); if (xp) xp.addEventListener('click', async ()=>{ const xb2=$('#exportBtn'); if (xb2){ xb2.disabled=true; xb2.textContent='만드는 중…'; }
     try { collectMarks(c); Prog.start('주석 PDF 만드는 중'); const bytes=await (isPdf(c) ? exportPdfAnnots(c) : exportDomPdfAnnots(c)); Prog.done(); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'})); a.download=((c.title||'문서').replace(/[\\/:*?"<>|]/g,'_'))+' 주석.pdf'; document.body.appendChild(a); a.click(); a.remove(); toast(`주석 ${fmtN(c.marks.length)}개를 넣은 PDF 를 내려받았습니다`); }
     catch(e){ Prog.done(); toast('주석 PDF 실패: '+((e&&e.message)||e)); } finally { if (xb2){ xb2.disabled=false; xb2.textContent='내보내기 ▾'; } } });
-  const ub=$('#undoBtn'), rb=$('#redoBtn'), cb=$('#clearBtn');
+  const ub=$('#undoBtn'), rb=$('#redoBtn'), cb=$('#clearBtn'); syncTopActs();
   if (ub) ub.addEventListener('click', ()=>undoMarks(c));
   if (rb) rb.addEventListener('click', ()=>redoMarks(c));
   const hb=$('#histBtn'); if (hb) hb.addEventListener('click', ()=>showHistory(c));
@@ -1796,7 +1803,7 @@ function renderPdfNotes(c){
     const after=ta?ta.value.trim():(m.after||''); const reason=tr?tr.value.trim():(m.reason||''); const bef=(m._snap&&m._snap.reason!=null)?m._snap.reason:(m.reason||''); const befA=(m._snap&&m._snap.after!=null)?m._snap.after:(m.after||'');
     const changed = after!==befA || reason!==bef;
     if (changed && !m._fresh){ if (!(await ask(`${i+1}번 메모를 수정하시겠습니까?`, '수정'))) return; }
-    if (changed){ pushHist(c, `메모 ${i+1} ${m._fresh?'작성':'수정'}`); if (reason!==bef) m.segs=updSegs(m._snap&&m._snap.segs?m._snap.segs:(m.segs||null), bef, reason, (me && m.by && !sameUser(m, me)) ? me.name : null, me ? me.id : ''); m.after=after; m.reason=reason; m.mt=Date.now(); if (!m._fresh) m.edited=Date.now(); view.dirty=true; const ub=$('#undoBtn'); if (ub) ub.disabled=false; }
+    if (changed){ pushHist(c, `메모 ${i+1} ${m._fresh?'작성':'수정'}`); if (reason!==bef) m.segs=updSegs(m._snap&&m._snap.segs?m._snap.segs:(m.segs||null), bef, reason, (me && m.by && !sameUser(m, me)) ? me.name : null, me ? me.id : ''); m.after=after; m.reason=reason; m.mt=Date.now(); if (!m._fresh) m.edited=Date.now(); view.dirty=true; const ub=$('#undoBtn'); if (ub) ub.disabled=false; syncTopActs(); }
     delete m._editing; delete m._fresh; delete m._snap; renderPdfNotes(c); };
   const cancelEdit=(i)=>{ const m=c.marks[i]; if (!m) return; if (m._snap){ m.after=m._snap.after; m.reason=m._snap.reason; m.segs=m._snap.segs; } delete m._editing; delete m._snap; if (m._fresh){ delete m._fresh; } renderPdfNotes(c); };
   notes.querySelectorAll('[data-act="msave"]').forEach(b=>b.addEventListener('click', ()=>commitEdit(+b.dataset.i)));
@@ -3192,6 +3199,9 @@ async function copyText(t, ok){
 }
 $('#btnList').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'list',id:null,draft:null,dirty:false,show:'side'}; location.hash=''; render(); });
 $('#btnReload').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; location.reload(); });
+// 폰 상단 바의 되돌리기·다시 실행·저장은 도구줄의 진짜 단추를 눌러 준다(도구줄은 스크롤에 사라지므로)
+function syncTopActs(){ const u=$('#tUndo'), r=$('#tRedo'), sv=$('#tSave'); if (!u) return; const ub=$('#undoBtn'), rb=$('#redoBtn'), sb=$('#saveCase'); u.disabled=!(ub && !ub.disabled); r.disabled=!(rb && !rb.disabled); sv.disabled=!(sb && !sb.disabled); }
+[['#tUndo','#undoBtn'],['#tRedo','#redoBtn'],['#tSave','#saveCase']].forEach(([a,b])=>{ const el=$(a); if (el) el.addEventListener('click', ()=>{ const t=$(b); if (t && !t.disabled) t.click(); }); });
 $('#topMore').addEventListener('click', ()=>{ const who=$('#whoami'); openFold($('#topMore'), $('.top'), ['btnList','btnReload','btnTheme','uiMinus','uiReset','uiPlus','btnUsers','btnPw','btnHelp','btnLock'], (who&&who.textContent.trim())||''); });
 $('#btnHelp').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'help',id:null,draft:null,dirty:false,show:'side'}; location.hash='help'; render(); });
 $('#btnNew').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'edit',id:null,draft:null,dirty:false,show:'side'}; render(); });
@@ -3215,8 +3225,8 @@ document.fonts && document.fonts.ready.then(()=>layoutNotes());
 
 $('#btnLock').addEventListener('click', lockNow);
 // 화면 글자 크기(문서 제외)
-var uiScale=1; try { uiScale=parseFloat(localStorage.getItem('redpen.ui'))||1; } catch(e){}
-function applyUi(save){ document.documentElement.style.setProperty('--ui', uiScale); $('#uiReset').textContent=Math.round(uiScale*100)+'%'; if (save!==false) savePref({ui:uiScale}); syncTop(); layoutNotes(); fitOverall(); if (pdfState && $('#doc')) drawPages(); else layoutTextDoc(); }
+var uiScale=1; try { uiScale=parseFloat(localStorage.getItem(isMob()?'redpen.uiM':'redpen.ui'))||1; } catch(e){}   // 폰은 PC 와 따로 저장
+function applyUi(save){ document.documentElement.style.setProperty('--ui', uiScale); $('#uiReset').textContent=Math.round(uiScale*100)+'%'; if (save!==false) savePref(isMob()?{uiM:uiScale}:{ui:uiScale}); syncTop(); layoutNotes(); fitOverall(); if (pdfState && $('#doc')) drawPages(); else layoutTextDoc(); }
 function setUi(d, reset){ uiScale = reset ? 1 : Math.min(1.6, Math.max(0.8, Math.round((uiScale+d)*10)/10)); applyUi(); }
 $('#uiMinus').addEventListener('click', ()=>setUi(-0.1)); $('#uiPlus').addEventListener('click', ()=>setUi(0.1)); $('#uiReset').addEventListener('click', ()=>setUi(0,true));
 document.documentElement.style.setProperty('--ui', uiScale); $('#uiReset').textContent=Math.round(uiScale*100)+'%';
@@ -3249,7 +3259,8 @@ function loadPref(){
   const u=me && cfg && (cfg.users||[]).find(x=>x.id===me.id); const remote=(u && u.pref)||{};
   const pref=((remote.at||0) >= (loc.at||0)) ? Object.assign({}, loc, remote) : Object.assign({}, remote, loc);   // 더 나중에 바꾼 쪽이 이긴다(다른 PC 에서 바꾼 것도 따라온다)
   applyTheme(pref.theme||'');   // 밝기를 먼저 — 배율 적용이 화면 요소가 아직 없어 실패해도 밝기는 살아야 한다
-  if (pref.ui){ uiScale=Math.min(1.6, Math.max(0.8, +pref.ui||1)); try { applyUi(false); } catch(e){ document.documentElement.style.setProperty('--ui', uiScale); const r=$('#uiReset'); if (r) r.textContent=Math.round(uiScale*100)+'%'; } }
+  const uv = isMob() ? ('uiM' in pref ? pref.uiM : 1) : pref.ui;   // 폰은 PC 값을 따르지 않고 제 값(없으면 100%)
+  if (uv){ uiScale=Math.min(1.6, Math.max(0.8, +uv||1)); try { applyUi(false); } catch(e){ document.documentElement.style.setProperty('--ui', uiScale); const r=$('#uiReset'); if (r) r.textContent=Math.round(uiScale*100)+'%'; } }
 }
 $('#btnTheme').addEventListener('click', ()=>{ const cur=document.documentElement.getAttribute('data-theme'); const dark = cur==='dark' || (cur!=='light' && matchMedia('(prefers-color-scheme: dark)').matches); const next = dark ? 'light' : 'dark'; applyTheme(next); savePref({theme:next}); });
 applyTheme('');
