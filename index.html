@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T09:58:47+09:00">
+<meta name="build" content="2026-09-20T10:01:42+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -127,6 +127,13 @@ a{color:var(--ins)}
 .hide-marks .txtdoc .t-ghost{background:none} .hide-marks .mk.ghost{display:none!important}
 .ghostbox{max-width:1120px;margin:22px auto 0;border-top:1px dashed var(--rule);padding-top:12px;opacity:.82} .ghostbox:hover{opacity:1} .ghostbox .ghead{display:flex;align-items:center;gap:8px;flex-wrap:wrap} .ghostbox h3{font-family:var(--serif);font-size:calc(15px * var(--ui,1));margin:0;color:var(--ink-2)} .ghostbox>.msg{margin:4px 0 10px}
 .glist{display:grid;gap:8px} .gitem{border-left:2px dashed var(--ink-3);padding:4px 10px;background:var(--paper-2);border-radius:0 4px 4px 0;font-size:calc(13.5px * var(--ui,1))} .gitem.hot{outline:2px solid var(--ins-line)} .gitem .gh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:3px} .gitem .who{font-size:calc(11px * var(--ui,1));color:var(--nc);border:1px solid var(--nc);border-radius:3px;padding:0 5px} .gitem .gt{color:var(--ink-2);font-family:var(--serif)} .gitem.del .gt,.gitem.rep .gt{text-decoration:line-through} .gitem .gt .after{text-decoration:none;color:var(--ins)} .gitem .gr{white-space:pre-wrap;line-height:1.5;margin-top:2px} .chip.hint{background:var(--rep-bg);color:var(--rep)} .chip.hint.ok{background:var(--memo-bg);color:var(--memo)}
+.cmpbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:6px 0 8px;font-size:calc(13px * var(--ui,1))} .cmpbar .arrow{color:var(--ink-3)} .cmpbar .stats{display:flex;gap:10px}
+.cmp{max-width:1120px;margin:14px auto 40px;background:#fff;color:#1F2430;box-shadow:0 1px 3px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);font-family:var(--serif);font-size:calc(15.5px * var(--z,1));line-height:1.8}
+.cmp .chead{display:grid;grid-template-columns:1fr 1fr;font-family:var(--sans);font-size:12px;letter-spacing:.06em;color:var(--ink-3);border-bottom:1px solid var(--rule)} .cmp .chead div{padding:8px 14px} .cmp .chead div+div{border-left:1px solid var(--rule)}
+.crow{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px dotted #e3e5df} .crow .cl,.crow .cr{padding:6px 14px;white-space:pre-wrap;overflow-wrap:anywhere} .crow .cr{border-left:1px solid var(--rule)}
+.crow.eq{color:#6b7280} .crow.del .cl{background:var(--del-bg)} .crow.ins .cr{background:var(--ins-bg)} .crow.mod .cl,.crow.mod .cr{background:#FFFBEA}
+.crow del{color:var(--del);background:var(--del-bg);text-decoration:line-through;text-decoration-thickness:1.5px;border-radius:2px} .crow ins{color:var(--ins);background:var(--ins-bg);text-decoration:underline;text-underline-offset:3px;border-radius:2px}
+.crow.fold{display:block;text-align:center;padding:4px;background:var(--paper-2)}
 .chip.ver{background:var(--ins-bg);color:var(--ins);font-family:var(--mono)} .chip.ver.ro{background:var(--rep-bg);color:var(--rep)} .verSel{font:inherit;font-size:calc(12px * var(--ui,1));border:1px solid var(--rule);border-radius:4px;background:var(--paper);color:var(--ink);padding:2px 4px;max-width:200px}
 .btn.ico{padding-left:8px;padding-right:8px;font-size:calc(15px * var(--ui,1));line-height:1}.btn.ico sup{font-size:.55em;margin-left:2px;vertical-align:.6em;font-family:var(--mono)}
 .beta{font-size:.55em;font-weight:500;color:var(--ink-3);letter-spacing:.02em;margin-left:.15em;vertical-align:.15em}#buildAt{font-family:var(--sans);font-size:1em;color:var(--ink-3);letter-spacing:0;font-weight:400}
@@ -596,7 +603,8 @@ function render(){
   const main=$('#main'); main.innerHTML=''; document.body.classList.remove('zoomed-body'); document.body.style.minWidth='';
   if (view.mode==='list'){ renderHome(main); window.scrollTo(0,0); return; }
   if (view.mode==='edit'){ renderEdit(main); window.scrollTo(0,0); return; }
-  if (view.mode==='help'){ renderHelp(main); window.scrollTo(0,0); return; }   // 문서를 내려 보다가 들어와도 위가 상단 바에 가려지지 않게
+  if (view.mode==='help'){ renderHelp(main); window.scrollTo(0,0); return; }
+  if (view.mode==='cmp'){ const c0=cases.find(x=>x.id===view.id); if (!c0 || !c0.loaded){ view.mode='case'; } else { renderCompare(main, c0); window.scrollTo(0,0); return; } }   // 문서를 내려 보다가 들어와도 위가 상단 바에 가려지지 않게
   let c = view.draft || cases.find(x=>x.id===view.id);
   if (!c){ view.mode='list'; renderHome(main); return; }
   if (!c.loaded && !view.draft){
@@ -674,7 +682,7 @@ function renderHelp(main){
 function headHtml(c, statsHtml, toolsHtml){
   const isDraft = !!view.draft;
   return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':(c.type==='word'?'Word':(isHtmlDoc(c)?'HTML':'텍스트'))}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}${Array.isArray(c.vis)?`<span class="chip" title="지정된 뷰어만 봄">👁 ${c.vis.length}명 지정</span>`:''}<span>${esc(c.client||'')}</span><span>${esc(fmtWhen(c))}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
-    <h2>${esc(c.title||'(제목 없음)')}<span class="hbtns">${verChip(c)}${editable() ? `<button class="btn small" id="editCase">정보 수정</button><button class="btn small" id="newVer" title="고친 글을 새 버전으로 올립니다. 이전 버전은 그대로 남고, 메모는 새 버전의 같은 구절로 옮겨집니다">이 문서 새 버전 올리기</button>` : ''}${roVer ? `<button class="btn small primary" id="verBack">현재 버전으로</button>` : ((editable() && (c.versions||[]).length) ? `<button class="btn small danger" id="verDrop" title="지금 버전을 지우고 직전 버전으로 되돌립니다">현재 버전 삭제</button>` : '')}${isPdf(c) ? `<button class="btn small" id="dlPdf" title="저장된 원본 PDF 를 그대로 내려받습니다">원본 PDF 내려받기</button>` : ''}</span></h2>
+    <h2>${esc(c.title||'(제목 없음)')}<span class="hbtns">${verChip(c)}${editable() ? `<button class="btn small" id="editCase">정보 수정</button><button class="btn small" id="newVer" title="고친 글을 새 버전으로 올립니다. 이전 버전은 그대로 남고, 메모는 새 버전의 같은 구절로 옮겨집니다">이 문서 새 버전 올리기</button>` : ''}${(c.versions||[]).length ? `<button class="btn small" id="verCmp" title="두 버전을 문장 단위로 나란히 놓고 바뀐 곳만 칠합니다">버전 비교</button>` : ''}${roVer ? `<button class="btn small primary" id="verBack">현재 버전으로</button>` : ((editable() && (c.versions||[]).length) ? `<button class="btn small danger" id="verDrop" title="지금 버전을 지우고 직전 버전으로 되돌립니다">현재 버전 삭제</button>` : '')}${isPdf(c) ? `<button class="btn small" id="dlPdf" title="저장된 원본 PDF 를 그대로 내려받습니다">원본 PDF 내려받기</button>` : ''}</span></h2>
     <div class="stats">${statsHtml}</div>
     <div class="tools">${toolsHtml}
       <button class="btn small" id="copyLink">링크 복사</button>
@@ -704,6 +712,7 @@ function bindHead(c, collect){
   const isDraft = !!view.draft;
   const vs=$('#verSel'); if (vs) vs.addEventListener('change', async ()=>{ const n=+vs.value; if (!(await leaveOk())) { vs.value=roVer||0; return; } view.ver = n||null; view.draft=null; view.dirty=false; render(); });
   const vb=$('#verBack'); if (vb) vb.addEventListener('click', ()=>{ view.ver=null; render(); });
+  const vc=$('#verCmp'); if (vc) vc.addEventListener('click', async ()=>{ if (view.dirty && !(await leaveOk())) return; const cur=(c.versions||[]).length+1; const b=roVer||cur; view.cmp={a:Math.max(1,b-1), b}; view.mode='cmp'; render(); });
   const vd=$('#verDrop'); if (vd) vd.addEventListener('click', async ()=>{ const vs=c.versions||[]; const last=vs[vs.length-1]; if (!last) return;
     if (!(await ask(`${vs.length+1}버전(현재)을 지우고 ${last.n}버전으로 되돌립니다. 이 버전에 쓴 메모 ${fmtN((c.marks||[]).length)}곳도 함께 지워집니다.`, '현재 버전 삭제'))) return;
     vd.disabled=true; vd.textContent='되돌리는 중…';
@@ -1702,6 +1711,64 @@ function drawMarks(c, p){
         k.style.left=((r[0]+r[2])*100)+'%'; k.style.top=(r[1]*100)+'%'; k.addEventListener('click', ()=>focusHunk(h)); el.appendChild(k); }
     });
   });
+}
+// ══════════════ 버전 비교: 문장 단위로 맞춰 놓고 바뀐 곳만 칠한다 ══════════════
+function splitSents(t){ return String(t||'').replace(/\r/g,'').split(/(?<=[.!?。？！])\s+|\n+/).map(x=>x.trim()).filter(Boolean); }
+function lcsOps(A, B, eq){   // 최장 공통 부분열 → [{op:'eq'|'del'|'ins', a, b}]
+  const n=A.length, m=B.length; const dp=Array.from({length:n+1}, ()=>new Uint16Array(m+1));
+  for (let i=n-1;i>=0;i--) for (let j=m-1;j>=0;j--) dp[i][j] = eq(A[i],B[j]) ? dp[i+1][j+1]+1 : Math.max(dp[i+1][j], dp[i][j+1]);
+  const ops=[]; let i=0,j=0; while (i<n && j<m){ if (eq(A[i],B[j])){ ops.push({op:'eq',a:i,b:j}); i++; j++; } else if (dp[i+1][j]>=dp[i][j+1]){ ops.push({op:'del',a:i}); i++; } else { ops.push({op:'ins',b:j}); j++; } }
+  while (i<n){ ops.push({op:'del',a:i++}); } while (j<m){ ops.push({op:'ins',b:j++}); }
+  return ops;
+}
+function simRatio(a, b){ const A=normT(a), B=normT(b); if (!A.length && !B.length) return 1; if (!A.length || !B.length) return 0; if (A.length*B.length>250000) return A===B?1:0; const ops=lcsOps([...A],[...B],(x,y)=>x===y); const eq=ops.filter(o=>o.op==='eq').length; return 2*eq/(A.length+B.length); }
+const tokenize = t => String(t).match(/[\w가-힣]+|\s+|[^\w가-힣\s]+/g) || [];
+function wordDiffHtml(a, b){   // 바뀐 문장 한 쌍 → [왼쪽 html, 오른쪽 html]
+  const A=tokenize(a), B=tokenize(b); const ops=lcsOps(A,B,(x,y)=>x===y); let L='', R='';
+  ops.forEach(o=>{ if (o.op==='eq'){ L+=esc(A[o.a]); R+=esc(B[o.b]); } else if (o.op==='del'){ L+=`<del>${esc(A[o.a])}</del>`; } else { R+=`<ins>${esc(B[o.b])}</ins>`; } });
+  return [L, R];
+}
+// 두 글을 문장 단위로 맞춘다 → 행 목록 [{t:'eq'|'mod'|'del'|'ins', L, R}]
+function alignTexts(oldT, newT){
+  const A=splitSents(oldT), B=splitSents(newT); const ops=lcsOps(A,B,(x,y)=>normT(x)===normT(y)); const rows=[];
+  let i=0; while (i<ops.length){ const o=ops[i];
+    if (o.op==='eq'){ rows.push({t:'eq', L:esc(A[o.a]), R:esc(B[o.b])}); i++; continue; }
+    const dels=[], inss=[]; while (i<ops.length && ops[i].op!=='eq'){ if (ops[i].op==='del') dels.push(A[ops[i].a]); else inss.push(B[ops[i].b]); i++; }
+    // 빠진 문장과 들어온 문장을 비슷한 것끼리 짝지어 「고침」으로, 나머지는 빠짐/새로
+    const used=new Set();
+    dels.forEach(d=>{ let best=-1, bs=0.45; inss.forEach((x,k)=>{ if (used.has(k)) return; const r=simRatio(d,x); if (r>bs){ bs=r; best=k; } });
+      if (best>=0){ used.add(best); const [L,R]=wordDiffHtml(d, inss[best]); rows.push({t:'mod', L, R}); } else rows.push({t:'del', L:esc(d), R:''}); });
+    inss.forEach((x,k)=>{ if (!used.has(k)) rows.push({t:'ins', L:'', R:esc(x)}); });
+  }
+  return rows;
+}
+function versionText(c, n){ const cur=(c.versions||[]).length+1; if (n>=cur) return isPdf(c) ? pdfLinesText(c.ocr) : docText(c); const v=(c.versions||[]).find(x=>x.n===n); return v ? verText(v) : ''; }
+function versionLabel(c, n){ const cur=(c.versions||[]).length+1; if (n>=cur) return `${cur}버전 (현재) · ${fmtWhen(c)}`; const v=(c.versions||[]).find(x=>x.n===n); return v ? `${n}버전 · ${fmtWhen(v)}` : n+'버전'; }
+let cmpFold=true;
+function renderCompare(main, c){
+  const cur=(c.versions||[]).length+1; const a=Math.min(Math.max(1, view.cmp.a), cur), b=Math.min(Math.max(1, view.cmp.b), cur);
+  const opts=n=>Array.from({length:cur},(_,k)=>k+1).map(k=>`<option value="${k}" ${k===n?'selected':''}>${esc(versionLabel(c,k))}</option>`).join('');
+  const tA=versionText(c,a), tB=versionText(c,b);
+  const noText = isPdf(c) && (!tA.trim() || !tB.trim());
+  const rows = noText ? [] : alignTexts(tA, tB);
+  const nMod=rows.filter(r=>r.t==='mod').length, nDel=rows.filter(r=>r.t==='del').length, nIns=rows.filter(r=>r.t==='ins').length, nEq=rows.filter(r=>r.t==='eq').length;
+  // 같은 문장이 길게 이어지면 접는다(앞뒤 1문장만 남김)
+  const parts=[]; let run=[];
+  const flush=()=>{ if (!run.length) return; if (cmpFold && run.length>3){ parts.push(run[0]); parts.push({t:'fold', n:run.length-2, rows:run.slice(1,-1)}); parts.push(run[run.length-1]); } else parts.push(...run); run=[]; };
+  rows.forEach(r=>{ if (r.t==='eq') run.push(r); else { flush(); parts.push(r); } }); flush();
+  const rowHtml=r=>{ if (r.t==='fold') return `<div class="crow fold"><button class="btn small" data-unfold>같은 문장 ${fmtN(r.n)}개 펼치기</button></div>`;
+    return `<div class="crow ${r.t}"><div class="cl">${r.L}</div><div class="cr">${r.R}</div></div>`; };
+  main.innerHTML=`<div class="head"><div class="eyebrow"><span class="chip">버전 비교</span><span>${esc(c.title||'')}</span></div>
+    <h2>버전 비교 <span class="hbtns"><button class="btn small primary" id="cmpClose">비교 닫기</button></span></h2>
+    <div class="cmpbar"><label>왼쪽 <select class="verSel" id="cmpA">${opts(a)}</select></label><span class="arrow">↔</span><label>오른쪽 <select class="verSel" id="cmpB">${opts(b)}</select></label>
+      <span class="stats">${noText?'':`<span>같음 <b>${fmtN(nEq)}</b></span><span class="i">고침 <b>${fmtN(nMod)}</b></span><span class="d">빠짐 <b>${fmtN(nDel)}</b></span><span class="m">새로 <b>${fmtN(nIns)}</b></span>`}</span>
+      <span class="spacer"></span><button class="btn small" id="cmpFold">${cmpFold?'같은 문장 모두 펼치기':'같은 문장 접기'}</button></div>
+    <div class="hint">문장 단위로 맞춘 뒤 바뀐 문장은 낱말 단위로 <del>빠진 말</del>·<ins>들어온 말</ins>을 칠합니다. 통째로 새로 쓴 문장은 「빠짐」과 「새로」 행으로 갈립니다.${isPdf(c)?' PDF 는 글자 인식(OCR)한 글을 기준으로 비교합니다. 그림·배치는 「버전 고르기」로 각 버전을 열어 보세요.':''}</div></div>
+    <div class="cmp">${noText?`<p class="msg" style="padding:20px">두 버전 모두 글자 인식(OCR)이 되어 있어야 비교할 수 있습니다. 각 버전을 열어 「글자 인식(OCR)」을 돌린 뒤 저장해 주세요.</p>`:`<div class="chead"><div>${esc(versionLabel(c,a))}</div><div>${esc(versionLabel(c,b))}</div></div>${parts.map(rowHtml).join('')}`}</div>`;
+  $('#cmpClose').addEventListener('click', ()=>{ view.mode='case'; view.cmp=null; render(); });
+  $('#cmpA').addEventListener('change', e=>{ view.cmp.a=+e.target.value; render(); }); $('#cmpB').addEventListener('change', e=>{ view.cmp.b=+e.target.value; render(); });
+  $('#cmpFold').addEventListener('click', ()=>{ cmpFold=!cmpFold; render(); });
+  main.querySelectorAll('[data-unfold]').forEach(bt=>bt.addEventListener('click', ()=>{ const idx=[...main.querySelectorAll('.crow.fold')].indexOf(bt.closest('.crow')); const fold=parts.filter(x=>x.t==='fold')[idx]; if (!fold) return; bt.closest('.crow').outerHTML=fold.rows.map(rowHtml).join(''); }));
 }
 // ══════════════ 직전 버전 메모: 흐리게 겹쳐 보이고, 「이월」로만 현재 버전에 들어온다 ══════════════
 const normT = t => String(t||'').replace(/\s+/g,'');
