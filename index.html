@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T16:00:21+09:00">
+<meta name="build" content="2026-09-20T16:05:44+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -3182,7 +3182,7 @@ function pinApply(el, o){ if (!el._pinSaved) el._pinSaved={}; if (!el._pinLast) 
     if (!(k in el._pinSaved)) el._pinSaved[k]=[el.style.getPropertyValue(k), el.style.getPropertyPriority(k)];
     el.style.setProperty(k, o[k], 'important'); el._pinLast[k]=o[k]; } }
 function pinRestore(el){ if (el) el._pinLast=null; const sv=el && el._pinSaved; if (!sv) return; for (const k in sv){ const [v,pr]=sv[k]; if (v) el.style.setProperty(k, v, pr); else el.style.removeProperty(k); } el._pinSaved=null; }
-let selGuard={r:null, len:0, busy:false};
+let selGuard={len:0, bad:false};
 // 손잡이를 끌 때 선택이 갑자기 문서 처음·끝까지 튀면 직전의 멀쩡한 선택으로 되돌린다.
 // PDF 글자층은 줄마다 떨어진 절대위치 조각이라 브라우저가 빈 곳에서 고를 자리를 못 찾고 크게 건너뛴다.
 function inTextSpan(n){
@@ -3192,32 +3192,16 @@ function inTextSpan(n){
   return !!sp.closest('.textLayer');
 }
 function guardSel(){
-  if (selGuard.busy) return false;
   const sl=window.getSelection();
-  if (!sl || !sl.rangeCount || sl.isCollapsed){ selGuard.r=null; selGuard.len=0; return false; }
+  if (!sl || !sl.rangeCount || sl.isCollapsed){ selGuard.bad=false; selGuard.len=0; return false; }
   const r=sl.getRangeAt(0); const a=r.commonAncestorContainer; const el=(a.nodeType===1?a:a.parentElement);
   const tl=el && el.closest ? el.closest('.textLayer') : null;
-  if (!tl){ selGuard.r=null; selGuard.len=0; return false; }
+  if (!tl){ selGuard.bad=false; selGuard.len=0; return false; }   // PDF 글자층 밖(텍스트·Word)은 상관없다
   const len=String(sl).length;
   const outside = !inTextSpan(sl.anchorNode) || !inTextSpan(sl.focusNode);
-  if (outside){
-    if (selGuard.r){
-      selGuard.busy=true;
-      try { sl.removeAllRanges(); sl.addRange(selGuard.r); } catch(e){}
-      setTimeout(()=>{ selGuard.busy=false; }, 0);
-      selDiag('글자 밖이라 되돌림 ('+len+'자)');
-      return true;
-    }
-    return false;
-  }
-  if (selGuard.r && selGuard.len>0 && len>=selGuard.len*5 && len-selGuard.len>200){
-    selGuard.busy=true;
-    try { sl.removeAllRanges(); sl.addRange(selGuard.r); } catch(e){}
-    setTimeout(()=>{ selGuard.busy=false; }, 0);
-    selDiag('한 번에 너무 뛰어 되돌림 '+selGuard.len+'자 → '+len+'자');
-    return true;
-  }
-  try { selGuard.r=r.cloneRange(); } catch(e){ selGuard.r=null; }
+  const jumped = selGuard.len>0 && len>=selGuard.len*5 && len-selGuard.len>200;
+  selGuard.bad = outside || jumped;   // 손잡이가 글자 밖으로 나갔거나 한 번에 너무 뛴 선택
+  if (selGuard.bad) selDiag(outside ? '글자 밖 ('+len+'자) — 막대 안 띄움' : '한 번에 너무 뜀 '+selGuard.len+'→'+len+'자');
   selGuard.len=len; return false;
 }
 // ── 진단 모드: 주소 끝에 ?seldiag 를 붙이면 고를 때마다 어디가 잡혔는지 화면 아래에 적는다 ──
@@ -3301,6 +3285,7 @@ if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFra
     if (!isMob()) return; clearTimeout(selT); selT=setTimeout(function fire(){
     if (fingerDown && Date.now()-fingerAt < 4000){ clearTimeout(selT); selT=setTimeout(fire, 200); return; }   // 손가락이 닿아 있는 동안(손잡이 조작 중)에는 기다린다. 뗀 신호가 유실돼도 4초면 푼다
     const sel=window.getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+    if (selGuard.bad) return;   // 손잡이가 글자 밖으로 튄 선택 — 그대로 메모를 만들면 쪽 전체가 잡힌다
     const cont=$('#doc'); if (!cont || !editable()) return; const r=sel.getRangeAt(0); if (!cont.contains(r.commonAncestorContainer)) return;
     cont.dispatchEvent(new MouseEvent('mouseup', {bubbles:true, cancelable:true}));
     setTimeout(pinOverlays, 250);   // 고르기가 멎으면 상단 바를 제자리로(고르는 중 판정 600ms 를 막 넘긴 뒤)
