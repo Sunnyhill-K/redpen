@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T14:26:32+09:00">
+<meta name="build" content="2026-09-20T14:32:20+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -1360,7 +1360,7 @@ function ensureNpop(){
   const el=document.createElement('div'); el.className='npop';
   el.innerHTML=`<div class="npop-head"><span class="npop-title"></span><span class="spacer"></span><button class="npop-nav" data-d="-1" aria-label="이전 메모" title="이전 메모">↑</button><button class="npop-nav" data-d="1" aria-label="다음 메모" title="다음 메모">↓</button><button class="npop-x" aria-label="닫기" title="닫기">✕</button></div><div class="npop-body"></div>`;
   el.querySelector('.npop-x').addEventListener('click', ()=>closeNotePop());
-  el.querySelectorAll('.npop-nav').forEach(b=>b.addEventListener('click', e=>{ e.preventDefault(); const nh=(+npop.h)+(+b.dataset.d); if (nh>=1 && document.getElementById('note'+nh)) mountNotePop(nh); }));
+  el.querySelectorAll('.npop-nav').forEach(b=>b.addEventListener('click', e=>{ e.preventDefault(); const nh=(+npop.h)+(+b.dataset.d); if (nh>=1 && document.getElementById('note'+nh)){ mountNotePop(nh); ensureHunkVisible(nh); } }));   // 이웃 메모로 가면 그 구절이 보이게 화면도 따라간다
   el.addEventListener('focusin', e=>{ if (e.target.matches('textarea, input, [contenteditable="true"], .md')){ el.classList.add('kb'); pinOverlays(); } });   // 글 입력칸에 커서가 들어올 때만(키보드) 위쪽에 붙인다 — 단추 포커스에 튀면 손을 뗄 때 단추가 그 자리에 없다
   el.addEventListener('focusout', ()=>setTimeout(()=>{ if (!el.contains(document.activeElement)){ el.classList.remove('kb'); pinOverlays(); } }, 120));
   window.addEventListener('popstate', ()=>{ if (npop.h!=null) closeNotePop(true); });          // 안드로이드 뒤로 가기 = 닫기
@@ -1385,7 +1385,15 @@ function mountNotePop(h){
   placeNpop(h); el.classList.add('open'); npop.back.classList.add('open'); document.body.classList.add('npop-open'); hot(h,true); pinOverlays();
   const t=n.querySelector('textarea:not([hidden]), .md[contenteditable]'); if (t){ t.focus({preventScroll:true}); if (t.isContentEditable){ const r=document.createRange(); r.selectNodeContents(t); r.collapse(false); const sl=getSelection(); sl.removeAllRanges(); sl.addRange(r); } }
 }
-function openNotePop(h){ h=+h; if (!document.getElementById('note'+h)) return; const first=npop.h==null; mountNotePop(h); if (first){ try { history.pushState({npop:1}, ''); } catch(e){} } }
+function ensureHunkVisible(h){
+  const t=document.querySelector(`#doc .hunk[data-h="${h}"]:not(.t-ghost), .page .hunk[data-h="${h}"]:not(.ghost)`); if (!t || !npop.el) return;
+  const vv=window.visualViewport; const vt=vv?vv.offsetTop:0, vb=vt+(vv?vv.height:window.innerHeight);
+  const r=t.getBoundingClientRect(); const pr=npop.el.getBoundingClientRect();
+  const hidden = r.bottom < vt+8 || r.top > vb-8 || (pr.height>0 && r.bottom > pr.top && r.top < pr.bottom);   // 창 밖이거나 팝오버 밑
+  if (!hidden) return;
+  t.scrollIntoView({block:'center', inline:'nearest'}); placeNpop(h); pinOverlays();
+}
+function openNotePop(h){ h=+h; if (!document.getElementById('note'+h)) return; const first=npop.h==null; mountNotePop(h); ensureHunkVisible(h); if (first){ try { history.pushState({npop:1}, ''); } catch(e){} } }
 function closeNotePop(fromPop){
   if (npop.h==null) return; const h=npop.h; unmountNote(); npop.h=null; hot(h,false);
   npop.el.classList.remove('open','kb'); npop.back.classList.remove('open'); document.body.classList.remove('npop-open'); pinRestore(npop.el); pinRestore(npop.back);
