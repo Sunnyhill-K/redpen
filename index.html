@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T13:51:06+09:00">
+<meta name="build" content="2026-09-20T14:05:29+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -1355,9 +1355,9 @@ function ensureNpop(){
   el.innerHTML=`<div class="npop-head"><span class="npop-title"></span><span class="spacer"></span><button class="npop-nav" data-d="-1" aria-label="이전 메모" title="이전 메모">↑</button><button class="npop-nav" data-d="1" aria-label="다음 메모" title="다음 메모">↓</button><button class="npop-x" aria-label="닫기" title="닫기">✕</button></div><div class="npop-body"></div>`;
   el.querySelector('.npop-x').addEventListener('click', ()=>closeNotePop());
   el.querySelectorAll('.npop-nav').forEach(b=>b.addEventListener('click', ()=>{ const nh=npop.h+(+b.dataset.d); if (document.getElementById('note'+nh)) mountNotePop(nh); }));
-  el.addEventListener('focusin', e=>{ if (e.target.matches('textarea, input, [contenteditable="true"], .md')) el.classList.add('kb'); });   // 글 입력칸에 커서가 들어올 때만(키보드) 위쪽에 붙인다 — 단추 포커스에 튀면 손을 뗄 때 단추가 그 자리에 없다
+  el.addEventListener('focusin', e=>{ if (e.target.matches('textarea, input, [contenteditable="true"], .md')){ el.classList.add('kb'); pinOverlays(); } });   // 글 입력칸에 커서가 들어올 때만(키보드) 위쪽에 붙인다 — 단추 포커스에 튀면 손을 뗄 때 단추가 그 자리에 없다
   el.querySelectorAll('.npop-head button').forEach(b=>b.addEventListener('pointerdown', e=>e.preventDefault()));
-  el.addEventListener('focusout', ()=>setTimeout(()=>{ if (!el.contains(document.activeElement)) el.classList.remove('kb'); }, 120));
+  el.addEventListener('focusout', ()=>setTimeout(()=>{ if (!el.contains(document.activeElement)){ el.classList.remove('kb'); pinOverlays(); } }, 120));
   window.addEventListener('popstate', ()=>{ if (npop.h!=null) closeNotePop(true); });          // 안드로이드 뒤로 가기 = 닫기
   document.body.append(back, el); npop.el=el; npop.back=back; return el;
 }
@@ -1377,13 +1377,13 @@ function mountNotePop(h){
   el.querySelector('.npop-body').replaceChildren(n);
   const c=view.draft||cases.find(x=>x.id===view.id); el.querySelector('.npop-title').textContent=`메모 ${h} / ${c?fmtN(c.marks.length):'?'}`;
   el.querySelector('.npop-nav[data-d="-1"]').disabled=!document.getElementById('note'+(h-1)); el.querySelector('.npop-nav[data-d="1"]').disabled=!document.getElementById('note'+(h+1));
-  placeNpop(h); el.classList.add('open'); npop.back.classList.add('open'); document.body.classList.add('npop-open'); hot(h,true);
+  placeNpop(h); el.classList.add('open'); npop.back.classList.add('open'); document.body.classList.add('npop-open'); hot(h,true); pinOverlays();
   const t=n.querySelector('textarea:not([hidden]), .md[contenteditable]'); if (t){ t.focus({preventScroll:true}); if (t.isContentEditable){ const r=document.createRange(); r.selectNodeContents(t); r.collapse(false); const sl=getSelection(); sl.removeAllRanges(); sl.addRange(r); } }
 }
 function openNotePop(h){ h=+h; if (!document.getElementById('note'+h)) return; const first=npop.h==null; mountNotePop(h); if (first){ try { history.pushState({npop:1}, ''); } catch(e){} } }
 function closeNotePop(fromPop){
   if (npop.h==null) return; const h=npop.h; unmountNote(); npop.h=null; hot(h,false);
-  npop.el.classList.remove('open','kb'); npop.back.classList.remove('open'); document.body.classList.remove('npop-open');
+  npop.el.classList.remove('open','kb'); npop.back.classList.remove('open'); document.body.classList.remove('npop-open'); pinRestore(npop.el); pinRestore(npop.back);
   if (!fromPop && history.state && history.state.npop){ try { history.back(); } catch(e){} }
 }
 function focusHunk(h){
@@ -3152,6 +3152,27 @@ function showLinkMenu(x, y, items){
 // ── 폰에서 접은 단추들을 ⋯ 메뉴로 (숨긴 단추를 그대로 눌러 주므로 기능이 두 벌이 되지 않는다) ──
 function isMob(){ return window.matchMedia('(max-width:760px)').matches; }   // innerWidth 는 아이폰 핀치 줌에 줄어든다 → 미디어쿼리(레이아웃 폭)로
 // ── 폰: 손가락으로 글자를 고르면(선택이 멎고 0.45초) 기존 선택 처리(mouseup)를 그대로 부른다 → 삭제/바꾸기/메모 막대가 아래에 뜬다 ──
+// ── 핀치 줌은 레이아웃 전체를 키우므로 화면에 고정한 막대·팝오버·메뉴도 같이 커져 밀려난다 → 떠 있는 UI 는 보이는 창(visualViewport)에 맞춰 다시 놓고 1/배율로 되돌린다(본문만 커진 것처럼 보이게) ──
+function pinApply(el, o){ if (!el._pinSaved) el._pinSaved={}; for (const k in o){ if (!(k in el._pinSaved)) el._pinSaved[k]=[el.style.getPropertyValue(k), el.style.getPropertyPriority(k)]; el.style.setProperty(k, o[k], 'important'); } }
+function pinRestore(el){ const sv=el && el._pinSaved; if (!sv) return; for (const k in sv){ const [v,pr]=sv[k]; if (v) el.style.setProperty(k, v, pr); else el.style.removeProperty(k); } el._pinSaved=null; }
+function pinOverlays(){
+  const vv=window.visualViewport; if (!vv) return; const s=vv.scale||1, on=s>1.02, k=1/s;
+  const lw=document.documentElement.clientWidth, L=vv.offsetLeft, T=vv.offsetTop, W=vv.width, H=vv.height;
+  document.querySelectorAll('.pop').forEach(el=>{ if (getComputedStyle(el).position!=='fixed') return; if (!on){ pinRestore(el); return; }   // 선택 막대: 보이는 창 아래
+    pinApply(el, {transform:`scale(${k})`, 'transform-origin':'left top', left:L+'px', right:'auto', bottom:'auto', width:lw+'px'}); pinApply(el, {top:(T+H-el.offsetHeight*k)+'px'}); });
+  const np=document.querySelector('.npop.open');                                                                                    // 메모 팝오버: 키보드면 위, 아니면 아래
+  if (np){ if (!on){ if (np._pinSaved){ pinRestore(np); if (npop.h!=null) placeNpop(npop.h); } }
+    else { const kb=np.classList.contains('kb'); pinApply(np, {'max-height':Math.round(H*s*(kb?0.46:0.55))+'px', transform:`scale(${k})`, 'transform-origin':'left top', left:(L+8*k)+'px', right:'auto', width:(lw-16)+'px', bottom:'auto'}); pinApply(np, {top:(kb ? T+8*k : T+H-(np.offsetHeight+8)*k)+'px'}); } }
+  const bk=document.querySelector('.npop-back.open'); if (bk){ if (!on) pinRestore(bk); else pinApply(bk, {left:L+'px', top:T+'px', width:W+'px', height:H+'px', right:'auto', bottom:'auto'}); }
+  document.querySelectorAll('.imenu').forEach(el=>{ if (!on){ pinRestore(el); return; } pinApply(el, {transform:`scale(${k})`, 'transform-origin':'left top'});   // ⋯ 메뉴: 줄이고 보이는 창 안으로
+    const r=el.getBoundingClientRect(); let x=r.left, y=r.top; if (x+r.width>L+W-4) x=L+W-4-r.width; if (y+r.height>T+H-4) y=T+H-4-r.height; x=Math.max(L+4,x); y=Math.max(T+4,y); pinApply(el, {left:x+'px', top:y+'px'}); });
+  const ts=$('#toast'); if (ts){ if (!on) pinRestore(ts); else { pinApply(ts, {transform:`scale(${k}) translateX(-50%)`, 'transform-origin':'left top', left:(L+W/2)+'px', bottom:'auto'}); pinApply(ts, {top:(T+H-(22+ts.offsetHeight)*k)+'px'}); } }
+  const rail=$('.rail'); if (rail){ const overlay = isMob() && document.body.classList.contains('inDoc') && !$('.shell').classList.contains('nrail');   // 목록 덮개
+    if (!on || !overlay) pinRestore(rail); else pinApply(rail, {transform:`scale(${k})`, 'transform-origin':'left top', left:L+'px', top:T+'px', width:lw+'px', height:Math.round(H*s)+'px', right:'auto', bottom:'auto'}); }
+}
+if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFrame(pinT); pinT=requestAnimationFrame(pinOverlays); };
+  window.visualViewport.addEventListener('resize', pinReq); window.visualViewport.addEventListener('scroll', pinReq); window.addEventListener('scroll', pinReq, {passive:true});
+  new MutationObserver(pinReq).observe(document.body, {childList:true}); }   // 막대·메뉴가 새로 붙으면 바로
 { // 폰: 표시된 구절을 탭해도 메모가 열린다. 선택을 지우려고 누른 탭(막대가 떠 있거나 선택이 있던 때)은 열지 않는다
   let hadSel=false;
   document.addEventListener('pointerdown', ()=>{ const sl=window.getSelection(); hadSel=!!document.querySelector('.pop') || !!(sl && !sl.isCollapsed); }, true);
@@ -3216,7 +3237,7 @@ const Prog=(()=>{ let el=null, showT=null, on=false;
     set(frac,label){ if (!on) this.start(label); paint(frac,label); },
     done(){ on=false; clearTimeout(showT); if (el){ paint(1); setTimeout(()=>{ if (!on) el.classList.remove('show'); }, 350); } }
   }; })();
-function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'), 2200); }
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('show'); pinOverlays(); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'), 2200); }
 async function copyText(t, ok){
   try { await navigator.clipboard.writeText(t); toast(ok); }
   catch(e){ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); toast(ok);}catch(_){ toast('복사가 막혀 있습니다. 직접 선택해 복사해 주세요.'); } ta.remove(); }
@@ -3227,7 +3248,7 @@ $('#btnReload').addEventListener('click', async ()=>{ if (!(await leaveOk())) re
 function syncTopActs(){ const u=$('#tUndo'), r=$('#tRedo'), sv=$('#tSave'); if (!u) return; const ub=$('#undoBtn'), rb=$('#redoBtn'), sb=$('#saveCase'); u.disabled=!(ub && !ub.disabled); r.disabled=!(rb && !rb.disabled); sv.disabled=!(sb && !sb.disabled);
   const tl=$('#tList'), sh=$('.shell'); if (tl && sh) tl.classList.toggle('on', !sh.classList.contains('nrail')); }
 // 폰의 [목록]: 문서 위에 목록을 덮어 보인다(문서를 고르면 접힌다). 접힌 목록의 「펼치기」 띠는 폰에서 없앤다
-{ const tl=$('#tList'); if (tl) tl.addEventListener('click', ()=>{ const sh=$('.shell'); if (!sh) return; if (npop.h!=null) closeNotePop(); sh.classList.toggle('nrail'); try { syncFold(); } catch(e){} syncTopActs(); }); }
+{ const tl=$('#tList'); if (tl) tl.addEventListener('click', ()=>{ const sh=$('.shell'); if (!sh) return; if (npop.h!=null) closeNotePop(); sh.classList.toggle('nrail'); try { syncFold(); } catch(e){} syncTopActs(); pinOverlays(); }); }
 [['#tUndo','#undoBtn'],['#tRedo','#redoBtn'],['#tSave','#saveCase']].forEach(([a,b])=>{ const el=$(a); if (el) el.addEventListener('click', ()=>{ const t=$(b); if (t && !t.disabled) t.click(); }); });
 $('#topMore').addEventListener('click', ()=>{ const who=$('#whoami'); openFold($('#topMore'), $('.top'), ['btnList','btnReload','btnTheme','uiMinus','uiReset','uiPlus','btnUsers','btnPw','btnHelp','btnLock'], (who&&who.textContent.trim())||''); });
 $('#btnHelp').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'help',id:null,draft:null,dirty:false,show:'side'}; location.hash='help'; render(); });
