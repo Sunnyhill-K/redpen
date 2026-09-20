@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T14:45:29+09:00">
+<meta name="build" content="2026-09-20T14:52:40+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -1393,7 +1393,7 @@ function ensureHunkVisible(h){
   if (!hidden) return;
   t.scrollIntoView({block:'center', inline:'nearest'}); placeNpop(h); pinOverlays();
 }
-function openNotePop(h){ h=+h; if (!document.getElementById('note'+h)) return; const first=npop.h==null; mountNotePop(h); ensureHunkVisible(h);
+function openNotePop(h){ h=+h; if (!document.getElementById('note'+h)) return; const first=npop.h==null; mountNotePop(h);   // 열 때는 화면을 안 움직인다(탭한 자리는 이미 보인다) — 따라가기는 ↑↓ 때만
   if (first){ try { npop.sr=history.scrollRestoration||'auto'; history.scrollRestoration='manual'; } catch(e){}   // 닫을 때 뒤로 가기가 열었던 자리로 되돌리지 않게
     try { history.pushState({npop:1}, ''); } catch(e){} } }
 function closeNotePop(fromPop){
@@ -3202,6 +3202,7 @@ if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFra
   document.addEventListener('pointerdown', ()=>{ const sl=window.getSelection(); hadSel=!!document.querySelector('.pop') || !!(sl && !sl.isCollapsed); }, true);
   document.addEventListener('click', e=>{
     if (!isMob() || hadSel) return; const doc=$('#doc'); if (!doc || !e.target.closest || !doc.contains(e.target)) return;
+    const sl0=window.getSelection(); if (sl0 && !sl0.isCollapsed) return;   // 고른 글이 아직 살아 있으면(끄는 중) 열지 않는다
     if (e.target.closest('.mk, .pop, a, button, input, textarea')) return;
     const hk=e.target.closest('#doc .hunk[data-h]:not(.t-ghost):not(.ghost)'); if (hk){ const n=+hk.dataset.h; if (n) focusHunk(n); return; }
     const pageEl=e.target.closest('.page'); if (!pageEl) return;                       // PDF: 탭 좌표가 어느 표시 상자 안인지
