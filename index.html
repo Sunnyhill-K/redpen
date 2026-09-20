@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T10:20:13+09:00">
+<meta name="build" content="2026-09-20T10:27:22+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -125,7 +125,10 @@ a{color:var(--ins)}
 .mk.ghost,.marks .mk.ghost{color:var(--ink-3)!important;border-color:var(--ink-3)!important;border-style:dashed!important;background:var(--paper)!important;opacity:.85} .mk.ghost.static{position:static;transform:none;display:inline-block;font-family:var(--mono);font-size:11px;border:1px dashed var(--ink-3);border-radius:8px;padding:2px 5px;color:var(--ink-3)}
 .mbox.ghost{background:transparent!important;border:1.5px dashed rgba(120,120,120,.7);border-radius:2px;box-sizing:border-box}
 .hide-marks .txtdoc .t-ghost{background:none} .hide-marks .mk.ghost{display:none!important}
-.ghostbox{max-width:1120px;margin:22px auto 0;border-top:1px dashed var(--rule);padding-top:12px;opacity:.82} .ghostbox:hover{opacity:1} .ghostbox .ghead{display:flex;align-items:center;gap:8px;flex-wrap:wrap} .ghostbox h3{font-family:var(--serif);font-size:calc(15px * var(--ui,1));margin:0;color:var(--ink-2)} .ghostbox>.msg{margin:4px 0 10px}
+.note.ghost{border-left:2px dashed var(--ink-3);opacity:.72;background:transparent} .note.ghost:hover,.note.ghost.hot{opacity:1} .note.ghost .n{color:var(--ink-3)} .note.ghost .gt{font-family:var(--serif);color:var(--ink-2);font-size:calc(13.5px * var(--ui,1));line-height:1.45} .note.ghost.del .gt,.note.ghost.rep .gt{text-decoration:line-through} .note.ghost .gt .after{text-decoration:none;color:var(--ins)} .note.ghost .txt{color:var(--ink-2)}
+.note.ghost .carry{border:1px solid var(--ins);color:var(--ins);background:transparent;border-radius:3px;padding:0 7px;font-size:calc(11px * var(--ui,1));font-family:var(--sans);cursor:pointer;font-weight:600} .note.ghost .carry:hover{background:var(--ins);color:#fff}
+.notes-title{white-space:nowrap;display:flex;gap:6px;align-items:center} .notes-title .gsum{text-transform:none;letter-spacing:0;color:var(--ink-2)} .notes-title .dim{color:var(--ink-3);font-weight:400} .notes-title .tb{border:1px solid var(--rule);background:transparent;color:var(--ink-2);border-radius:3px;padding:0 6px;font-size:calc(10.5px * var(--ui,1));cursor:pointer;text-transform:none;letter-spacing:0;font-family:var(--sans)} .notes-title .tb:hover{border-color:var(--ink-3);color:var(--ink)}
+.ghostbox{display:none} .ghostbox:hover{opacity:1} .ghostbox .ghead{display:flex;align-items:center;gap:8px;flex-wrap:wrap} .ghostbox h3{font-family:var(--serif);font-size:calc(15px * var(--ui,1));margin:0;color:var(--ink-2)} .ghostbox>.msg{margin:4px 0 10px}
 .glist{display:grid;gap:8px} .gitem{border-left:2px dashed var(--ink-3);padding:4px 10px;background:var(--paper-2);border-radius:0 4px 4px 0;font-size:calc(13.5px * var(--ui,1))} .gitem.hot{outline:2px solid var(--ins-line)} .gitem .gh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:3px} .gitem .who{font-size:calc(11px * var(--ui,1));color:var(--nc);border:1px solid var(--nc);border-radius:3px;padding:0 5px} .gitem .gt{color:var(--ink-2);font-family:var(--serif)} .gitem.del .gt,.gitem.rep .gt{text-decoration:line-through} .gitem .gt .after{text-decoration:none;color:var(--ins)} .gitem .gr{white-space:pre-wrap;line-height:1.5;margin-top:2px} .chip.hint{background:var(--rep-bg);color:var(--rep)} .chip.hint.ok{background:var(--memo-bg);color:var(--memo)}
 .cmpbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:6px 0 8px;font-size:calc(13px * var(--ui,1))} .cmpbar .arrow{color:var(--ink-3)} .cmpbar .stats{display:flex;gap:10px}
 .cmp{max-width:1120px;margin:14px auto 40px;background:#fff;color:#1F2430;box-shadow:0 1px 3px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);font-family:var(--serif);font-size:calc(15.5px * var(--z,1));line-height:1.8}
@@ -1158,11 +1161,10 @@ function layoutNotes(){
   const stacked = window.innerWidth <= 760;
   if (stacked){ notes.style.height=''; notes.querySelectorAll('.note').forEach(n=>n.style.top=''); return; }
   const base = notes.getBoundingClientRect().top; let bottom = notes.closest('.pdf') || notes.closest('.three') ? 26 : 0;
-  notes.querySelectorAll('.note').forEach(n=>{
-    const h = n.dataset.h; const target = doc.querySelector(`.hunk[data-h="${h}"]`);
-    let top = target ? target.getBoundingClientRect().top - base - 2 : bottom;
-    top = Math.max(top, bottom); n.style.top = top+'px'; bottom = top + n.offsetHeight + 10;
-  });
+  const items=[...notes.querySelectorAll('.note')].map((n,i)=>{ const h=n.dataset.h; const target=doc.querySelector(`.hunk[data-h="${h}"]`); const isG=n.classList.contains('ghost'); if (isG && !ghostsOn){ n.style.display='none'; return null; } n.style.display=''; return {n, i, want: target ? target.getBoundingClientRect().top - base - 2 : null}; }).filter(Boolean);
+  // 문서 위 자리 순으로 놓되(현재 메모와 직전 버전 메모가 섞여도 위치대로), 자리 없는 것은 맨 아래
+  items.sort((a,b)=>{ if (a.want==null && b.want==null) return a.i-b.i; if (a.want==null) return 1; if (b.want==null) return -1; return (a.want-b.want) || (a.i-b.i); });
+  items.forEach(({n, want})=>{ let top = want!=null ? want : bottom; top = Math.max(top, bottom); n.style.top = top+'px'; bottom = top + n.offsetHeight + 10; });
   notes.style.height = Math.max(bottom, 0)+'px';
 }
 function focusHunk(h){
@@ -1414,7 +1416,7 @@ async function ocrDoc(c, btn){
     c.ocr=out; c.ocrAt=new Date().toISOString(); view.dirty=true;
     // 이미 그려진 쪽의 글자층을 OCR 층으로 바꿔 끼운다
     document.querySelectorAll('.page').forEach(el=>{ const p=+el.dataset.p; const tl=el.querySelector('.textLayer'); if (tl && out[p]){ const vw=el.getBoundingClientRect().width; tl.innerHTML=''; buildOcrLayer(tl, out[p], {width:vw, height:el.getBoundingClientRect().height}); } });
-    toast(`글자 인식 끝. 쪽별 줄 수 ${counts.join(', ')} · 저장(Ctrl+S)하면 다른 사람도 드래그할 수 있습니다`); computeGhosts(c); drawAllMarks(c); renderGhostBox(c);
+    toast(`글자 인식 끝. 쪽별 줄 수 ${counts.join(', ')} · 저장(Ctrl+S)하면 다른 사람도 드래그할 수 있습니다`); computeGhosts(c); drawAllMarks(c); renderPdfNotes(c);
     say('글자 다시 인식'); Prog.done();
   } catch(e){ Prog.done(); toast('글자 인식 실패: '+((e&&e.message)||e)); say('글자 인식(OCR)'); }
   finally { ocrBusy=false; if (btn) btn.disabled=false; }
@@ -1567,7 +1569,12 @@ document.addEventListener('keydown', e=>{
 function renderPdfNotes(c){
   const notes=$('#notes'); if (!notes) return;
   const canEdit = editable();
-  notes.innerHTML = `<div class="notes-title">교정 메모 ${fmtN(c.marks.length)}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
+  const pv=prevVersion(c); const gs=(!roVer && pv) ? (c._ghosts||computeGhosts(c)) : []; const gTotal=pv?(pv.marks||[]).length:0, gCarried=(c.carried||[]).length;
+  const ghostHead = (!roVer && pv) ? `<span class="gsum" title="직전 버전(${pv.n}버전)의 메모. 반영된 것은 두고 남은 것만 「이월」로 이 버전에 넣습니다">· ${pv.n}버전 메모 ${fmtN(gs.length)} <span class="dim">(이월 ${fmtN(gCarried)}/${fmtN(gTotal)})</span></span>${gs.length?`<button class="tb" id="ghostAll" title="남은 ${pv.n}버전 메모를 모두 이 버전으로">모두 이월</button>`:''}<button class="tb" id="ghostToggle" title="문서 위 점선 표시 ${ghostsOn?'숨기기':'보이기'}">${ghostsOn?'점선 숨김':'점선 표시'}</button>` : '';
+  const ghostNotes = gs.map(g=>{ const m=g.m; const col=userColor(m.by, m.byId); return `
+    <div class="note ghost ${m.kind}" data-h="g${g.h}" id="ghost${g.h}"><div class="n"><span class="mk ghost static">${g.h}ʹ</span><span class="chip kd ${m.kind}">${KIND[m.kind]}</span>${m.by?`<span class="who" style="--nc:${col||'var(--ink-3)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${g.lost?'<span class="chip lostc" title="이 버전에서 같은 구절을 못 찾았습니다. 이월하면 자리 없이 목록에 남습니다">자리 못 찾음</span>':''}<span class="chip hint ${/사라짐|있음$/.test(g.hint)&&!/남아/.test(g.hint)?'ok':''}">${esc(g.hint)}</span><span class="spacer"></span>${editable()?`<button class="carry" data-carry="${esc(m.mid)}" title="이 메모를 이 버전에 넣어 이어서 다룹니다">이월</button>`:''}</div>
+    <div class="gt">${esc(m.text||'')}${m.kind==='rep'?` <span class="after">→ ${esc(m.after||'')}</span>`:''}</div>${(m.reason||'').trim()?`<div class="txt">${md(m.reason||'', m.segs)}</div>`:''}</div>`; }).join('');
+  notes.innerHTML = `<div class="notes-title">교정 메모 ${fmtN(c.marks.length)}${ghostHead}</div>` + c.marks.map((m,i)=>{ const h=i+1; return `
     <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span class="nn" title="원문의 이 자리로">${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}${m.lost?'<span class="chip lostc" title="본문을 고치면서 이 구절이 사라져 표시할 자리가 없습니다. 글은 남아 있습니다.">자리 잃음</span>':''}${m.from?`<span class="chip ver" title="${m.from}버전의 ${m.fromNo||''}번 메모를 이월">${m.from}버전에서</span>`:''}<span class="k">${esc(m.text)}</span><span class="nv"><button class="nvb" data-d="-1" title="바로 위 메모 (Alt+↑)" tabindex="-1">↑</button><button class="nvb" data-d="1" title="바로 아래 메모 (Alt+↓)" tabindex="-1">↓</button></span>${canEdit?`<button class="x" title="표시 지우기" data-i="${i}">×</button>`:''}</div>
     ${m.kind==='rep' ? (canEdit ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : `<div class="txt after">${esc(m.after||'')}</div>`) : ''}
     ${canEdit ? mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', 'txt', m.segs) : `<div class="txt">${md(m.reason||'', m.segs)}</div>`}</div>`; }).join('');
@@ -1586,6 +1593,10 @@ function renderPdfNotes(c){
         const m=c.marks[+t.dataset.i]; if (m && t.dataset.f==='reason'){ m.segs=updSegs(m.segs, bef, cur, (me && m.by && !sameUser(m, me)) ? me.name : null, me ? me.id : ''); m.mt=Date.now(); }
         t.value=cur; collectMarks(c); if (f.isContentEditable) f.innerHTML=md(cur, m ? m.segs : null); const ub=$('#undoBtn'); if (ub) ub.disabled=false; } before=null; });
   });
+  notes.insertAdjacentHTML('beforeend', ghostNotes);
+  const gt=$('#ghostToggle'); if (gt) gt.addEventListener('click', ()=>{ ghostsOn=!ghostsOn; try { localStorage.setItem('redpen.ghosts', ghostsOn?'1':'0'); } catch(e){} drawAllMarks(c); renderPdfNotes(c); });
+  const ga=$('#ghostAll'); if (ga) ga.addEventListener('click', ()=>{ const n=gs.length; gs.slice().forEach(g=>carryGhost(c, g, true)); afterCarry(c, n); });
+  notes.querySelectorAll('[data-carry]').forEach(b=>b.addEventListener('click', ()=>{ const g=gs.find(x=>x.m.mid===b.dataset.carry); if (g){ carryGhost(c, g, true); afterCarry(c, 1); } }));
   bindNotes();
   requestAnimationFrame(()=>layoutNotes());
 }
@@ -1823,12 +1834,12 @@ function drawGhostsText(c, cont){
 }
 function drawGhostsPdf(c, p){
   const el=document.querySelector(`.page[data-p="${p}"] .marks`); if (!el) return; el.querySelectorAll('.ghost').forEach(x=>x.remove()); if (!ghostsOn) return;
-  (c._ghosts||[]).forEach(g=>{ if (g.lost || g.page!==p) return; g.rects.forEach((r,ri)=>{ const d=document.createElement('div'); d.className='mbox ghost'; d.style.left=(r[0]*100)+'%'; d.style.top=(r[1]*100)+'%'; d.style.width=(r[2]*100)+'%'; d.style.height=(r[3]*100)+'%'; el.appendChild(d);
+  (c._ghosts||[]).forEach(g=>{ if (g.lost || g.page!==p) return; g.rects.forEach((r,ri)=>{ const d=document.createElement('div'); d.className='mbox ghost'+(ri===0?' hunk':''); d.dataset.h='g'+g.h; d.style.left=(r[0]*100)+'%'; d.style.top=(r[1]*100)+'%'; d.style.width=(r[2]*100)+'%'; d.style.height=(r[3]*100)+'%'; el.appendChild(d);
     if (ri===0){ const k=document.createElement('span'); k.className='mk ghost'; k.dataset.h='g'+g.h; k.textContent=g.h+'ʹ'; k.style.left=((r[0]+r[2])*100)+'%'; k.style.top=(r[1]*100)+'%'; k.addEventListener('click', ()=>{ const e2=document.getElementById('ghost'+g.h); if (e2){ e2.scrollIntoView({block:'center', behavior:'smooth'}); e2.classList.add('hot'); setTimeout(()=>e2.classList.remove('hot'),1500); } }); el.appendChild(k); } }); });
 }
 // 화면 아래 「직전 버전 메모」 목록(흐림) + 이월
 function renderGhostBox(c){
-  const box=$('#ghostBox'); if (!box) return; const pv=prevVersion(c); const gs=c._ghosts||[];
+  const box=$('#ghostBox'); if (!box) return; box.hidden=true; box.innerHTML=''; return; const pv=prevVersion(c); const gs=c._ghosts||[];
   if (!pv || roVer){ box.hidden=true; box.innerHTML=''; return; }
   const total=(pv.marks||[]).length, carried=(c.carried||[]).length;
   box.hidden=false;
@@ -1849,7 +1860,7 @@ function carryGhost(c, g, silent){
   else { if (g.lost){ m.start=-1; m.end=-1; m.lost=true; } else { m.start=g.start; m.end=g.end; delete m.lost; } }
   c.marks=c.marks||[]; c.marks.push(m); c.carried=c.carried||[]; c.carried.push(g.m.mid);
 }
-function afterCarry(c, n){ pushHist(c, `직전 버전 메모 ${fmtN(n)}건 이월`); view.dirty=true; computeGhosts(c); drawAllMarks(c); refreshPdfHead(c); renderGhostBox(c); toast(`${fmtN(n)}건을 이 버전으로 옮겼습니다. 저장(Ctrl+S)하세요`); }
+function afterCarry(c, n){ pushHist(c, `직전 버전 메모 ${fmtN(n)}건 이월`); view.dirty=true; computeGhosts(c); drawAllMarks(c); refreshPdfHead(c); toast(`${fmtN(n)}건을 이 버전으로 옮겼습니다. 저장(Ctrl+S)하세요`); }
 function drawAllMarks(c){ if (!isPdf(c)){ if (!textRevMode && !pdfListMode) renderTextDoc(c); return; } document.querySelectorAll('.page').forEach(el=>{ drawMarks(c, +el.dataset.p); drawGhostsPdf(c, +el.dataset.p); }); }
 function bindSelection(cont, c0){
   let pop=null;
@@ -1983,7 +1994,7 @@ document.addEventListener('contextmenu', e=>{
 // ── 메모 이동: 화면 위쪽 선을 기준으로 위/아래에서 가장 가까운 표시로 ──
 let jumpCur=null;   // 마지막으로 다녀간 메모 번호(Alt+Q/X 한 칸씩 이동의 기준)
 function jumpMemo(dir){
-  const line=headLine()+6; const hunks=[...document.querySelectorAll('#doc .hunk[data-h]:not(.t-ghost), .page .hunk[data-h]')];
+  const line=headLine()+6; const hunks=[...document.querySelectorAll('#doc .hunk[data-h]:not(.t-ghost), .page .hunk[data-h]:not(.ghost)')];
   const seen=new Set(); const items=[]; hunks.forEach(el=>{ const h=el.dataset.h; if (seen.has(h)) return; seen.add(h); items.push({h, top:el.getBoundingClientRect().top}); });
   if (!items.length){ toast('메모가 없습니다'); return; }
   items.sort((a,b)=>a.top-b.top);   // 문서 위치 순(번호 순이 아니라 글 순서)
