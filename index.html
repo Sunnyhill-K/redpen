@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T11:12:24+09:00">
+<meta name="build" content="2026-09-20T11:43:05+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -67,7 +67,7 @@ a{color:var(--ins)}
 .btn.primary:hover{opacity:.9}
 .btn.danger{color:var(--del);border-color:var(--del-line)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
-.btn.small{padding:3px 8px;font-size:calc(12px * var(--ui,1))}
+.btn.small{padding:3px 8px;font-size:calc(12px * var(--ui,1))} .mobonly{display:none}
 
 /* ── 본체 ── */
 .shell{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:calc(100vh - 50px)}
@@ -109,7 +109,7 @@ a{color:var(--ins)}
 .shell.nrail .railhead{padding:0;justify-content:center}
 .shell.nrail .railbtns{align-items:center}
 .selbar{padding:0 12px 8px;display:flex;gap:6px}
-.imenu{position:fixed;z-index:30;background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:0 6px 18px rgba(0,0,0,.18);display:flex;flex-direction:column;min-width:140px;padding:4px}
+.imenu{position:fixed;z-index:30;background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:0 6px 18px rgba(0,0,0,.18);display:flex;flex-direction:column;min-width:140px;padding:4px;max-height:min(70vh,520px);overflow-y:auto} .imenu .lab{padding:6px 10px 5px;color:var(--ink-3);font-size:calc(11.5px * var(--ui,1));font-family:var(--sans)} .imenu .lab+.lab{padding-top:0} .imenu .sep{border-top:1px solid var(--rule);margin:3px 0}
 .imenu button{border:0;background:transparent;text-align:left;padding:7px 10px;border-radius:3px;cursor:pointer;white-space:normal;line-height:1.4} .imenu{max-width:min(520px,92vw)}
 .imenu button:hover{background:var(--paper-2)}
 .imenu button.d{color:var(--del)}
@@ -458,6 +458,35 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   .doc{padding:16px 16px;font-size:calc(15.5px * var(--ui,1))}
   main{padding-inline:16px}
 }
+/* ── 폰(≤760px) ─ 1단계: 가로 스크롤 없애기 · 손가락 크기 · 상단/도구줄 접기 ── */
+@media (max-width:760px){
+  /* 가로로 비어져 나가던 것들: 1fr 은 내용보다 못 줄어든다 → minmax(0,1fr) */
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .sheet,.overall,.sheet.pdf{grid-template-columns:minmax(0,1fr)}
+  .railrow{flex-wrap:wrap}
+  main{padding-inline:12px}
+  .top{padding:8px 12px;gap:8px}
+  .txtdoc .tpage{padding:18px 16px}
+  .doc{padding:14px 12px}
+  .sheet{gap:14px}
+  /* 손가락 크기(44px 기준) · iOS 는 16px 미만 입력칸에서 화면을 확대한다 */
+  .top .btn,.head .tools .btn,.head .hbtns .btn{min-height:40px;padding:8px 12px}
+  .seg button,.pager button,.pager input{min-height:40px}
+  .fab{width:38px;height:38px}
+  .cases li{padding-block:13px}
+  input,textarea,select{font-size:16px}
+  /* 상단 바: 브랜드 · 새 퇴고 · ⋯ 만 남기고 접는다 */
+  .top #whoami,.top .zoom,.top #btnUsers,.top #btnPw,.top #btnLock,.top #btnHelp,.top #btnList,.top #btnReload,.top #btnTheme,#buildAt{display:none}
+  .top .mobonly,.tools .mobonly{display:inline-block}
+  /* 문서 도구줄: 보기 전환 · 쪽 이동 · 저장 · ⋯ 만 */
+  .head .tools > *{display:none}
+  .head .tools > .seg,.head .tools > .pager{display:inline-flex}
+  .head .tools > #saveCase,.head .tools > #docMore{display:inline-block}
+  .head .tools > .msg{display:inline}
+  .head .hbtns button{display:none}
+  .head .hint{display:none}
+  .head h2{font-size:calc(21px * var(--ui,1))}
+}
 </style>
 </head>
 <body>
@@ -472,7 +501,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   <button class="btn ico" id="btnList" title="홈" aria-label="홈"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" style="vertical-align:-3px"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M10 20v-6h4v6"/></svg></button>
   <button class="btn ico" id="btnReload" title="새로고침 (최신 판으로)" aria-label="새로고침">↻</button>
   <button class="btn ico" id="btnTheme" title="어둡게" aria-label="화면 밝기"></button>
-  <button class="btn primary" id="btnNew" title="새 문서를 넣거나 직접 씁니다 · Alt+N">새 퇴고(새 글 작성)</button>
+  <button class="btn ico mobonly" id="topMore" title="더 보기" aria-label="더 보기">⋯</button><button class="btn primary" id="btnNew" title="새 문서를 넣거나 직접 씁니다 · Alt+N">새 퇴고(새 글 작성)</button>
 </header>
 
 <div class="shell">
@@ -703,6 +732,7 @@ function headHtml(c, statsHtml, toolsHtml){
       <span class="zoom" title="Ctrl+휠로도 됩니다"><button id="zoomOut" aria-label="축소">−</button><button class="z" id="zoomReset" title="100%로">${Math.round((isPdf(c)?zoom.pdf:zoom.text)*100)}%</button><button id="zoomIn" aria-label="확대">+</button></span>
       <span class="spacer"></span>
       <button class="fab" id="fabTop" title="맨 위로" aria-label="맨 위로">↑</button><button class="fab" id="fabBottom" title="맨 아래로" aria-label="맨 아래로">↓</button>
+      <button class="btn small mobonly" id="docMore" title="더 보기" aria-label="더 보기">⋯</button>
       ${editable() && !isDraft ? `<button class="btn small danger" id="delCase">삭제</button>` : ''}
       ${editable() ? `<button class="btn small primary" id="saveCase" title="Ctrl+S">저장</button>` : ''}
       <span class="msg" id="saveMsg"></span>
@@ -1611,6 +1641,7 @@ function refreshPdfHead(c){
      ${(isPdf(c)&&canEdit)?`<button class="btn small ${areaMode?'on':''}" id="areaBtn" title="켜면 글자가 아닌 부분에서도 영역을 드래그하여 선택할 수 있습니다. 그림 부분은 켜지 않아도 그냥 끌면 됩니다 · Alt+A">${areaMode?'영역 선택 끝':'영역 선택'}</button>`:''}
      <button class="btn small" id="copyList">메모 복사</button><button class="btn small" id="exportBtn" title="문서와 표시·메모를 파일로 — HTML(메모 팝업, 인쇄로 PDF) 또는 주석 PDF">내보내기 ▾</button><button id="exportPdfBtn" hidden></button>${(isPdf(c)&&canEdit)?`<button class="btn small" id="ocrBtn" title="캡처본 PDF 처럼 글자층이 없는 문서의 글자를 인식해 드래그할 수 있게 합니다">${c.ocr?'글자 다시 인식':'글자 인식(OCR)'}</button>`:''}`)
     + `<div class="hint">원본 그대로${canEdit?' · 글자를 드래그하면 삭제·바꾸기·메모, 그림 부분은 네모로 끌면 영역 메모 (Alt+1/2/3)':''} · Ctrl+휠 확대·축소 · 메모 이동 Alt+↑/↓ (Alt+Q/X 도 됨)${isPdf(c)?' · 쪽 이동 Alt+W/S, 번호 Alt+G':''} · 메모 서식: 굵게 Ctrl+B · 기울임 Ctrl+I · 밑줄 Ctrl+U · 취소선 Ctrl+Shift+X</div>`;
+  { const dm=$('#docMore'); if (dm) dm.addEventListener('click', ()=>openFold(dm, head, null, '')); }
   $('#toggleMarks').addEventListener('click', ()=>{ document.body.classList.toggle('hide-marks'); refreshPdfHead(c); });
   $('#modeDoc').addEventListener('click', ()=>{ pdfListMode=false; textRevMode=false; refreshPdfHead(c); });
   $('#modeList').addEventListener('click', ()=>{ collectMarks(c); pdfListMode=true; textRevMode=false; refreshPdfHead(c); });
@@ -2066,6 +2097,8 @@ let fbwLast=-1;
 function fixBodyWidth(){
   // 몸통 폭을 지우지 않고, 문서 틀(sheet)의 실제 오른쪽 끝을 재서 필요한 폭을 정한다 → 값이 안 바뀌면 아무것도 건드리지 않는다
   const de=document.documentElement; const cw=de.clientWidth; de.style.setProperty('--vw', cw+'px');
+  // 폰에서는 몸통을 넓히지 않는다 — 넓히면 목록·상단까지 같이 늘어나 가로 스크롤이 눈덩이가 된다(확대는 손가락으로)
+  if (isMob()){ if (fbwLast!==0){ fbwLast=0; document.body.style.minWidth=''; document.body.classList.remove('zoomed-body'); } return; }
   const sheet=document.querySelector('.sheet'); let need=0;
   if (sheet){ const r=sheet.getBoundingClientRect(); need=Math.ceil(r.right + window.scrollX + 20); }
   const over = need > cw + 2;
@@ -2965,11 +2998,38 @@ async function boot(){
 function showLinkMenu(x, y, items){
   document.querySelectorAll('.imenu').forEach(m=>m.remove());
   const m=document.createElement('div'); m.className='imenu'; m.style.left=Math.min(x, window.innerWidth-160)+'px'; m.style.top=y+'px';
-  items.forEach(it=>{ const b=document.createElement('button'); b.textContent=it.l; b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); }); b.addEventListener('click', ()=>{ close(); it.f(); }); m.appendChild(b); });
+  items.forEach(it=>{
+    if (it.sep){ const d=document.createElement('div'); d.className='sep'; m.appendChild(d); return; }
+    if (!it.f){ const d=document.createElement('div'); d.className='lab'; d.textContent=it.l; m.appendChild(d); return; }
+    const b=document.createElement('button'); b.textContent=it.l; b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); }); b.addEventListener('click', ()=>{ close(); it.f(); }); m.appendChild(b); });
   const close=()=>{ m.remove(); document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
   const onDown=e=>{ if (!m.contains(e.target)) close(); }; const onKey=e=>{ if (e.key==='Escape') close(); };
-  setTimeout(()=>{ document.addEventListener('mousedown', onDown); document.addEventListener('keydown', onKey); }, 0);
+  setTimeout(()=>{ document.addEventListener('pointerdown', onDown); document.addEventListener('keydown', onKey); }, 0);
   document.body.appendChild(m);
+  const r=m.getBoundingClientRect();   // 화면 밖으로 나가면 안으로 끌어온다
+  if (r.bottom > innerHeight-8) m.style.top=Math.max(8, innerHeight-r.height-8)+'px';
+  if (r.right > innerWidth-8) m.style.left=Math.max(8, innerWidth-r.width-8)+'px';
+}
+
+// ── 폰에서 접은 단추들을 ⋯ 메뉴로 (숨긴 단추를 그대로 눌러 주므로 기능이 두 벌이 되지 않는다) ──
+const isMob = ()=>window.innerWidth<=760;
+const FOLD_LAB={uiMinus:'화면 글자 작게', uiReset:'화면 글자 크기 100%로', uiPlus:'화면 글자 크게', zoomOut:'문서 축소', zoomReset:'문서 배율 100%로', zoomIn:'문서 확대', btnList:'홈 (문서 목록)', btnReload:'새로고침', undoBtn:'되돌리기', redoBtn:'다시 실행', fabTop:'맨 위로', fabBottom:'맨 아래로'};
+function foldItems(scope, order){
+  const out=[];
+  scope.querySelectorAll('button').forEach(b=>{
+    if (b.classList.contains('mobonly') || b.hidden || b.offsetParent) return;   // 화면에 보이는 것·⋯ 자신은 뺀다
+    let l=FOLD_LAB[b.id] || (b.textContent||'').replace(/\s+/g,' ').trim() || b.getAttribute('aria-label') || b.title || '';
+    l=l.replace(/\s*▾$/,'').replace(/\s*\(.*?\)$/,''); if (!l) return;
+    out.push({id:b.id, l: b.disabled ? l+' — 지금은 못 씀' : l, f: b.disabled ? null : ()=>b.click()});
+  });
+  if (order) out.sort((a,b)=>{ const i=order.indexOf(a.id), j=order.indexOf(b.id); return (i<0?99:i)-(j<0?99:j); });
+  return out;
+}
+function openFold(btn, scope, order, head){
+  const r=btn.getBoundingClientRect(); const items=foldItems(scope, order);
+  if (head) items.unshift({l:head, f:null}, {sep:true});
+  if (items.length<=2){ toast('접힌 단추가 없습니다'); return; }
+  showLinkMenu(Math.max(8, r.right-220), r.bottom+4, items);
 }
 // ══════════════ 공통 ══════════════
 // 샌드박스 iframe에서는 브라우저 확인창이 열리지 않고 곧장 취소로 떨어지므로 자체 확인창을 쓴다
@@ -3002,6 +3062,7 @@ async function copyText(t, ok){
 }
 $('#btnList').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'list',id:null,draft:null,dirty:false,show:'side'}; location.hash=''; render(); });
 $('#btnReload').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; location.reload(); });
+$('#topMore').addEventListener('click', ()=>{ const who=$('#whoami'); openFold($('#topMore'), $('.top'), ['btnList','btnReload','btnTheme','uiMinus','uiReset','uiPlus','btnUsers','btnPw','btnHelp','btnLock'], (who&&who.textContent.trim())||''); });
 $('#btnHelp').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'help',id:null,draft:null,dirty:false,show:'side'}; location.hash='help'; render(); });
 $('#btnNew').addEventListener('click', async ()=>{ if (!(await leaveOk())) return; view={mode:'edit',id:null,draft:null,dirty:false,show:'side'}; render(); });
 const shell=$('.shell');
