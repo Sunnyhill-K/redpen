@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T15:17:16+09:00">
+<meta name="build" content="2026-09-20T15:24:49+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -282,7 +282,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .sheet.pdf .notes-title{position:static;margin-bottom:8px}
 .pages{display:flex;flex-direction:column;gap:18px;position:relative;overflow:auto;max-width:100%;background:var(--paper-3);padding:14px;border-radius:3px}
 .page{position:relative;width:100%;margin:0 auto;flex:none;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);overflow:hidden}
-.page{user-select:none;-webkit-user-select:none} .textLayer{user-select:text;-webkit-user-select:text}   /* 줄을 넘겨 골라도 쪽 그림은 안 껴들게 */
+.page canvas,.page .marks{user-select:none;-webkit-user-select:none}   /* 그림·표시층은 선택 하이라이트를 안 받는다. 쪽 전체를 막으면 손잡이가 문서 끝으로 튄다 */
 .page canvas{display:block;width:100%;height:auto}
 .page .pno{position:absolute;right:8px;bottom:6px;font-family:var(--mono);font-size:calc(10px * var(--ui,1));color:#8A909B;pointer-events:none;z-index:4}
 .textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;opacity:1;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;z-index:2}
@@ -3178,7 +3178,7 @@ function pinApply(el, o){ if (!el._pinSaved) el._pinSaved={}; if (!el._pinLast) 
     if (!(k in el._pinSaved)) el._pinSaved[k]=[el.style.getPropertyValue(k), el.style.getPropertyPriority(k)];
     el.style.setProperty(k, o[k], 'important'); el._pinLast[k]=o[k]; } }
 function pinRestore(el){ if (el) el._pinLast=null; const sv=el && el._pinSaved; if (!sv) return; for (const k in sv){ const [v,pr]=sv[k]; if (v) el.style.setProperty(k, v, pr); else el.style.removeProperty(k); } el._pinSaved=null; }
-let selBusy=0;   // 마지막으로 고른 글이 바뀐 시각
+let selBusy=0, fingerDown=false;   // 마지막으로 고른 글이 바뀐 시각 · 손가락이 화면에 닿아 있는지
 function pinOverlays(){
   const vv=window.visualViewport; if (!vv) return; const s=vv.scale||1, on=s>1.02, k=1/s;
   const picking = on && (Date.now()-selBusy < 600);   // 고르는 중
@@ -3205,7 +3205,8 @@ if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFra
   new MutationObserver(pinReq).observe(document.body, {childList:true}); }   // 막대·메뉴가 새로 붙으면 바로
 { // 폰: 표시된 구절을 탭해도 메모가 열린다. 선택을 지우려고 누른 탭(막대가 떠 있거나 선택이 있던 때)은 열지 않는다
   let hadSel=false;
-  document.addEventListener('pointerdown', ()=>{ const sl=window.getSelection(); hadSel=!!document.querySelector('.pop') || !!(sl && !sl.isCollapsed); }, true);
+  document.addEventListener('pointerdown', ()=>{ fingerDown=true; const sl=window.getSelection(); hadSel=!!document.querySelector('.pop') || !!(sl && !sl.isCollapsed); }, true);
+  ['pointerup','pointercancel'].forEach(t=>document.addEventListener(t, ()=>{ fingerDown=false; }, true));
   document.addEventListener('click', e=>{
     if (!isMob() || hadSel) return; const doc=$('#doc'); if (!doc || !e.target.closest || !doc.contains(e.target)) return;
     const sl0=window.getSelection(); if (sl0 && !sl0.isCollapsed) return;   // 고른 글이 아직 살아 있으면(끄는 중) 열지 않는다
@@ -3220,7 +3221,8 @@ if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFra
 }
 { // 등록은 늘 하고(헤드리스도 지나가게) 발동 때만 폰 폭인지 본다
   let selT=null;
-  document.addEventListener('selectionchange', ()=>{ selBusy=Date.now(); if (!isMob()) return; clearTimeout(selT); selT=setTimeout(()=>{
+  document.addEventListener('selectionchange', ()=>{ selBusy=Date.now(); if (!isMob()) return; clearTimeout(selT); selT=setTimeout(function fire(){
+    if (fingerDown){ clearTimeout(selT); selT=setTimeout(fire, 200); return; }   // 손가락이 닿아 있는 동안(손잡이 조작 중)에는 기다린다
     const sel=window.getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
     const cont=$('#doc'); if (!cont || !editable()) return; const r=sel.getRangeAt(0); if (!cont.contains(r.commonAncestorContainer)) return;
     cont.dispatchEvent(new MouseEvent('mouseup', {bubbles:true, cancelable:true}));
