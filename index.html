@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T14:32:20+09:00">
+<meta name="build" content="2026-09-20T14:45:29+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -1393,11 +1393,17 @@ function ensureHunkVisible(h){
   if (!hidden) return;
   t.scrollIntoView({block:'center', inline:'nearest'}); placeNpop(h); pinOverlays();
 }
-function openNotePop(h){ h=+h; if (!document.getElementById('note'+h)) return; const first=npop.h==null; mountNotePop(h); ensureHunkVisible(h); if (first){ try { history.pushState({npop:1}, ''); } catch(e){} } }
+function openNotePop(h){ h=+h; if (!document.getElementById('note'+h)) return; const first=npop.h==null; mountNotePop(h); ensureHunkVisible(h);
+  if (first){ try { npop.sr=history.scrollRestoration||'auto'; history.scrollRestoration='manual'; } catch(e){}   // 닫을 때 뒤로 가기가 열었던 자리로 되돌리지 않게
+    try { history.pushState({npop:1}, ''); } catch(e){} } }
 function closeNotePop(fromPop){
   if (npop.h==null) return; const h=npop.h; unmountNote(); npop.h=null; hot(h,false);
   npop.el.classList.remove('open','kb'); npop.back.classList.remove('open'); document.body.classList.remove('npop-open'); pinRestore(npop.el); pinRestore(npop.back);
-  if (!fromPop && history.state && history.state.npop){ try { history.back(); } catch(e){} }
+  const back = !fromPop && history.state && history.state.npop;
+  const x=window.scrollX, y=window.scrollY;
+  if (back){ try { history.back(); } catch(e){} }
+  const done=()=>{ if (back && Math.abs(window.scrollY-y)>2) window.scrollTo(x,y); try { if (npop.sr) history.scrollRestoration=npop.sr; } catch(e){} };   // 되살아나면 보던 자리로 되돌린다
+  if (back){ requestAnimationFrame(done); setTimeout(done, 0); setTimeout(()=>{ done(); npop.sr=null; }, 150); } else { done(); npop.sr=null; }
 }
 function focusHunk(h){
   if (isMob()){ openNotePop(h); return; }
