@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T10:45:37+09:00">
+<meta name="build" content="2026-09-20T10:47:15+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -713,12 +713,12 @@ function fmtTs(ts){ if (!ts) return ''; const d=new Date(ts); if (isNaN(d)) retu
 function repliesHtml(m, i){
   const rs=m.replies||[]; const mine=me?me.id:''; const admin=me&&me.role==='admin';
   const items=rs.map((r,k)=>{ const col=userColor(r.by, r.byId); const own=r.byId===mine; return `<div class="reply" data-k="${k}"><div class="rh"><span class="who" style="--nc:${col||'var(--ink-2)'}">${esc(userLabel(r.by, r.byId)||r.by||'')}</span><span class="rt">${fmtTs(r.ts)}${r.mt&&r.mt!==r.ts?' (수정됨)':''}</span><span class="spacer"></span>${(own&&editable())?`<button class="rl" data-act="edit" data-i="${i}" data-k="${k}">수정</button>`:''}${((own||admin)&&editable())?`<button class="rl" data-act="del" data-i="${i}" data-k="${k}">삭제</button>`:''}</div><div class="rb">${md(r.t||'')}</div></div>`; }).join('');
-  return `<div class="replies">${items}${(me&&editable())?`<button class="rl radd2" data-i="${i}">답글${rs.length?' '+rs.length:''}</button><div class="rform" hidden><textarea class="rta" rows="2" placeholder="답글 — Enter 저장 · Shift+Enter 줄바꿈 · Esc 취소"></textarea><div class="rbtns"><button class="btn small primary" data-act="save">남기기</button><button class="btn small" data-act="cancel">취소</button></div></div>`:''}</div>`;
+  return `<div class="replies">${items}${(me&&editable())?`<button class="rl radd2" data-i="${i}">답글${rs.length?' '+rs.length:''}</button><div class="rform" hidden><textarea class="rta" rows="2" placeholder="답글 — Ctrl+Enter 저장 · Enter 줄바꿈 · Esc 취소"></textarea><div class="rbtns"><button class="btn small primary" data-act="save">남기기</button><button class="btn small" data-act="cancel">취소</button></div></div>`:''}</div>`;
 }
 function bindReplies(root, c){
   const rerender=(i)=>{ const m=c.marks[i]; const n=document.getElementById('note'+(i+1)); if (!n) return; const old=n.querySelector('.replies'); if (old) old.outerHTML=repliesHtml(m, i); bindReplies(n, c); requestAnimationFrame(layoutNotes); };
   const openForm=(box, i, k, text)=>{ const f=box.querySelector('.rform'); const ta=f.querySelector('.rta'); f.hidden=false; f.dataset.k=(k==null?'':k); ta.value=text||''; ta.focus(); requestAnimationFrame(layoutNotes);
-    ta.onkeydown=e=>{ if (e.key==='Enter' && !e.shiftKey){ e.preventDefault(); f.querySelector('[data-act="save"]').click(); } if (e.key==='Escape'){ e.preventDefault(); f.querySelector('[data-act="cancel"]').click(); } };
+    ta.onkeydown=e=>{ if (e.key==='Enter' && (e.ctrlKey||e.metaKey)){ e.preventDefault(); f.querySelector('[data-act="save"]').click(); } if (e.key==='Escape'){ e.preventDefault(); f.querySelector('[data-act="cancel"]').click(); } };
     f.querySelector('[data-act="save"]').onclick=()=>{ const v=ta.value.trim(); if (!v) return; const m=c.marks[i]; m.replies=m.replies||[]; const kk=f.dataset.k;
       if (kk!==''){ const r=m.replies[+kk]; if (r){ if (r.t===v){ f.hidden=true; return; } ask('답글을 수정하시겠습니까?', '수정').then(ok=>{ if (!ok){ f.hidden=true; ta.value=''; requestAnimationFrame(layoutNotes); return; } pushHist(c, `메모 ${i+1} 답글 수정`); r.t=v; r.mt=Date.now(); m.mt=Date.now(); view.dirty=true; const ub=$('#undoBtn'); if (ub) ub.disabled=false; rerender(i); }); return; } }
       else { pushHist(c, `메모 ${i+1} 답글`); m.replies.push({id:newMid(), by:me.name, byId:me.id, t:v, ts:Date.now()}); }
