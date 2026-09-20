@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T21:51:32+09:00">
+<meta name="build" content="2026-09-20T23:23:46+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -2069,7 +2069,13 @@ function fillGaps(tl, pageH){
   if (pr.width>1) rows.forEach(row=>{
     const ls=row.list.map(sp=>({sp, r:sp.getBoundingClientRect()})).sort((a,b)=>a.r.left-b.r.left);
     const padL=Math.round(ls[0].r.left-pr.left);
-    if (padL>1 && padL<pr.width){ ls[0].sp.style.paddingLeft=padL+'px'; ls[0].sp.style.marginLeft=(-padL)+'px'; }
+    if (padL>1 && padL<pr.width){
+      // pdf.js 는 조각마다 transform:scaleX(...) 로 글자를 가로로 늘인다. 이 배율은 padding 에는 걸리고
+      // 상쇄용 음수 margin 에는 안 걸려서, 그냥 주면 글자가 2~3px 오른쪽으로 밀린다(PC 에서 첫 글자가 잘려 보였다).
+      // padding 을 배율로 미리 나눠 두면 늘어난 뒤에 padL 이 되어 정확히 상쇄된다.
+      const mx=/scalex\(([\d.]+)\)/i.exec(ls[0].sp.style.transform||''); const sx=(mx && parseFloat(mx[1])) || 1;
+      ls[0].sp.style.paddingLeft=(padL/sx).toFixed(2)+'px'; ls[0].sp.style.marginLeft=(-padL)+'px';
+    }
     ls.forEach((v,i)=>{                                   // 조각과 조각 사이, 마지막 조각은 쪽 오른쪽 끝까지
       const right = ls[i+1] ? ls[i+1].r.left : pr.right;
       const pad=Math.round(right - v.r.right);
