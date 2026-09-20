@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T14:05:29+09:00">
+<meta name="build" content="2026-09-20T14:15:22+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -492,6 +492,11 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   .head .tools{gap:6px} .head .tools .btn.small{padding:8px 10px}
   .pager button{padding:0 6px;min-width:30px} .pager input{width:34px;padding:3px 0}
   /* 상단 바 둘째 줄: 새 퇴고 ┈ ↶ ↷ 저장 */
+  /* 상단 바를 흐름 밖(fixed)으로 — 핀치 줌에도 원래 크기로 붙잡기 위해. 그 자리는 .shell 위쪽 여백(--top-h)으로 채워 배치는 같다 */
+  .top{position:fixed;left:0;right:0;top:0}
+  .shell{padding-top:var(--top-h,50px)}
+  /* 안드로이드는 16px 미만 편집칸에 커서가 가면 화면을 확 확대한다 — 메모 편집칸(contenteditable)도 */
+  .md[contenteditable],.fld .md,.note .md{font-size:16px!important}
   .top .brk{display:block;flex-basis:100%;height:0;margin-top:-8px}
   .top .topacts{display:inline-flex;gap:5px;margin-left:auto}
   .top .lg{display:none} .top .sm{display:inline}
@@ -3167,6 +3172,11 @@ function pinOverlays(){
   document.querySelectorAll('.imenu').forEach(el=>{ if (!on){ pinRestore(el); return; } pinApply(el, {transform:`scale(${k})`, 'transform-origin':'left top'});   // ⋯ 메뉴: 줄이고 보이는 창 안으로
     const r=el.getBoundingClientRect(); let x=r.left, y=r.top; if (x+r.width>L+W-4) x=L+W-4-r.width; if (y+r.height>T+H-4) y=T+H-4-r.height; x=Math.max(L+4,x); y=Math.max(T+4,y); pinApply(el, {left:x+'px', top:y+'px'}); });
   const ts=$('#toast'); if (ts){ if (!on) pinRestore(ts); else { pinApply(ts, {transform:`scale(${k}) translateX(-50%)`, 'transform-origin':'left top', left:(L+W/2)+'px', bottom:'auto'}); pinApply(ts, {top:(T+H-(22+ts.offsetHeight)*k)+'px'}); } }
+  const tp=$('.top'); if (tp){ if (!on || getComputedStyle(tp).position!=='fixed') pinRestore(tp); else pinApply(tp, {transform:`scale(${k})`, 'transform-origin':'left top', left:L+'px', top:T+'px', width:lw+'px', right:'auto'}); }   // 상단 바(폰에선 fixed)
+  document.querySelectorAll('.ask').forEach(el=>{ const box=el.querySelector('.box'); if (!on){ pinRestore(el); if (box) pinRestore(box); return; }   // 확인창: 배경은 보이는 창, 상자는 원래 크기로 가운데
+    pinApply(el, {left:L+'px', top:T+'px', width:W+'px', height:H+'px', right:'auto', bottom:'auto'});
+    if (box) pinApply(box, {transform:`scale(${k})`, 'transform-origin':'center center', width:Math.min(420, lw-32)+'px', 'max-width':'none', flex:'none', 'max-height':Math.round(H*s-32)+'px', overflow:'auto'}); });   // flex:none — 좁아진 배경(보이는 창 폭)에 맞춰 줄어들지 않게
+  const pgc=$('.prog'); if (pgc){ if (!on || getComputedStyle(pgc).display==='none') pinRestore(pgc); else { pinApply(pgc, {transform:`scale(${k})`, 'transform-origin':'left top', right:'auto', bottom:'auto'}); pinApply(pgc, {left:(L+W-(pgc.offsetWidth+18)*k)+'px', top:(T+H-(pgc.offsetHeight+18)*k)+'px'}); } }   // 진행 카드
   const rail=$('.rail'); if (rail){ const overlay = isMob() && document.body.classList.contains('inDoc') && !$('.shell').classList.contains('nrail');   // 목록 덮개
     if (!on || !overlay) pinRestore(rail); else pinApply(rail, {transform:`scale(${k})`, 'transform-origin':'left top', left:L+'px', top:T+'px', width:lw+'px', height:Math.round(H*s)+'px', right:'auto', bottom:'auto'}); }
 }
