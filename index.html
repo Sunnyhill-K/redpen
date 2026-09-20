@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T17:57:11+09:00">
+<meta name="build" content="2026-09-20T18:15:29+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -289,7 +289,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .textLayer{user-select:none;-webkit-user-select:none}
 .textLayer span,.textLayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}
 .textLayer span{user-select:text;-webkit-user-select:text}
-.textLayer br{user-select:none;-webkit-user-select:none}
+.textLayer br{display:none}
 .textLayer ::selection{background:rgba(45,91,185,.5)}
 .textLayer span{padding-top:.6em;margin-top:-.6em;padding-bottom:.6em}
 .textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:-1;cursor:default;user-select:none;-webkit-user-select:none}
@@ -3187,7 +3187,7 @@ function pinApply(el, o){ if (!el._pinSaved) el._pinSaved={}; if (!el._pinLast) 
     el.style.setProperty(k, o[k], 'important'); el._pinLast[k]=o[k]; } }
 function pinRestore(el){ if (el) el._pinLast=null; const sv=el && el._pinSaved; if (!sv) return; for (const k in sv){ const [v,pr]=sv[k]; if (v) el.style.setProperty(k, v, pr); else el.style.removeProperty(k); } el._pinSaved=null; }
 const BARE=/[?&]bare/.test(location.search);
-let selGuard={len:0, bad:false};
+let selGuard={len:0, bad:false, fix:false}, lastFocus=null;
 // 손잡이를 끌 때 선택이 갑자기 문서 처음·끝까지 튀면 직전의 멀쩡한 선택으로 되돌린다.
 // PDF 글자층은 줄마다 떨어진 절대위치 조각이라 브라우저가 빈 곳에서 고를 자리를 못 찾고 크게 건너뛴다.
 function inTextSpan(n){
@@ -3203,7 +3203,15 @@ function guardSel(){
   const tl=el && el.closest ? el.closest('.textLayer') : null;
   if (!tl){ selGuard.bad=false; selGuard.len=0; return false; }   // PDF 글자층 밖(텍스트·Word)은 상관없다
   const len=String(sl).length;
-  const outside = !inTextSpan(sl.anchorNode) || !inTextSpan(sl.focusNode);
+  const fIn = inTextSpan(sl.focusNode);
+  if (fIn) lastFocus={n:sl.focusNode, o:sl.focusOffset};
+  else if (lastFocus && !selGuard.fix && sl.anchorNode && inTextSpan(sl.anchorNode)){
+    selGuard.fix=true;
+    try { sl.extend(lastFocus.n, lastFocus.o); } catch(e){}
+    setTimeout(()=>{ selGuard.fix=false; }, 0);
+    selDiag('끝점을 글자로 되돌림');
+  }
+  const outside = !inTextSpan(sl.anchorNode) || !fIn;
   const jumped = selGuard.len>0 && len>=selGuard.len*5 && len-selGuard.len>200;
   selGuard.bad = outside || jumped;   // 손잡이가 글자 밖으로 나갔거나 한 번에 너무 뛴 선택
   if (selGuard.bad) selDiag(outside ? '글자 밖 ('+len+'자) — 막대 안 띄움' : '한 번에 너무 뜀 '+selGuard.len+'→'+len+'자');
@@ -3276,6 +3284,16 @@ if (window.visualViewport){ let pinT=null; const pinReq=()=>{ cancelAnimationFra
       if (!BARE && t && e.pointerType==='mouse') t.classList.add('selecting'); }   // 고르기 시작 전에 끝 표식을 펼쳐 둔다
     const sl=window.getSelection(); hadSel=!!document.querySelector('.pop') || !!(sl && !sl.isCollapsed); }, true);
   ['pointerup','pointercancel'].forEach(t=>document.addEventListener(t, ()=>{ fingerDown=false; }, true));
+  let tapAt=null;
+  document.addEventListener('pointerdown', e=>{ tapAt={x:e.clientX, y:e.clientY, t:Date.now()}; }, true);
+  document.addEventListener('pointerup', e=>{
+    if (!isMob() || !tapAt) return;
+    const quick = Date.now()-tapAt.t < 400 && Math.abs(e.clientX-tapAt.x)<10 && Math.abs(e.clientY-tapAt.y)<10;
+    tapAt=null; if (!quick) return;
+    const t=e.target; if (!t || !t.closest) return;
+    if (!t.closest('.textLayer') || t.tagName==='SPAN') return;
+    const sl=window.getSelection(); if (sl && !sl.isCollapsed && !document.querySelector('.pop')) sl.removeAllRanges();
+  }, true);
   document.addEventListener('click', e=>{
     if (BARE || !isMob() || hadSel) return; const doc=$('#doc'); if (!doc || !e.target.closest || !doc.contains(e.target)) return;
     const sl0=window.getSelection(); if (sl0 && !sl0.isCollapsed) return;   // 고른 글이 아직 살아 있으면(끄는 중) 열지 않는다
