@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T18:22:06+09:00">
+<meta name="build" content="2026-09-20T19:09:11+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -3254,8 +3254,10 @@ function selDiag(extra){
 }
 let selBusy=0, fingerDown=false, fingerAt=0;   // 마지막으로 고른 글이 바뀐 시각 · 손가락이 닿아 있는지와 그 시각
 function pinOverlays(){
+  if (BARE) return;
   const vv=window.visualViewport; if (!vv) return; const s=vv.scale||1, on=s>1.02, k=1/s;
-  const picking = on && (Date.now()-selBusy < 600);   // 고르는 중
+  const picking = on && (Date.now()-selBusy < 700);   // 고르는 중
+  if (picking) return;   // 글을 고르는 동안에는 떠 있는 UI 를 하나도 건드리지 않는다(손잡이 추적을 방해한다)
   const lw=document.documentElement.clientWidth, L=vv.offsetLeft, T=vv.offsetTop, W=vv.width, H=vv.height;
   document.querySelectorAll('.pop').forEach(el=>{ if (getComputedStyle(el).position!=='fixed') return; if (!on){ pinRestore(el); return; }   // 선택 막대: 보이는 창 아래
     pinApply(el, {transform:`scale(${k})`, 'transform-origin':'left top', left:L+'px', right:'auto', bottom:'auto', width:lw+'px'}); pinApply(el, {top:(T+H-el.offsetHeight*k)+'px'}); });
