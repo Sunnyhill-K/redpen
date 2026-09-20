@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T11:59:21+09:00">
+<meta name="build" content="2026-09-20T12:34:34+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -495,6 +495,23 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   .ask .box input[type=password],.ask .box input[type=text],
   .ask .box.users td input,.ask .box.users td select,.ask .box.users .newrow input,.ask .box.users .newrow select{font-size:16px}
 }
+/* 폰: 글자를 고르면 뜨는 삭제/바꾸기/메모 막대는 화면 아래에(iOS 의 복사/공유 메뉴는 선택 위에 뜨므로 자리 싸움을 피한다) */
+@media (max-width:760px){
+  .pop{position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;transform:none!important;z-index:16;border-radius:12px 12px 0 0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));justify-content:center;gap:10px}
+  .pop button{font-size:16px;padding:12px 18px;min-height:48px;border:1px solid rgba(255,255,255,.25);border-radius:8px}
+  .pop kbd{display:none}
+  .toast{z-index:60}
+}
+body.area-mode .page{touch-action:none}
+/* 폰 메모 팝오버 */
+.npop-back{display:none;position:fixed;inset:0;z-index:14;background:rgba(0,0,0,.28);touch-action:none} .npop-back.open{display:block}
+.npop{display:none;position:fixed;left:8px;right:8px;z-index:15;background:var(--paper);border:1px solid var(--rule);border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.3);max-height:55vh;flex-direction:column;overflow:hidden} .npop.open{display:flex}
+.npop.kb{top:8px!important;bottom:auto!important;max-height:46vh}
+.npop:has(.radd.open),.npop:has(.radd.open) .npop-body{overflow:visible}
+.npop-head{display:flex;align-items:center;gap:6px;padding:6px 8px 6px 12px;border-bottom:1px solid var(--rule);font-family:var(--sans);font-size:calc(12px * var(--ui,1));color:var(--ink-2);flex:none}
+.npop-head button{min-width:40px;min-height:36px;border:1px solid var(--rule);background:transparent;border-radius:6px;font-size:16px;color:var(--ink);cursor:pointer} .npop-head button:disabled{opacity:.3}
+.npop-body{overflow-y:auto;padding:10px 12px 12px;-webkit-overflow-scrolling:touch}
+.npop .note{position:static;margin:0} .npop .note .nv{display:none}
 </style>
 </head>
 <body>
@@ -651,6 +668,8 @@ async function openCase(id){
 }
 function render(){
   renderList();
+  if (npop.h!=null) closeNotePop();
+  if (isMob()){ const sh=$('.shell'); if (sh){ const fold = view.mode!=='list'; if (sh.classList.contains('nrail')!==fold){ sh.classList.toggle('nrail', fold); try { syncFold(); } catch(e){} } } }   // 폰: 문서를 열면 목록을 접고, 홈이면 편다
   const main=$('#main'); main.innerHTML=''; document.body.classList.remove('zoomed-body'); document.body.style.minWidth='';
   if (view.mode==='list'){ renderHome(main); window.scrollTo(0,0); return; }
   if (view.mode==='edit'){ renderEdit(main); window.scrollTo(0,0); return; }
@@ -1301,7 +1320,7 @@ function bindNotes(){
 }
 function layoutNotes(){
   const notes=$('#notes'), doc=$('#doc'); if (!notes || !doc || notes.hidden) return;
-  const stacked = window.innerWidth <= 760;
+  const stacked = isMob();
   if (stacked){ notes.style.height=''; notes.querySelectorAll('.note').forEach(n=>n.style.top=''); return; }
   const base = notes.getBoundingClientRect().top; const tt=notes.querySelector('.notes-title'); let bottom = tt ? tt.offsetHeight + 8 : 0;   // 제목 줄(교정 메모 N · 직전 버전 메모) 아래부터
   const items=[...notes.querySelectorAll('.note')].map((n,i)=>{ const h=n.dataset.h; const target=doc.querySelector(`.hunk[data-h="${h}"]`); const isG=n.classList.contains('ghost'); if (isG && !ghostsOn){ n.style.display='none'; return null; } n.style.display=''; return {n, i, want: target ? target.getBoundingClientRect().top - base - 2 : null}; }).filter(Boolean);
@@ -1310,7 +1329,47 @@ function layoutNotes(){
   items.forEach(({n, want})=>{ let top = want!=null ? want : bottom; top = Math.max(top, bottom); n.style.top = top+'px'; bottom = top + n.offsetHeight + 10; });
   notes.style.height = Math.max(bottom, 0)+'px';
 }
+// ── 폰: 딱지 → 그 메모를 팝오버로. 메모 카드를 통째로 옮겨 담으므로 반응·답글·수정이 그대로 되고, 닫으면 제자리로 돌려놓는다 ──
+const npop={h:null, el:null, back:null, ph:null};
+function ensureNpop(){
+  if (npop.el) return npop.el;
+  const back=document.createElement('div'); back.className='npop-back'; back.addEventListener('pointerdown', e=>{ e.preventDefault(); closeNotePop(); });
+  const el=document.createElement('div'); el.className='npop';
+  el.innerHTML=`<div class="npop-head"><span class="npop-title"></span><span class="spacer"></span><button class="npop-nav" data-d="-1" aria-label="이전 메모" title="이전 메모">↑</button><button class="npop-nav" data-d="1" aria-label="다음 메모" title="다음 메모">↓</button><button class="npop-x" aria-label="닫기" title="닫기">✕</button></div><div class="npop-body"></div>`;
+  el.querySelector('.npop-x').addEventListener('click', ()=>closeNotePop());
+  el.querySelectorAll('.npop-nav').forEach(b=>b.addEventListener('click', ()=>{ const nh=npop.h+(+b.dataset.d); if (document.getElementById('note'+nh)) mountNotePop(nh); }));
+  el.addEventListener('focusin', ()=>el.classList.add('kb'));                                   // 키보드가 올라오면 위쪽에 붙인다
+  el.addEventListener('focusout', ()=>setTimeout(()=>{ if (!el.contains(document.activeElement)) el.classList.remove('kb'); }, 120));
+  window.addEventListener('popstate', ()=>{ if (npop.h!=null) closeNotePop(true); });          // 안드로이드 뒤로 가기 = 닫기
+  document.body.append(back, el); npop.el=el; npop.back=back; return el;
+}
+function unmountNote(){ const body=npop.el && npop.el.querySelector('.npop-body'); const n=body && body.firstElementChild; if (n){ n.classList.remove('hot'); if (npop.ph && npop.ph.isConnected) npop.ph.replaceWith(n); else n.remove(); } if (npop.ph && npop.ph.isConnected) npop.ph.remove(); npop.ph=null; }
+function placeNpop(h){
+  const el=npop.el; const mk=document.querySelector(`.mk[data-h="${h}"]`); const vh=window.innerHeight; el.style.top=''; el.style.bottom='';
+  if (!mk){ el.style.bottom='8px'; return; }
+  const r=mk.getBoundingClientRect(); const below=vh-r.bottom-12, above=r.top-12;
+  if (below>=Math.min(300, vh*0.55) || below>=above) el.style.top=Math.max(8, Math.min(r.bottom+8, vh-160))+'px';   // 딱지 아래
+  else el.style.bottom=Math.max(8, vh-r.top+8)+'px';                                                                  // 딱지 위
+}
+function mountNotePop(h){
+  h=+h; const el=ensureNpop(); const n=document.getElementById('note'+h); if (!n){ closeNotePop(); return; }
+  if (npop.h!=null && npop.h!==h) hot(npop.h,false);
+  unmountNote();
+  const ph=document.createElement('i'); ph.className='npop-ph'; ph.hidden=true; n.before(ph); npop.ph=ph; npop.h=h;
+  el.querySelector('.npop-body').replaceChildren(n);
+  const c=view.draft||cases.find(x=>x.id===view.id); el.querySelector('.npop-title').textContent=`메모 ${h} / ${c?fmtN(c.marks.length):'?'}`;
+  el.querySelector('.npop-nav[data-d="-1"]').disabled=!document.getElementById('note'+(h-1)); el.querySelector('.npop-nav[data-d="1"]').disabled=!document.getElementById('note'+(h+1));
+  placeNpop(h); el.classList.add('open'); npop.back.classList.add('open'); document.body.classList.add('npop-open'); hot(h,true);
+  const t=n.querySelector('textarea:not([hidden]), .md[contenteditable]'); if (t){ t.focus({preventScroll:true}); if (t.isContentEditable){ const r=document.createRange(); r.selectNodeContents(t); r.collapse(false); const sl=getSelection(); sl.removeAllRanges(); sl.addRange(r); } }
+}
+function openNotePop(h){ h=+h; if (!document.getElementById('note'+h)) return; const first=npop.h==null; mountNotePop(h); if (first){ try { history.pushState({npop:1}, ''); } catch(e){} } }
+function closeNotePop(fromPop){
+  if (npop.h==null) return; const h=npop.h; unmountNote(); npop.h=null; hot(h,false);
+  npop.el.classList.remove('open','kb'); npop.back.classList.remove('open'); document.body.classList.remove('npop-open');
+  if (!fromPop && history.state && history.state.npop){ try { history.back(); } catch(e){} }
+}
 function focusHunk(h){
+  if (isMob()){ openNotePop(h); return; }
   const n = document.getElementById('note'+h); if (!n) return;
   n.scrollIntoView({block:'center', behavior:'smooth'});
   const t=n.querySelector('textarea:not([hidden]), .md[contenteditable]');
@@ -1418,7 +1477,7 @@ const tpageCls = c => 'tpage'+(isHtmlDoc(c)?' hdoc':'');
 // 텍스트·Word 틀 폭: 기준 폭 × 문서 배율(PDF 와 같은 규칙). 넘치면 창이 가로로 움직인다
 function layoutTextDoc(){
   const cont=$('#doc'); if (!cont || !cont.classList.contains('txtdoc')) return;
-  const sheet=cont.closest('.sheet'); const stacked = window.innerWidth <= 760;
+  const sheet=cont.closest('.sheet'); const stacked = isMob();
   const notesW = Math.round(280*uiScale); const mainW = $('#main').clientWidth - 40 - 28;
   const baseW = stacked ? mainW : DOC_BASE_W;   // 창을 줄여도 문서 배율은 그대로, 가로 스크롤만 길어진다
   const width = Math.round(baseW * zoom.text);
@@ -1755,6 +1814,7 @@ function renderPdfNotes(c){
   const ga=$('#ghostAll'); if (ga) ga.addEventListener('click', ()=>{ const n=gs.length; gs.slice().forEach(g=>carryGhost(c, g, true)); afterCarry(c, n); });
   notes.querySelectorAll('[data-carry]').forEach(b=>b.addEventListener('click', ()=>{ const g=gs.find(x=>x.m.mid===b.dataset.carry); if (g){ carryGhost(c, g, true); afterCarry(c, 1); } }));
   bindNotes();
+  if (npop.h!=null){ if (document.getElementById('note'+npop.h)) mountNotePop(npop.h); else closeNotePop(); }   // 메모 열을 다시 그렸으면 팝오버에 새 카드를 다시 담는다
   requestAnimationFrame(()=>layoutNotes());
 }
 function hashStr(str){ let h=0; for (let i=0;i<str.length;i++){ h=(h*31 + str.charCodeAt(i))|0; } return (h>>>0).toString(36); }
@@ -1823,7 +1883,7 @@ async function drawPages(){
   const cont = $('#doc'); if (!cont) return;
   cont.innerHTML=''; cont.classList.remove('pdfmsg');
   // 기준 폭 = 100%일 때의 문서 열 폭. 확대하면 틀(.pages)을 그 배수로 키운다
-  const sheet = cont.closest('.sheet'); const stacked = window.innerWidth <= 760;
+  const sheet = cont.closest('.sheet'); const stacked = isMob();
   if (stacked) cont.style.width='';
   const mainW = stacked ? (()=>{ const cs=getComputedStyle(cont); return Math.floor(cont.clientWidth - parseFloat(cs.paddingLeft||0) - parseFloat(cs.paddingRight||0)); })() : $('#main').clientWidth - 40 - 28;   // 폰: 쪽 틀의 안쪽 폭 그대로
   const notesW = Math.round(280*uiScale);
@@ -1877,20 +1937,40 @@ async function drawPages(){
     } catch(e){ return false; } finally { pg.busy=false; }
   };
   st.rerenderAt=rerenderAt; st.pages=pages;
+  // ── 핀치 줌 타일: 벌린 상태에서 화면에 보이는 부분만 장치 픽셀 1:1 로 그려 기본 캔버스 위에 덧씌운다(글자층·표시 아래). 타일은 늘 화면 크기 안팎이라 배율이 커져도 메모리가 일정하다 ──
+  const removeTile=(pg)=>{ if (pg.tile){ pg.tile.remove(); pg.tile=null; } pg.tileKey=null; };
+  const tileFor = async (pg, s, box)=>{   // box = 레이아웃 좌표계의 보이는 영역 {l,t,r,b}
+    if (!pg.done || !pg.cv || st.token!==token) return false;
+    const r=pg.el.getBoundingClientRect(); const M=48;   // 살짝 넓게 그려 두면 조금 밀어도 다시 안 그린다
+    const x0=Math.max(0, Math.floor(box.l - r.left - M)), y0=Math.max(0, Math.floor(box.t - r.top - M));
+    const x1=Math.min(pg.vp.width, Math.ceil(box.r - r.left + M)), y1=Math.min(pg.vp.height, Math.ceil(box.b - r.top + M));
+    if (x1-x0<8 || y1-y0<8){ removeTile(pg); return false; }
+    let d=Math.min((window.devicePixelRatio||1)*s, 8); const A=1.6e7; if ((x1-x0)*(y1-y0)*d*d>A) d=Math.sqrt(A/((x1-x0)*(y1-y0)));   // 타일 64MB 상한
+    const key=[x0,y0,x1,y1,d.toFixed(2)].join(','); if (pg.tileKey===key) return true;
+    if (pg.busy) return null; pg.busy=true;
+    try {
+      const cv=document.createElement('canvas'); cv.className='tile'; cv.width=Math.round((x1-x0)*d); cv.height=Math.round((y1-y0)*d);
+      cv.style.cssText=`position:absolute;left:${x0}px;top:${y0}px;width:${x1-x0}px;height:${y1-y0}px;pointer-events:none`;
+      const tvp=pg.page.getViewport({scale: pg.scale*d, offsetX: -x0*d, offsetY: -y0*d});
+      await pg.page.render({canvasContext: cv.getContext('2d'), viewport: tvp}).promise;
+      if (st.token!==token || !pg.cv.isConnected) return false;
+      removeTile(pg); pg.cv.after(cv); pg.tile=cv; pg.tileKey=key; return true;
+    } catch(e){ return false; } finally { pg.busy=false; }
+  };
+  st.tileFor=tileFor; st.removeTile=removeTile;
   if (window.visualViewport){
     const vv=window.visualViewport; let vvT=null;
     const tick=()=>{ clearTimeout(vvT); vvT=setTimeout(async ()=>{
       if (st.token!==token) return;
-      const s=vv.scale||1; const dprReal=window.devicePixelRatio||1;
-      if (s<1.05 && !pages.some(pg=>pg.d && pg.d>dprEff+0.25)) return;   // 안 벌렸고 올려 그린 쪽도 없으면 볼 일 없음
-      const top=vv.offsetTop, bot=top+vv.height; let again=false;
-      for (const pg of pages){ if (!pg.done || !pg.cv) continue; const r=pg.el.getBoundingClientRect(); const seen = r.bottom > top-120 && r.top < bot+120;
-        // 벌린 만큼(장치 픽셀 기준) 올리되 캔버스 가로 2400px 까지 — 폰(dpr 3)에서 3.5배면 장치 픽셀당 0.7, 한 쪽 33MB
-        const want=Math.max(dprEff, Math.min(dprReal*s, 2400/pg.vp.width));
-        const goal = seen ? want : dprEff; if (Math.abs((pg.d||dprEff)-goal) < 0.25) continue;
-        if (pg.busy){ again=true; continue; } await rerenderAt(pg, goal); if (st.token!==token) return; }
+      const s=vv.scale||1;
+      if (s<1.15){ if (pages.some(pg=>pg.tile)) pages.forEach(removeTile); return; }   // 안 벌렸으면 타일 없이 기본 캔버스만
+      const box={l:vv.offsetLeft, t:vv.offsetTop, r:vv.offsetLeft+vv.width, b:vv.offsetTop+vv.height}; let again=false;
+      for (const pg of pages){ if (!pg.done || !pg.cv) continue; const r=pg.el.getBoundingClientRect();
+        const seen = r.bottom > box.t-40 && r.top < box.b+40 && r.right > box.l-40 && r.left < box.r+40;
+        if (!seen){ removeTile(pg); continue; }
+        const ok=await tileFor(pg, s, box); if (ok===null) again=true; if (st.token!==token) return; }
       if (again) tick();
-    }, 250); };
+    }, 180); };
     vv.addEventListener('resize', tick); vv.addEventListener('scroll', tick); window.addEventListener('scroll', tick, {passive:true});
     st.vvOff=()=>{ vv.removeEventListener('resize', tick); vv.removeEventListener('scroll', tick); window.removeEventListener('scroll', tick); clearTimeout(vvT); };
   }
@@ -2089,22 +2169,25 @@ function bindSelection(cont, c0){
   cont.addEventListener('dragstart', e=>{ if (areaMode || rbActive) e.preventDefault(); });
   cont.addEventListener('selectstart', e=>{ if (areaMode || rbActive) e.preventDefault(); });
   let rbActive=false;
-  cont.addEventListener('mousedown', e=>{
+  cont.addEventListener('pointerdown', e=>{
     rbActive=false; if (rb){ rb.remove(); rb=null; rbPage=null; }   // 창 밖에서 놓아 남은 끌기 상태 정리
-    if (e.button!==0) return; const pageEl=e.target.closest && e.target.closest('.page'); if (!pageEl) return;
+    if (e.button!==0 || e.isPrimary===false) return;
+    if (e.pointerType!=='mouse' && !areaMode) return;               // 손가락: 「영역 선택」을 켰을 때만 네모, 아니면 스크롤
+    const pageEl=e.target.closest && e.target.closest('.page'); if (!pageEl) return;
     const onText = e.target.closest && e.target.closest('.textLayer'); if (!areaMode && onText) return;   // 글자 위: 글자 선택
     if (e.target.closest && e.target.closest('.pop, .mk')) return;
     rbActive=true;
     e.preventDefault(); kill(); const pr=pageEl.getBoundingClientRect(); rbPage=pageEl; rbStart=[(e.clientX-pr.left)/pr.width, (e.clientY-pr.top)/pr.height];
     rb=document.createElement('div'); rb.className='arearubber'; pageEl.appendChild(rb);
   });
-  document.addEventListener('mousemove', e=>{
+  document.addEventListener('pointermove', e=>{
     if (!rb || !rbPage) return; const pr=rbPage.getBoundingClientRect(); const x=Math.min(Math.max((e.clientX-pr.left)/pr.width,0),1), y=Math.min(Math.max((e.clientY-pr.top)/pr.height,0),1);
     const l=Math.min(rbStart[0],x), t=Math.min(rbStart[1],y), w=Math.abs(x-rbStart[0]), h=Math.abs(y-rbStart[1]);
     rb.style.left=(l*100)+'%'; rb.style.top=(t*100)+'%'; rb.style.width=(w*100)+'%'; rb.style.height=(h*100)+'%'; rb._r=[l,t,w,h];
   });
   window.addEventListener('blur', ()=>{ if (rb){ rb.remove(); rb=null; rbPage=null; } rbActive=false; });
-  document.addEventListener('mouseup', ()=>{
+  document.addEventListener('pointercancel', ()=>{ if (rb){ rb.remove(); rb=null; rbPage=null; } rbActive=false; });   // 브라우저가 스크롤로 가져가면 네모를 거둔다
+  document.addEventListener('pointerup', ()=>{
     if (!rb){ rbActive=false; return; } const r=rb._r, pageEl=rbPage; rb.remove(); rb=null; rbPage=null; setTimeout(()=>{ rbActive=false; }, 0);
     const prr=pageEl.getBoundingClientRect(); if (!r || r[2]*prr.width<8 || r[3]*prr.height<8) return;   // 8px 미만 네모는 무시(쪽 크기와 무관)
     const c=cur(); const rect=r.map(v=>+v.toFixed(4)); const text='[영역] '+pageEl.dataset.p+'쪽';
@@ -3048,7 +3131,16 @@ function showLinkMenu(x, y, items){
 }
 
 // ── 폰에서 접은 단추들을 ⋯ 메뉴로 (숨긴 단추를 그대로 눌러 주므로 기능이 두 벌이 되지 않는다) ──
-function isMob(){ return window.innerWidth<=760; }
+function isMob(){ return window.matchMedia('(max-width:760px)').matches; }   // innerWidth 는 아이폰 핀치 줌에 줄어든다 → 미디어쿼리(레이아웃 폭)로
+// ── 폰: 손가락으로 글자를 고르면(선택이 멎고 0.45초) 기존 선택 처리(mouseup)를 그대로 부른다 → 삭제/바꾸기/메모 막대가 아래에 뜬다 ──
+{ // 등록은 늘 하고(헤드리스도 지나가게) 발동 때만 폰 폭인지 본다
+  let selT=null;
+  document.addEventListener('selectionchange', ()=>{ if (!isMob()) return; clearTimeout(selT); selT=setTimeout(()=>{
+    const sel=window.getSelection(); if (!sel || sel.isCollapsed || !sel.rangeCount) return;
+    const cont=$('#doc'); if (!cont || !editable()) return; const r=sel.getRangeAt(0); if (!cont.contains(r.commonAncestorContainer)) return;
+    cont.dispatchEvent(new MouseEvent('mouseup', {bubbles:true, cancelable:true}));
+  }, 450); });
+}
 const FOLD_LAB={uiMinus:'화면 글자 작게', uiReset:'화면 글자 크기 100%로', uiPlus:'화면 글자 크게', zoomOut:'문서 축소', zoomReset:'문서 배율 100%로', zoomIn:'문서 확대', btnList:'홈 (문서 목록)', btnReload:'새로고침', undoBtn:'되돌리기', redoBtn:'다시 실행', fabTop:'맨 위로', fabBottom:'맨 아래로'};
 function foldItems(scope, order){
   const out=[];
@@ -3113,8 +3205,9 @@ try { if (localStorage.getItem('redpen.nrail')==='1') shell.classList.add('nrail
 syncFold();
 $('#btnRail').addEventListener('click', e=>{ e.stopPropagation(); shell.classList.toggle('nrail'); syncFold(); try { localStorage.setItem('redpen.nrail', shell.classList.contains('nrail')?'1':'0'); } catch(e){}
   requestAnimationFrame(()=>{ layoutNotes(); if (pdfState && $('#doc')) drawPages(); }); });
-let rsT=null, lastW=window.innerWidth;
-window.addEventListener('resize', ()=>{ layoutNotes(); fixBodyWidth(); clearTimeout(rsT); rsT=setTimeout(()=>{ const nowStacked=window.innerWidth<=760, wasStacked=lastW<=760; if (nowStacked!==wasStacked || (nowStacked && Math.abs(window.innerWidth-lastW)>10)){ lastW=window.innerWidth; if (pdfState && $('#doc')) drawPages(); else layoutTextDoc(); } else lastW=window.innerWidth; }, 250); });
+// 레이아웃 폭(clientWidth)만 본다 — innerWidth 는 아이폰 핀치 줌에 따라 줄어 PDF 를 통째로 다시 그리게 했다
+let rsT=null, lastW=document.documentElement.clientWidth, lastStacked=isMob();
+window.addEventListener('resize', ()=>{ layoutNotes(); fixBodyWidth(); clearTimeout(rsT); rsT=setTimeout(()=>{ const w=document.documentElement.clientWidth; const nowStacked=isMob(); if (nowStacked!==lastStacked || (nowStacked && Math.abs(w-lastW)>10)){ lastStacked=nowStacked; lastW=w; if (pdfState && $('#doc')) drawPages(); else layoutTextDoc(); } else lastW=w; }, 250); });
 window.addEventListener('beforeunload', e=>{ if (view.dirty){ e.preventDefault(); e.returnValue=''; } });
 document.fonts && document.fonts.ready.then(()=>layoutNotes());
 
