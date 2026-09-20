@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T13:33:28+09:00">
+<meta name="build" content="2026-09-20T13:42:04+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -488,6 +488,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   .head h2{font-size:calc(21px * var(--ui,1))}
   /* 도구줄을 한 줄에: 짧은 탭 이름 · 좁은 간격 · 작은 쪽 이동 칸 */
   .seg .lg{display:none} .seg .sm{display:inline} .seg button{padding:8px 9px}
+  .head .tools > .seg{margin-right:auto}   /* 탭 다음부터는 오른쪽 정렬 */
   .head .tools{gap:6px} .head .tools .btn.small{padding:8px 10px}
   .pager button{padding:0 6px;min-width:30px} .pager input{width:34px;padding:3px 0}
   /* 상단 바 둘째 줄: 새 퇴고 ┈ ↶ ↷ 저장 */
@@ -3150,6 +3151,20 @@ function showLinkMenu(x, y, items){
 // ── 폰에서 접은 단추들을 ⋯ 메뉴로 (숨긴 단추를 그대로 눌러 주므로 기능이 두 벌이 되지 않는다) ──
 function isMob(){ return window.matchMedia('(max-width:760px)').matches; }   // innerWidth 는 아이폰 핀치 줌에 줄어든다 → 미디어쿼리(레이아웃 폭)로
 // ── 폰: 손가락으로 글자를 고르면(선택이 멎고 0.45초) 기존 선택 처리(mouseup)를 그대로 부른다 → 삭제/바꾸기/메모 막대가 아래에 뜬다 ──
+{ // 폰: 표시된 구절을 탭해도 메모가 열린다. 선택을 지우려고 누른 탭(막대가 떠 있거나 선택이 있던 때)은 열지 않는다
+  let hadSel=false;
+  document.addEventListener('pointerdown', ()=>{ const sl=window.getSelection(); hadSel=!!document.querySelector('.pop') || !!(sl && !sl.isCollapsed); }, true);
+  document.addEventListener('click', e=>{
+    if (!isMob() || hadSel) return; const doc=$('#doc'); if (!doc || !e.target.closest || !doc.contains(e.target)) return;
+    if (e.target.closest('.mk, .pop, a, button, input, textarea')) return;
+    const hk=e.target.closest('#doc .hunk[data-h]:not(.t-ghost):not(.ghost)'); if (hk){ const n=+hk.dataset.h; if (n) focusHunk(n); return; }
+    const pageEl=e.target.closest('.page'); if (!pageEl) return;                       // PDF: 탭 좌표가 어느 표시 상자 안인지
+    const c=view.draft||cases.find(x=>x.id===view.id); if (!c || !c.marks) return; const pr=pageEl.getBoundingClientRect(); if (!pr.width || !pr.height) return;
+    const x=(e.clientX-pr.left)/pr.width, y=(e.clientY-pr.top)/pr.height, p=+pageEl.dataset.p; const pad=3/pr.height;   // 3px 여유
+    const i=c.marks.findIndex(m=>m.page===p && (m.rects||[]).some(r=>x>=r[0] && x<=r[0]+r[2] && y>=r[1]-pad && y<=r[1]+r[3]+pad));
+    if (i>=0) focusHunk(i+1);
+  });
+}
 { // 등록은 늘 하고(헤드리스도 지나가게) 발동 때만 폰 폭인지 본다
   let selT=null;
   document.addEventListener('selectionchange', ()=>{ if (!isMob()) return; clearTimeout(selT); selT=setTimeout(()=>{
