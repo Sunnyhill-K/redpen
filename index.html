@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T10:54:10+09:00">
+<meta name="build" content="2026-09-20T11:12:24+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -205,7 +205,7 @@ ins{color:var(--ins);text-decoration:underline;text-decoration-thickness:1.5px;t
 .lreps{margin-top:4px;color:var(--ink-2);font-size:.95em} .xreps{margin-top:4px;padding-left:8px;border-left:2px solid #e3e5df;font-size:13px} .xrep{padding:2px 0}
 .reacts{display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-top:4px;min-height:18px} .reacts .rc{border:1px solid var(--rule);background:var(--paper-2);border-radius:10px;padding:0 7px;font-size:calc(14px * var(--ui,1));line-height:1.5;cursor:pointer;color:var(--ink)} .reacts .rc.on{border-color:var(--ins);background:var(--ins-bg)} .reacts .rc:hover{border-color:var(--ink-3)}
 .radd{position:relative;display:inline-flex} .radd .rplus{border:1px dashed var(--rule);background:transparent;border-radius:10px;padding:0 6px;font-size:calc(11px * var(--ui,1));line-height:1.5;cursor:pointer;color:var(--ink-3);opacity:.6} .note:hover .radd .rplus,.radd.open .rplus{opacity:1} .radd .rplus:hover{color:var(--ink);border-color:var(--ink-3)}
-.radd .rmenu{display:none;position:absolute;left:0;bottom:calc(100% + 2px);padding-bottom:6px;background:var(--paper);border:1px solid var(--rule);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);padding:4px;gap:2px;z-index:6;white-space:nowrap} .radd.open .rmenu,.radd:hover .rmenu{display:flex;flex-direction:column;gap:3px} .radd .rmenu{padding:8px 10px 10px} .rmenu .rrow{display:grid;grid-template-columns:repeat(7,auto);gap:2px;align-items:center;justify-content:start} .rmenu .rext{display:none;border-top:1px solid var(--rule);padding-top:3px} .radd.ext .rext{display:grid} .rmenu .rext .rin{grid-column:span 2} .rmenu .rmore{font-weight:700;color:var(--ink-3)} .rmenu .rin{width:52px;font:inherit;font-size:14px;border:1px solid var(--rule);border-radius:4px;padding:1px 4px;background:var(--paper-2);color:var(--ink)} .radd::after{content:'';position:absolute;left:-16px;right:-16px;bottom:100%;height:16px} .radd .rmenu button{border:0;background:transparent;font-size:19px;line-height:1.2;padding:2px 5px;border-radius:4px;cursor:pointer} .radd .rmenu button:hover{background:var(--paper-2)}
+.radd .rmenu{display:none;position:absolute;left:0;bottom:calc(100% + 2px);padding-bottom:6px;background:var(--paper);border:1px solid var(--rule);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);padding:4px;gap:2px;z-index:6;white-space:nowrap} .radd.open .rmenu,.radd:hover .rmenu{display:flex;flex-direction:column;gap:3px} .radd .rmenu{padding:8px 10px 10px} .rmenu .rrow{display:grid;grid-template-columns:repeat(7,auto);gap:2px;align-items:center;justify-content:start} .rmenu .rext{display:none;border-top:1px solid var(--rule);padding-top:3px} .radd.ext .rext{display:grid} .rmenu .rmore{font-weight:700;color:var(--ink-3)} .rmenu .rin{width:56px;font:inherit;font-size:14px;border:1px solid var(--rule);border-radius:4px;padding:1px 4px;background:var(--paper-2);color:var(--ink)} .rmenu .rin:focus{border-color:var(--focus);outline:none} .radd .rcus{display:none;align-items:center;gap:7px;border-top:1px solid var(--rule);margin-top:3px;padding-top:5px} .radd.ext .rcus{display:flex} .rmenu .rtip{color:var(--ink-3);font-size:calc(10.5px * var(--ui,1));font-family:var(--sans);white-space:nowrap} .rmenu .rtip.on{color:var(--ins);font-weight:600} .radd .rboard{display:none;grid-template-columns:repeat(7,1fr);gap:1px;margin-top:3px;padding-top:5px;border-top:1px solid var(--rule)} .radd.pick .rboard{display:grid} .radd .rpg{display:none;align-items:center;justify-content:center;gap:8px;padding-top:2px} .radd.pick .rpg{display:flex} .radd .rmenu .rpg button{font-size:13px;line-height:1;padding:1px 7px;color:var(--ink-3);border:1px solid var(--rule);border-radius:4px} .radd .rmenu .rpg button:hover{color:var(--ink);border-color:var(--ink-3)} .radd .rpg .pn{color:var(--ink-3);font-size:calc(10.5px * var(--ui,1));font-family:var(--mono)} .radd .rmenu .rboard button{font-size:17px;padding:2px 0;line-height:1.2} .radd .rboard button.sel{background:var(--ins-bg);outline:1px solid var(--ins)} .radd.down .rmenu{bottom:auto;top:calc(100% + 2px)} .radd.down::after{bottom:auto;top:100%} .radd::after{content:'';position:absolute;left:-16px;right:-16px;bottom:100%;height:16px} .radd .rmenu button{border:0;background:transparent;font-size:19px;line-height:1.2;padding:2px 5px;border-radius:4px;cursor:pointer} .radd .rmenu button:hover{background:var(--paper-2)}
 .note .n .nv{display:inline-flex;gap:3px;margin-left:4px} .note .nvb{border:1px solid var(--ink-3);background:var(--paper);color:var(--ink);cursor:pointer;padding:1px 8px;font-size:calc(13px * var(--ui,1));font-weight:700;line-height:1.3;border-radius:4px;font-family:var(--sans)} .note .nvb:hover{border-color:var(--ink);background:var(--paper-2)}
 .note textarea{width:100%;border:0;border-bottom:1px dashed var(--rule);background:transparent;resize:none;padding:2px 0;line-height:1.5;min-height:22px;font-size:calc(14.5px * var(--ui,1));overflow:hidden}
 .note textarea:focus{border-bottom-color:var(--focus);outline:none}
@@ -734,12 +734,40 @@ function myEmo(){ let loc={}; try { loc=JSON.parse(localStorage.getItem(prefKey(
 function quickReacts(){ const emo=myEmo(); const mine=Object.keys(emo).filter(e=>!REACTS_FIXED.includes(e)).sort((a,b)=>(emo[b].n-emo[a].n)||(emo[b].t-emo[a].t)).slice(0,3); const fill=REACTS_DEF.filter(e=>!mine.includes(e)); return [...REACTS_FIXED, ...mine, ...fill].slice(0,6); }
 const REACTS=['👍','✅','❤️','👀','😂','🙏'];   // 순서 기준(요약 표시용)
 const REACTS_MORE=['🎉','🔥','💯','👏','🙌','✨','🚀','🤔','😮','😢','😅','🙂','❌','⭐','💡','📌','☕','🫡'];
+const RCOLS=7, RROWS=5;   // 이모티콘 판: 한 쪽에 7열 × 5줄 (CSS repeat(7,1fr) 와 맞출 것)
+const REACT_BOARD=[
+  '😀','😄','😁','😆','😅','😂','🤣','🙂','😉','😊','😍','🥰','😘','🤗','🤩','🤔','😐','🙄','😏','😮','😲','😴','😌','😜','😢','😭','😱','😤','😰','😳','🤯','🥳','🥺','😬','🫠',
+  '😎','🤓','🧐','😶','🤐','👍','👎','👌','✌️','🤞','🤝','👏','🙌','🙏','💪','✋','👋','☝️','👉','🫡','🤷','👀','❤️','🧡','💛','💚','💙','💜','🖤','🤍','💔','💖','✨','⭐','🌟',
+  '💫','🔥','💯','✅','❌','⭕','❗','❓','‼️','⚠️','🚫','📌','📎','📝','✏️','📖','📚','🔍','💡','🎯','🏆','🎉','🎊','🎁','☕','🍀','🚀','⏰','🔔','💬','🗓️','📊','📈','🧩','🛠️'];
+function closeRadd(w){ if (!w) return; clearTimeout(w._t); w.classList.remove('open','ext','pick','down'); w._pin=false; const mn=w.querySelector('.rmenu'); if (mn) mn.style.left=''; const s=w.querySelector('.rboard button.sel'); if (s) s.classList.remove('sel'); }
+function boardCells(w){ return [...w.querySelectorAll('.rboard button')]; }
+function tipBoard(w){ const t=w.querySelector('.rtip'); if (!t) return; const inp=w.querySelector('.rin'); const sel=w.querySelector('.rboard button.sel');
+  t.textContent = sel ? 'Enter로 직접 칸에 넣기' : '입력하려면 Enter를 누르세요'; t.classList.toggle('on', !sel && !!(inp && inp.value.trim())); }
+function boardPage(w, pg){ const cs=boardCells(w); const per=RCOLS*RROWS; const last=Math.max(0, Math.ceil(cs.length/per)-1); pg=Math.max(0, Math.min(last, pg)); w._pg=pg;
+  cs.forEach((b,i)=>{ b.style.display = (Math.floor(i/per)===pg) ? '' : 'none'; });
+  const lab=w.querySelector('.rpg .pn'); if (lab) lab.textContent=(pg+1)+' / '+(last+1); return pg; }
+function selBoard(w, k){ const cs=boardCells(w); cs.forEach(b=>b.classList.remove('sel')); if (k>=0 && cs[k]){ boardPage(w, Math.floor(k/(RCOLS*RROWS))); cs[k].classList.add('sel'); } tipBoard(w); }
+function placeMenu(w){ const m=w.querySelector('.rmenu'); if (!m) return; w.classList.remove('down'); m.style.left='0px';
+  let r=m.getBoundingClientRect(); if (r.top < 6 && r.height < window.innerHeight-24){ w.classList.add('down'); r=m.getBoundingClientRect(); }
+  let dx=0; const over=r.right-(window.innerWidth-10); if (over>0) dx=-over; if (r.left+dx < 6) dx=6-r.left;
+  if (dx) m.style.left=Math.round(dx)+'px'; }
+function ensureBoard(w){ let b=w.querySelector('.rboard'); if (b) return b; const menu=w.querySelector('.rmenu'); if (!menu) return null;
+  b=document.createElement('span'); b.className='rboard'; b.innerHTML=REACT_BOARD.map(e=>`<button type="button" tabindex="-1" data-e="${e}">${e}</button>`).join(''); menu.appendChild(b);
+  const pg=document.createElement('span'); pg.className='rpg'; pg.innerHTML=`<button type="button" tabindex="-1" data-d="-1" title="앞쪽">‹</button><span class="pn"></span><button type="button" tabindex="-1" data-d="1" title="다음 쪽">›</button>`; menu.appendChild(pg);
+  const inp=w.querySelector('.rin');
+  b.querySelectorAll('button').forEach(btn=>{ btn.addEventListener('mousedown', e=>e.preventDefault());
+    btn.addEventListener('click', e=>{ e.stopPropagation(); if (inp){ inp.value=btn.dataset.e; inp.focus(); } selBoard(w, -1); }); });
+  pg.querySelectorAll('button').forEach(btn=>{ btn.addEventListener('mousedown', e=>e.preventDefault());
+    btn.addEventListener('click', e=>{ e.stopPropagation(); if (inp) inp.focus(); selBoard(w, -1); boardPage(w, (w._pg||0) + (+btn.dataset.d)); }); });
+  boardPage(w, 0);
+  return b; }
+function openBoard(w){ clearTimeout(w._t); ensureBoard(w); w.classList.add('open','ext','pick'); w._pin=true; tipBoard(w); requestAnimationFrame(()=>placeMenu(w)); }
 const reactKeys = r => { const ks=Object.keys(r||{}).filter(e=>(r[e]||[]).length); return [...REACTS.filter(e=>ks.includes(e)), ...ks.filter(e=>!REACTS.includes(e))]; };
 function reactsHtml(m, i){
   const r=m.reacts||{}; const mine=me?me.id:'';
   const chips=reactKeys(r).map(e=>{ const ids=r[e]; const names=ids.map(id=>{ const u=(cfg.users||[]).find(x=>x.id===id); return u?u.name:id; }).join(', '); return `<button class="rc ${ids.includes(mine)?'on':''}" data-i="${i}" data-e="${esc(e)}" title="${esc(names)}">${esc(e)} ${ids.length}</button>`; }).join('');
   const quick=quickReacts(); const more=[...REACTS_MORE, ...REACTS_DEF].filter(e=>!quick.includes(e));
-  return `<div class="reacts">${chips}${me?`<span class="radd"><button class="rplus" data-i="${i}" title="반응 남기기">＋</button><span class="rmenu"><span class="rrow">${quick.map(e=>`<button data-i="${i}" data-e="${e}">${e}</button>`).join('')}<button class="rmore" title="더 보기">…</button></span><span class="rrow rext">${more.map(e=>`<button data-i="${i}" data-e="${e}">${e}</button>`).join('')}<input class="rin" data-i="${i}" maxlength="4" placeholder="직접" title="이모티콘을 직접 넣고 Enter (윈도: Win+.)"></span></span></span>`:''}</div>`;
+  return `<div class="reacts">${chips}${me?`<span class="radd"><button class="rplus" data-i="${i}" title="반응 남기기">＋</button><span class="rmenu"><span class="rrow">${quick.map(e=>`<button data-i="${i}" data-e="${e}">${e}</button>`).join('')}<button class="rmore" title="더 보기">…</button></span><span class="rrow rext">${more.map(e=>`<button data-i="${i}" data-e="${e}">${e}</button>`).join('')}</span><span class="rcus"><input class="rin" data-i="${i}" maxlength="8" placeholder="직접" title="눌러서 이모티콘 판 열기 · 방향키로 골라 Enter"><span class="rtip">입력하려면 Enter를 누르세요</span></span></span></span>`:''}</div>`;
 }
 function toggleReact(c, i, e){
   if (!me) return; const m=c.marks[i]; if (!m) return; m.reacts=m.reacts||{}; const ids=m.reacts[e]||[]; const k=ids.indexOf(me.id);
@@ -751,16 +779,33 @@ function toggleReact(c, i, e){
 }
 function bindReacts(root, c){
   root.querySelectorAll('.rc').forEach(b=>b.addEventListener('click', ()=>toggleReact(c, +b.dataset.i, b.dataset.e)));
-  root.querySelectorAll('.rplus').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const w=b.parentElement; document.querySelectorAll('.radd.open').forEach(x=>{ if (x!==w) x.classList.remove('open'); }); w.classList.toggle('open'); w._pin=w.classList.contains('open'); if (!w._pin) w.classList.remove('ext'); }));
-  root.querySelectorAll('.radd').forEach(w=>{ w.addEventListener('mouseenter', ()=>{ clearTimeout(w._t); w.classList.add('open'); }); w.addEventListener('mouseleave', ()=>{ if (w._pin || w.contains(document.activeElement)) return; clearTimeout(w._t); w._t=setTimeout(()=>{ w.classList.remove('open'); w.classList.remove('ext'); }, 500); }); });
-  root.querySelectorAll('.rmenu button[data-e]').forEach(b=>b.addEventListener('click', ()=>{ const w=b.closest('.radd'); w.classList.remove('open','ext'); w._pin=false; toggleReact(c, +b.dataset.i, b.dataset.e); }));
-  root.querySelectorAll('.rmore').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const w=b.closest('.radd'); w.classList.add('open'); w.classList.toggle('ext'); const inp=w.querySelector('.rin'); if (w.classList.contains('ext') && inp) inp.focus(); }));
-  root.querySelectorAll('.rin').forEach(inp=>{ // 「직접」 칸에 커서가 있는 동안(윈도 이모티콘 창을 띄워도) 닫히지 않게
-    inp.addEventListener('focus', ()=>{ const w=inp.closest('.radd'); clearTimeout(w._t); w._pin=true; w.classList.add('open','ext'); });
-    inp.addEventListener('blur', ()=>{ const w=inp.closest('.radd'); setTimeout(()=>{ if (document.activeElement===inp) return; w._pin=false; if (!w.matches(':hover')){ w.classList.remove('open','ext'); } }, 300); });
-    inp.addEventListener('keydown', e=>{ if (e.key==='Enter'){ e.preventDefault(); const v=inp.value.trim(); if (!v || !/\p{Extended_Pictographic}/u.test(v)) { toast('이모티콘만 넣을 수 있습니다'); return; } inp.value=''; inp.closest('.radd').classList.remove('open','ext'); inp.closest('.radd')._pin=false; toggleReact(c, +inp.dataset.i, v); } if (e.key==='Escape'){ inp.closest('.radd').classList.remove('open','ext'); } }); inp.addEventListener('click', e=>e.stopPropagation()); });
+  root.querySelectorAll('.rplus').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const w=b.parentElement; document.querySelectorAll('.radd.open').forEach(x=>{ if (x!==w) closeRadd(x); }); if (w.classList.contains('open')) closeRadd(w); else { w.classList.add('open'); w._pin=true; requestAnimationFrame(()=>placeMenu(w)); } }));
+  root.querySelectorAll('.radd').forEach(w=>{ w.addEventListener('mouseenter', ()=>{ clearTimeout(w._t); w.classList.add('open'); requestAnimationFrame(()=>placeMenu(w)); }); w.addEventListener('mouseleave', ()=>{ if (w._pin || w.contains(document.activeElement)) return; clearTimeout(w._t); w._t=setTimeout(()=>closeRadd(w), 500); }); });
+  root.querySelectorAll('.rmenu .rrow button[data-e]').forEach(b=>b.addEventListener('click', ()=>{ const w=b.closest('.radd'); closeRadd(w); toggleReact(c, +b.dataset.i, b.dataset.e); }));
+  root.querySelectorAll('.rmore').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const w=b.closest('.radd'); w.classList.add('open'); w.classList.toggle('ext'); w._pin=true; if (!w.classList.contains('ext')) w.classList.remove('pick'); requestAnimationFrame(()=>placeMenu(w)); }));
+  root.querySelectorAll('.rin').forEach(inp=>{ const w=inp.closest('.radd');   // 누르면 이모티콘 판 · 방향키로 고르고 Enter 로 이 칸에 · 다시 Enter 로 달기
+    inp.addEventListener('focus', ()=>openBoard(w));
+    inp.addEventListener('click', e=>{ e.stopPropagation(); openBoard(w); });
+    inp.addEventListener('input', ()=>tipBoard(w));
+    inp.addEventListener('blur', ()=>{ setTimeout(()=>{ if (document.activeElement===inp) return; w._pin=false; if (w.matches(':hover')) w.classList.remove('pick'); else closeRadd(w); }, 300); });
+    inp.addEventListener('keydown', e=>{
+      const cells=boardCells(w);
+      if (cells.length && ['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(e.key)){
+        e.preventDefault(); let k=cells.findIndex(b=>b.classList.contains('sel'));
+        if (k<0) k=0; else k += (e.key==='ArrowRight'?1 : e.key==='ArrowLeft'?-1 : e.key==='ArrowDown'?RCOLS : -RCOLS);
+        selBoard(w, Math.max(0, Math.min(cells.length-1, k))); return;
+      }
+      if (e.key==='Enter'){ e.preventDefault();
+        const sel=w.querySelector('.rboard button.sel');
+        if (sel){ inp.value=sel.dataset.e; selBoard(w, -1); return; }
+        const v=inp.value.trim(); if (!v || !/\p{Extended_Pictographic}/u.test(v)) { toast('이모티콘만 넣을 수 있습니다'); return; }
+        inp.value=''; closeRadd(w); toggleReact(c, +inp.dataset.i, v); return;
+      }
+      if (e.key==='Escape'){ e.preventDefault(); if (w.classList.contains('pick')){ selBoard(w, -1); w.classList.remove('pick','down'); } else closeRadd(w); }
+    });
+  });
 }
-document.addEventListener('click', e=>{ if (!e.target.closest || !e.target.closest('.radd')) document.querySelectorAll('.radd.open').forEach(x=>{ x.classList.remove('open','ext'); x._pin=false; }); });
+document.addEventListener('click', e=>{ if (!e.target.closest || !e.target.closest('.radd')) document.querySelectorAll('.radd.open').forEach(x=>closeRadd(x)); });
 // 버전 칩: 현재 N버전 / 옛 버전 읽기 전용, 버전이 둘 이상이면 고르기
 function verChip(c){
   const vs=c.versions||[]; const cur=vs.length+1; const n=roVer||cur;
