@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T11:43:05+09:00">
+<meta name="build" content="2026-09-20T11:46:20+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -486,6 +486,14 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
   .head .hbtns button{display:none}
   .head .hint{display:none}
   .head h2{font-size:calc(21px * var(--ui,1))}
+  /* 문서별 ⋯ 는 마우스를 올려야 나타났다 — 손가락에는 올림이 없다 */
+  .cases li .more{opacity:1}
+}
+/* iOS 는 16px 미만 입력칸에 커서가 가면 화면을 확대한다 — 제 크기를 따로 정해 둔 칸까지 전부 */
+@media (max-width:760px){
+  .pager input,.rta,.rmenu .rin,.note textarea,.tcol textarea,
+  .ask .box input[type=password],.ask .box input[type=text],
+  .ask .box.users td input,.ask .box.users td select,.ask .box.users .newrow input,.ask .box.users .newrow select{font-size:16px}
 }
 </style>
 </head>
@@ -3002,7 +3010,7 @@ function showLinkMenu(x, y, items){
     if (it.sep){ const d=document.createElement('div'); d.className='sep'; m.appendChild(d); return; }
     if (!it.f){ const d=document.createElement('div'); d.className='lab'; d.textContent=it.l; m.appendChild(d); return; }
     const b=document.createElement('button'); b.textContent=it.l; b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); }); b.addEventListener('click', ()=>{ close(); it.f(); }); m.appendChild(b); });
-  const close=()=>{ m.remove(); document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+  const close=()=>{ m.remove(); document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
   const onDown=e=>{ if (!m.contains(e.target)) close(); }; const onKey=e=>{ if (e.key==='Escape') close(); };
   setTimeout(()=>{ document.addEventListener('pointerdown', onDown); document.addEventListener('keydown', onKey); }, 0);
   document.body.appendChild(m);
@@ -3012,7 +3020,7 @@ function showLinkMenu(x, y, items){
 }
 
 // ── 폰에서 접은 단추들을 ⋯ 메뉴로 (숨긴 단추를 그대로 눌러 주므로 기능이 두 벌이 되지 않는다) ──
-const isMob = ()=>window.innerWidth<=760;
+function isMob(){ return window.innerWidth<=760; }
 const FOLD_LAB={uiMinus:'화면 글자 작게', uiReset:'화면 글자 크기 100%로', uiPlus:'화면 글자 크게', zoomOut:'문서 축소', zoomReset:'문서 배율 100%로', zoomIn:'문서 확대', btnList:'홈 (문서 목록)', btnReload:'새로고침', undoBtn:'되돌리기', redoBtn:'다시 실행', fabTop:'맨 위로', fabBottom:'맨 아래로'};
 function foldItems(scope, order){
   const out=[];
@@ -3027,8 +3035,8 @@ function foldItems(scope, order){
 }
 function openFold(btn, scope, order, head){
   const r=btn.getBoundingClientRect(); const items=foldItems(scope, order);
+  if (!items.length){ toast('접힌 단추가 없습니다'); return; }
   if (head) items.unshift({l:head, f:null}, {sep:true});
-  if (items.length<=2){ toast('접힌 단추가 없습니다'); return; }
   showLinkMenu(Math.max(8, r.right-220), r.bottom+4, items);
 }
 // ══════════════ 공통 ══════════════
