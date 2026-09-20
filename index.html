@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T15:24:49+09:00">
+<meta name="build" content="2026-09-20T15:25:44+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -2669,7 +2669,7 @@ async function loadTextFile(file, target, msgEl){
 
 // ══════════════ 깃헙 저장 + 암호화 ══════════════
 // 파일 배치: config.json(열쇠 봉투) · docs/index.json(목록 메타) · docs/{id}.json(메타+암호문) · docs/{id}.pdf.enc(PDF 암호문)
-const GH = {owner:'Sunnyhill-K', repo:'redpen', branch:'main'};
+const GH = {owner:'Sunnyhill-K', repo:'sndocs', branch:'main'};   // 2026-09-20 저장소 이름 redpen → sndocs (주소만 바뀜)
 let role=null, K=null, Kraw=null, token=null, cfg=null;
 const te=new TextEncoder(), td=new TextDecoder();
 function b64(u8){ let out=''; for (let i=0;i<u8.length;i+=0x8000) out+=String.fromCharCode.apply(null, u8.subarray(i,i+0x8000)); return btoa(out); }
