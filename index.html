@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-20T23:23:46+09:00">
+<meta name="build" content="2026-09-21T23:25:52+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -322,6 +322,8 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
 .pop button:hover{background:rgba(127,127,127,.3)}
 .pop button.d{color:#F0776E} .pop button.r{color:#F0D060} .pop button.m{color:#7FC49A}
 .pop kbd{font-family:var(--mono);font-size:calc(10px * var(--ui,1));opacity:.7;margin-left:2px} .popsel{display:none}
+.btn kbd{font-family:var(--mono);font-size:calc(10px * var(--ui,1));opacity:.62;margin-left:3px;font-weight:400}
+.eyebrow .own,.cases li .own{color:var(--nc,var(--ink-3));font-weight:700}
 .pdfmsg{padding:40px;text-align:center;color:var(--ink-3);border:1px dashed var(--rule)}
 
 /* 메모 목록만 보기 */
@@ -537,7 +539,7 @@ body.area-mode .page{cursor:crosshair;user-select:none} body.area-mode .textLaye
 @media (max-width:760px){
   .pop{position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;transform:none!important;z-index:16;border-radius:12px 12px 0 0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));justify-content:center;gap:10px}
   .pop button{font-size:16px;padding:12px 18px;min-height:48px;border:1px solid rgba(255,255,255,.25);border-radius:8px}
-  .pop kbd{display:none}
+  .pop kbd,.btn kbd{display:none}
   .pop{flex-wrap:wrap} .pop .popsel{display:block;width:100%;text-align:center;color:#fff;opacity:.85;font-size:14px;line-height:1.4;padding:0 6px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .toast{z-index:60}
 }
@@ -615,7 +617,7 @@ function renderList(){
   if (sd){ sd.textContent = sortMode==='old' ? '오래된순' : '최신순'; sd.classList.toggle('on', sortMode==='new'||sortMode==='old'); }
   if (sn){ sn.textContent = sortMode==='nameDesc' ? '이름 ZA' : '이름 AZ'; sn.classList.toggle('on', sortMode==='nameAsc'||sortMode==='nameDesc'); }
   [...cases].filter(canSee).sort(cmp).forEach(c=>{
-    const li=document.createElement('li'); li.className = (view.mode==='case' && view.id===c.id) ? 'on' : ''; li.title = c.title||''; li.dataset.id=c.id;
+    const li=document.createElement('li'); li.className = (view.mode==='case' && view.id===c.id) ? 'on' : ''; li.title = [c.title||'', c.owner ? '올린 사람: '+userLabel('', c.owner) : ''].filter(Boolean).join('\n'); li.dataset.id=c.id;
     if (selMode) li.classList.add('sel');
     li.innerHTML = (selMode ? `<input type="checkbox" class="ck" ${selIds.has(c.id)?'checked':''}>` : '') + (artifactNs && !selMode ? `<button class="more" title="정보 수정 · 삭제">…</button>` : '') + `<span class="t">${esc(c.title||'(제목 없음)')}</span><span class="m"><span>${esc(fmtWhen(c))}</span><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF':(c.type==='word'?'Word':(isHtmlDoc(c)?'HTML':'텍스트'))}</span>${(c.ver||1)>1?`<span class="chip ver" title="버전 ${c.ver}개">v${c.ver}</span>`:''}${c.lock?'<span title="문서 비밀번호 있음">🔒</span>':''}<span>${fmtN(caseCount(c))}곳</span></span>`;
     li.addEventListener('click', e=>{
@@ -791,7 +793,7 @@ function renderHelp(main){
 // ══════════════ 사건 머리(공통) ══════════════
 function headHtml(c, statsHtml, toolsHtml){
   const isDraft = !!view.draft;
-  return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':(c.type==='word'?'Word':(isHtmlDoc(c)?'HTML':'텍스트'))}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}${Array.isArray(c.vis)?`<span class="chip" title="지정된 뷰어만 봄">👁 ${c.vis.length}명 지정</span>`:''}<span>${esc(c.client||'')}</span><span>${esc(fmtWhen(c))}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
+  return `<div class="eyebrow"><span class="chip ${isPdf(c)?'pdf':''}">${isPdf(c)?'PDF 문서':(c.type==='word'?'Word':(isHtmlDoc(c)?'HTML':'텍스트'))}</span>${c.lock?'<span class="chip" title="문서 비밀번호 있음">🔒 잠김</span>':''}${Array.isArray(c.vis)?`<span class="chip" title="지정된 뷰어만 봄">👁 ${c.vis.length}명 지정</span>`:''}${c.client?`<span title="이 글을 보낸 사람">의뢰인 ${esc(c.client)}</span>`:''}${c.owner?`<span class="own" title="이 문서를 올린 사람" style="--nc:${userColor('', c.owner)||'var(--ink-3)'}">올린이 ${esc(userLabel('', c.owner))}</span>`:''}<span>${esc(fmtWhen(c))}</span>${isDraft?'<span class="chip" style="color:var(--del)">저장 전</span>':''}</div>
     <h2>${esc(c.title||'(제목 없음)')}<span class="hbtns">${verChip(c)}${editable() ? `<button class="btn small" id="editCase">정보 수정</button><button class="btn small" id="newVer" title="고친 글을 새 버전으로 올립니다. 이전 버전과 그 메모는 그대로 남고, 새 버전은 빈 메모로 시작합니다">이 문서 새 버전 올리기</button>` : ''}${(c.versions||[]).length ? `<button class="btn small" id="verCmp" title="두 버전을 문장 단위로 나란히 놓고 바뀐 곳만 칠합니다">버전 비교</button>` : ''}${roVer ? `<button class="btn small primary" id="verBack">현재 버전으로</button>` : ((editable() && (c.versions||[]).length) ? `<button class="btn small danger" id="verDrop" title="지금 버전을 지우고 직전 버전으로 되돌립니다">현재 버전 삭제</button>` : '')}${isPdf(c) ? `<button class="btn small" id="dlPdf" title="저장된 원본 PDF 를 그대로 내려받습니다">원본 PDF 내려받기</button>` : ''}</span></h2>
     <div class="stats">${statsHtml}</div>
     <div class="tools">${toolsHtml}
@@ -810,7 +812,7 @@ function fmtTs(ts){ if (!ts) return ''; const d=new Date(ts); if (isNaN(d)) retu
 function repliesHtml(m, i){
   const rs=m.replies||[]; const mine=me?me.id:''; const admin=me&&me.role==='admin';
   const items=rs.map((r,k)=>{ const col=userColor(r.by, r.byId); const own=r.byId===mine; return `<div class="reply" data-k="${k}"><div class="rh"><span class="who" style="--nc:${col||'var(--ink-2)'}">${esc(userLabel(r.by, r.byId)||r.by||'')}</span><span class="rt">${fmtTs(r.ts)}${r.mt&&r.mt!==r.ts?' (수정됨)':''}</span><span class="spacer"></span>${(own&&editable())?`<button class="rl" data-act="edit" data-i="${i}" data-k="${k}">수정</button>`:''}${((own||admin)&&editable())?`<button class="rl" data-act="del" data-i="${i}" data-k="${k}">삭제</button>`:''}</div><div class="rb">${md(r.t||'')}</div></div>`; }).join('');
-  return `<div class="replies">${items}${(me&&editable())?`<button class="rl radd2" data-i="${i}">답글${rs.length?' '+rs.length:''}</button><div class="rform" hidden><textarea class="rta" rows="2" placeholder="답글 — Ctrl+Enter 저장 · Enter 줄바꿈 · Esc 취소"></textarea><div class="rbtns"><button class="btn small primary" data-act="save">남기기</button><button class="btn small" data-act="cancel">취소</button></div></div>`:''}</div>`;
+  return `<div class="replies">${items}${(me&&editable())?`<button class="rl radd2" data-i="${i}">답글${rs.length?' '+rs.length:''}</button><div class="rform" hidden><textarea class="rta" rows="2" placeholder="답글 — Ctrl+Enter 저장 · Enter 줄바꿈 · Esc 취소"></textarea><div class="rbtns"><button class="btn small primary" data-act="save">남기기 <kbd>Ctrl+↵</kbd></button><button class="btn small" data-act="cancel">취소 <kbd>Esc</kbd></button></div></div>`:''}</div>`;
 }
 function bindReplies(root, c){
   const rerender=(i)=>{ const m=c.marks[i]; const n=document.getElementById('note'+(i+1)); if (!n) return; const old=n.querySelector('.replies'); if (old) old.outerHTML=repliesHtml(m, i); bindReplies(n, c); requestAnimationFrame(layoutNotes); };
@@ -878,7 +880,7 @@ function bindReacts(root, c){
   root.querySelectorAll('.rc').forEach(b=>b.addEventListener('click', ()=>toggleReact(c, +b.dataset.i, b.dataset.e)));
   root.querySelectorAll('.rplus').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const w=b.parentElement; document.querySelectorAll('.radd.open').forEach(x=>{ if (x!==w) closeRadd(x); }); if (w.classList.contains('open')) closeRadd(w); else { w.classList.add('open'); w._pin=true; requestAnimationFrame(()=>placeMenu(w)); } }));
   root.querySelectorAll('.radd').forEach(w=>{ if (isMob()) return;   // 폰은 ＋ 를 눌러서만 연다
-    w.addEventListener('mouseenter', ()=>{ clearTimeout(w._t); w.classList.add('open'); requestAnimationFrame(()=>placeMenu(w)); }); w.addEventListener('mouseleave', ()=>{ if (w._pin || w.contains(document.activeElement)) return; clearTimeout(w._t); w._t=setTimeout(()=>closeRadd(w), 500); }); });
+    w.addEventListener('mouseenter', ()=>{ clearTimeout(w._t); w._t=setTimeout(()=>{ w.classList.add('open'); requestAnimationFrame(()=>placeMenu(w)); }, 1000); }); w.addEventListener('mouseleave', ()=>{ if (w._pin || w.contains(document.activeElement)) return; clearTimeout(w._t); w._t=setTimeout(()=>closeRadd(w), 500); }); });
   root.querySelectorAll('.rmenu .rrow button[data-e]').forEach(b=>b.addEventListener('click', ()=>{ const w=b.closest('.radd'); closeRadd(w); toggleReact(c, +b.dataset.i, b.dataset.e); }));
   root.querySelectorAll('.rmore').forEach(b=>b.addEventListener('click', e=>{ e.stopPropagation(); const w=b.closest('.radd'); w.classList.add('open'); w.classList.toggle('ext'); w._pin=true; if (!w.classList.contains('ext')) w.classList.remove('pick'); requestAnimationFrame(()=>placeMenu(w)); }));
   root.querySelectorAll('.rin').forEach(inp=>{ const w=inp.closest('.radd');   // 누르면 이모티콘 판 · 방향키로 고르고 Enter 로 이 칸에 · 다시 Enter 로 달기
@@ -1844,7 +1846,7 @@ function renderPdfNotes(c){
     <div class="note ${m.kind}" data-h="${h}" id="note${h}"><div class="n"><span class="nn" title="원문의 이 자리로">${h}</span><span class="chip">${KIND[m.kind]}</span>${m.by?`<span class="who" title="작성자" style="--nc:${userColor(m.by, m.byId)||'var(--ink-2)'}">${esc(userLabel(m.by, m.byId))}</span>`:''}${i===c.marks.length-1?'<span class="chip last">마지막</span>':''}${m.lost?'<span class="chip lostc" title="본문을 고치면서 이 구절이 사라져 표시할 자리가 없습니다. 글은 남아 있습니다.">자리 잃음</span>':''}${m.from?`<span class="chip ver" title="${m.from}버전의 ${m.fromNo||''}번 메모를 이월">${m.from}버전에서</span>`:''}${m.edited?`<span class="chip edm" title="${esc(fmtTs(m.edited))} 수정">수정됨</span>`:''}<span class="k">${esc(m.text)}</span><span class="nv"><button class="nvb" data-d="-1" title="바로 위 메모 (Alt+↑)" tabindex="-1">↑</button><button class="nvb" data-d="1" title="바로 아래 메모 (Alt+↓)" tabindex="-1">↓</button></span></div>
     ${(()=>{ const ed=canEdit && m._editing; const canDel=canEdit && (!m.byId || (me && (m.byId===me.id || me.role==='admin')));
       const body = ed
-        ? `${m.kind==='rep' ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : ''}${mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', 'txt', m.segs)}<div class="mbtns"><button class="btn small primary" data-act="msave" data-i="${i}">저장</button><button class="btn small" data-act="mcancel" data-i="${i}">취소</button><span class="hint">Ctrl+Enter 저장 · Esc 취소</span></div>`
+        ? `${m.kind==='rep' ? `<textarea rows="1" class="after" data-i="${i}" data-f="after" placeholder="이렇게 바꿈">${esc(m.after||'')}</textarea>` : ''}${mdField(m.reason||'', `data-i="${i}" data-f="reason"`, m.kind==='memo'?'메모':'왜 고쳤는지', 'txt', m.segs)}<div class="mbtns"><button class="btn small primary" data-act="msave" data-i="${i}">저장 <kbd>Ctrl+↵</kbd></button><button class="btn small" data-act="mcancel" data-i="${i}">취소 <kbd>Esc</kbd></button></div>`
         : `${m.kind==='rep' ? `<div class="txt after">${esc(m.after||'')}</div>` : ''}<div class="txt">${md(m.reason||'', m.segs)}</div>${canEdit?`<div class="macts"><button class="rl" data-act="medit" data-i="${i}">수정</button>${canDel?`<button class="rl" data-act="mdel" data-i="${i}">삭제</button>`:''}</div>`:''}`;
       return body; })()}${reactsHtml(m, i)}${repliesHtml(m, i)}</div>`; }).join('');
   notes.querySelectorAll('.nn').forEach(b=>b.addEventListener('click', ()=>{ const n=b.closest('.note'); if (n){ jumpCur=n.dataset.h; if (pdfListMode){ pdfListMode=false; textRevMode=false; refreshPdfHead(c); setTimeout(()=>jumpToHunk(+n.dataset.h), 60); } else jumpToHunk(+n.dataset.h); } }));
