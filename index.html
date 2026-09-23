@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SN Docs (Beta)</title>
-<meta name="build" content="2026-09-24T00:40:10+09:00">
+<meta name="build" content="2026-09-24T00:59:30+09:00">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 26 26%22 fill=%22none%22%3E%3Cpath d=%22M6.5 3.5h9l5 5v14a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-18a1 1 0 0 1 1-1z%22 fill=%22#fff%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M15.5 3.5v5h5%22 stroke=%22#1F2430%22 stroke-width=%221.7%22 stroke-linejoin=%22round%22/%3E%3Cpath d=%22M9 13h8M9 17h8%22 stroke=%22#8A909B%22 stroke-width=%221.5%22 stroke-linecap=%22round%22/%3E%3Cpath d=%22M8 20.5c1.5-1.4 3-1.4 4.5 0s3 1.4 4.5 0%22 stroke=%22#C4342D%22 stroke-width=%221.8%22 stroke-linecap=%22round%22/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -110,6 +110,11 @@ a{color:var(--ins)}
 .shell.nrail .railbtns{align-items:center}
 .selbar{padding:0 12px 8px;display:flex;gap:6px}
 .imenu{position:fixed;z-index:30;background:var(--paper);border:1px solid var(--rule);border-radius:4px;box-shadow:0 6px 18px rgba(0,0,0,.18);display:flex;flex-direction:column;min-width:140px;padding:4px;max-height:min(70vh,520px);overflow-y:auto} .imenu .lab{padding:6px 10px 5px;color:var(--ink-3);font-size:calc(11.5px * var(--ui,1));font-family:var(--sans)} .imenu .lab+.lab{padding-top:0} .imenu .sep{border-top:1px solid var(--rule);margin:3px 0}
+.imenu .mrow{display:flex;gap:4px;padding:2px 4px}
+.imenu .mrow button{flex:1;text-align:center;padding:9px 4px;border:1px solid var(--rule);border-radius:4px;font-variant-numeric:tabular-nums}
+.imenu .mrow button.mid{flex:1.5;color:var(--ink-3)}
+.imenu .mrow button:active{background:var(--paper-3)}
+@media (max-width:760px){ .imenu .mrow button{padding:12px 4px;font-size:calc(15px * var(--ui,1))} }
 .imenu button{border:0;background:transparent;text-align:left;padding:7px 10px;border-radius:3px;cursor:pointer;white-space:normal;line-height:1.4} .imenu{max-width:min(520px,92vw)}
 .imenu button:hover{background:var(--paper-2)}
 .imenu button.d{color:var(--del)}
@@ -3411,6 +3416,14 @@ function showLinkMenu(x, y, items){
   const m=document.createElement('div'); m.className='imenu'; m.style.left=Math.min(x, window.innerWidth-160)+'px'; m.style.top=y+'px';
   items.forEach(it=>{
     if (it.sep){ const d=document.createElement('div'); d.className='sep'; m.appendChild(d); return; }
+    if (it.row){   // 눌러도 메뉴가 닫히지 않는 한 줄(배율처럼 여러 번 눌러야 하는 것)
+      const d=document.createElement('div'); d.className='mrow';
+      it.row.forEach(x=>{ const b=document.createElement('button'); b.textContent=x.l; if (x.cls) b.className=x.cls;
+        b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); });
+        b.addEventListener('click', e=>{ e.stopPropagation(); x.f(); if (it.sync) it.sync(d); });
+        d.appendChild(b); });
+      m.appendChild(d); if (it.sync) it.sync(d); return;
+    }
     if (!it.f){ const d=document.createElement('div'); d.className='lab'; d.textContent=it.l; m.appendChild(d); return; }
     const b=document.createElement('button'); b.textContent=it.l; b.addEventListener('mousedown', e=>{ e.preventDefault(); e.stopPropagation(); }); b.addEventListener('click', ()=>{ close(); it.f(); }); m.appendChild(b); });
   const close=()=>{ m.remove(); document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
@@ -3589,10 +3602,33 @@ function askPcOnly(name, why, go){
   ask(name+' — '+why, '그래도 폰에서 하기').then(ok=>{ if (ok) go(); });
 }
 const FOLD_LAB={uiMinus:'화면 글자 작게', uiReset:'화면 글자 크기 100%로', uiPlus:'화면 글자 크게', zoomOut:'문서 축소', zoomReset:'문서 배율 100%로', zoomIn:'문서 확대', btnList:'홈 (문서 목록)', btnReload:'새로고침', undoBtn:'되돌리기', redoBtn:'다시 실행', fabTop:'맨 위로', fabBottom:'맨 아래로'};
+const ZOOM_IDS=new Set(['zoomOut','zoomReset','zoomIn','uiMinus','uiReset','uiPlus']);
+// 배율은 한 번에 끝나는 일이 아니라 여러 번 누르는 일이다. 낱개 항목으로 두면 누를 때마다 메뉴가 닫혀
+// 폰에서 「⋯ → 확대 → ⋯ → 확대」를 되풀이해야 했다 → 닫히지 않는 한 줄로 묶는다.
+function zoomRow(scope){
+  const has=id=>{ const b=scope.querySelector('#'+id); return b && !b.offsetParent ? b : null; };   // 접혀 있을 때만
+  const zi=has('zoomIn');
+  if (zi){
+    const c=(view.draft || cases.find(x=>x.id===view.id)); if (!c) return null;   // cur() 는 지역 함수라 여기선 못 쓴다
+    const now=()=>Math.round((isPdf(c)?zoom.pdf:zoom.text)*100)+'%';
+    return {head:'문서 크기', row:[
+      {l:'−', f:()=>setZoom(c,-0.1)},
+      {l:now(), cls:'mid', f:()=>setZoom(c,0,true)},
+      {l:'+', f:()=>setZoom(c,0.1)}
+    ], sync:d=>{ const b=d.querySelector('.mid'); if (b) b.textContent=now(); }};
+  }
+  if (has('uiPlus')) return {head:'화면 글자 크기', row:[
+      {l:'가−', f:()=>setUi(-0.1)},
+      {l:Math.round(uiScale*100)+'%', cls:'mid', f:()=>setUi(0,true)},
+      {l:'가+', f:()=>setUi(0.1)}
+    ], sync:d=>{ const b=d.querySelector('.mid'); if (b) b.textContent=Math.round(uiScale*100)+'%'; }};
+  return null;
+}
 function foldItems(scope, order){
   const out=[];
   scope.querySelectorAll('button').forEach(b=>{
     if (b.classList.contains('mobonly') || b.hidden || b.offsetParent) return;   // 화면에 보이는 것·⋯ 자신은 뺀다
+    if (ZOOM_IDS.has(b.id)) return;                                              // 배율은 아래에서 한 줄로 묶는다
     if (b.id==='saveCase' && $('#tSave')) return;                                   // 저장은 상단 바에 있으니 ⋯ 에도 안 넣는다
     let l=FOLD_LAB[b.id] || (b.textContent||'').replace(/\s+/g,' ').trim() || b.getAttribute('aria-label') || b.title || '';
     l=l.replace(/\s*▾$/,'').replace(/\s*\(.*?\)$/,''); if (!l) return;
@@ -3605,7 +3641,9 @@ function foldItems(scope, order){
 }
 function openFold(btn, scope, order, head){
   const r=btn.getBoundingClientRect(); const items=foldItems(scope, order);
-  if (!items.length){ toast('접힌 단추가 없습니다'); return; }
+  const zr=zoomRow(scope);
+  if (!items.length && !zr){ toast('접힌 단추가 없습니다'); return; }
+  if (zr) items.unshift({l:zr.head, f:null}, zr, {sep:true});
   if (head) items.unshift({l:head, f:null}, {sep:true});
   showLinkMenu(Math.max(8, r.right-220), r.bottom+4, items);
 }
